@@ -17,7 +17,7 @@
 
 
 #include <faiss/IndexPQ.h>
-#include <faiss/IndexIVF.h>
+#include <faiss/IndexIVFFlat.h>
 #include <faiss/IndexFlat.h>
 #include <faiss/index_io.h>
 
