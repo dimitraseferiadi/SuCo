@@ -209,6 +209,8 @@ typedef uint64_t size_t;
 #include <faiss/IndexIVFRaBitQ.h>
 #include <faiss/IndexIVFRaBitQFastScan.h>
 
+#include  <faiss/IndexSuCo.h>
+
 #ifdef FAISS_ENABLE_SVS
 #include <faiss/svs/IndexSVSVamana.h>
 #include <faiss/svs/IndexSVSFlat.h>
@@ -651,6 +653,8 @@ struct faiss::simd16uint16 {};
 %include <faiss/IndexIVFRaBitQ.h>
 %include <faiss/IndexIVFRaBitQFastScan.h>
 
+%include  <faiss/IndexSuCo.h>
+
 %ignore faiss::BufferList::Buffer;
 %ignore faiss::RangeSearchPartialResult::QueryResult;
 %ignore faiss::IDSelectorBatch::set;
@@ -752,6 +756,7 @@ struct faiss::simd16uint16 {};
     DOWNCAST ( IndexShardsIVF )
     DOWNCAST2 ( IndexShards, IndexShardsTemplateT_faiss__Index_t )
     DOWNCAST2 ( IndexReplicas, IndexReplicasTemplateT_faiss__Index_t )
+    DOWNCAST ( IndexSuCo )
     DOWNCAST ( IndexRaBitQFastScan )
     DOWNCAST ( IndexRaBitQ )
     DOWNCAST ( IndexIVFRaBitQ )

@@ -80,6 +80,7 @@ set(FAISS_SRC
   IndexScalarQuantizer.cpp
   IndexShards.cpp
   IndexShardsIVF.cpp
+  IndexSuCo.cpp
   IndexNeuralNetCodec.cpp
   MatrixStats.cpp
   MetaIndexes.cpp
@@ -197,6 +198,7 @@ set(FAISS_HEADERS
   IndexPreTransform.h
   IndexRefine.h
   IndexReplicas.h
+  IndexSuCo.h
   IndexRaBitQ.h
   IndexRaBitQFastScan.h
   IndexRowwiseMinMax.h
