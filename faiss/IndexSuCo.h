@@ -43,32 +43,12 @@
 #pragma once
 
 #include <cstdint>
-#include <utility>
-#include <unordered_map>
 #include <vector>
 
 #include <faiss/Index.h>
 #include <faiss/impl/platform_macros.h>
 
 namespace faiss {
-
-// ---------------------------------------------------------------------------
-// Hash helper for std::pair<int32_t, int32_t> used as IMI key
-// ---------------------------------------------------------------------------
-struct SuCoHashPair {
-    size_t operator()(const std::pair<int32_t, int32_t>& p) const noexcept {
-        size_t seed = 0;
-        seed ^= std::hash<int32_t>()(p.first)  + 0x9e3779b9u + (seed << 6) + (seed >> 2);
-        seed ^= std::hash<int32_t>()(p.second) + 0x9e3779b9u + (seed << 6) + (seed >> 2);
-        return seed;
-    }
-};
-
-// Inverted Multi-Index type: maps (c1, c2) → list of vector indices
-using SuCoIMI = std::unordered_map<
-        std::pair<int32_t, int32_t>,
-        std::vector<idx_t>,
-        SuCoHashPair>;
 
 // ---------------------------------------------------------------------------
 // IndexSuCo
@@ -118,11 +98,12 @@ struct IndexSuCo : Index {
     std::vector<float> centroids;
 
     /**
-     * Inverted Multi-Indexes, one per subspace.
-     * imi[i] maps (c1, c2) → sorted list of global vector IDs that were
-     * assigned to cluster (c1 in first half, c2 in second half) of subspace i.
+     * Flat Inverted Multi-Indexes, one per subspace.
+     * inv_lists[s] is a flat array of ncentroids_half^2 inverted lists.
+     * The list for cluster (c1, c2) in subspace s is at index
+     *   c1 * ncentroids_half + c2.
      */
-    std::vector<SuCoIMI> imi;
+    std::vector<std::vector<std::vector<idx_t>>> inv_lists;
 
     /**
      * Raw added vectors, stored as a flat row-major array of size ntotal * d.
@@ -225,27 +206,26 @@ private:
     /**
      * Dynamic Activation algorithm (Algorithm 3 in the paper).
      * Retrieves IMI cells in ascending (dist1[c1] + dist2[c2]) order from
-     * imi[subspace_idx] until at least `collision_num` data points have been
-     * collected.
+     * inv_lists[subspace_idx] until at least `collision_num` data points have
+     * been collected, and directly increments sc_scores for each point.
      *
-     * @param subspace_idx   Which subspace's IMI to query.
-     * @param dists1         Distances from query to each first-half centroid,
-     *                       length ncentroids_half.
-     * @param idx1           Argsort of dists1 ascending, length ncentroids_half.
-     * @param dists2         Distances from query to each second-half centroid,
-     *                       length ncentroids_half.
-     * @param idx2           Argsort of dists2 ascending, length ncentroids_half.
+     * @param subspace_idx   Which subspace's inv_lists to query.
+     * @param dists1         Distances from query to each first-half centroid.
+     * @param idx1           Argsort of dists1 ascending.
+     * @param dists2         Distances from query to each second-half centroid.
+     * @param idx2           Argsort of dists2 ascending.
      * @param collision_num  Stop after this many points have been collected.
-     * @param out_cells      Appended with retrieved (c1, c2) pairs.
+     * @param sc_scores      SC-score accumulator (length ntotal); incremented
+     *                       in-place for every collected point.
      */
     void dynamic_activate(
-            int                                   subspace_idx,
-            const std::vector<float>&             dists1,
-            const std::vector<int32_t>&           idx1,
-            const std::vector<float>&             dists2,
-            const std::vector<int32_t>&           idx2,
-            idx_t                                 collision_num,
-            std::vector<std::pair<int32_t,int32_t>>& out_cells) const;
+            int          subspace_idx,
+            const float*   dists1,
+            const int32_t* idx1,
+            const float*   dists2,
+            const int32_t* idx2,
+            idx_t          collision_num,
+            uint8_t*       sc_scores) const;
 
     /**
      * Search a single query vector.

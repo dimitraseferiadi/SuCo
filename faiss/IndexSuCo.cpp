@@ -17,6 +17,10 @@
 #include <stdexcept>
 #include <string>
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 #include <faiss/Clustering.h>
 #include <faiss/IndexFlat.h>
 #include <faiss/impl/FaissAssert.h>
@@ -71,7 +75,7 @@ IndexSuCo::IndexSuCo(
 
 void IndexSuCo::reset() {
     centroids.clear();
-    imi.clear();
+    inv_lists.clear();
     xb.clear();
     ntotal = 0;
     is_trained = false;
@@ -185,19 +189,19 @@ void IndexSuCo::add(idx_t n, const float* x) {
     xb.resize(prev_xb_size + static_cast<size_t>(n) * d);
     std::memcpy(xb.data() + prev_xb_size, x, static_cast<size_t>(n) * d * sizeof(float));
 
-    // If this is the first add, initialise the IMI vector
-    if (imi.empty()) {
-        imi.resize(nsubspaces);
+    // If this is the first add, initialise the inv_lists array
+    if (inv_lists.empty()) {
+        inv_lists.resize(nsubspaces);
+        for (int s = 0; s < nsubspaces; ++s) {
+            inv_lists[s].resize(
+                    static_cast<size_t>(ncentroids_half) * ncentroids_half);
+        }
     }
 
     // Temporary buffer for one half-subspace's vectors
     std::vector<float>   half_buf(static_cast<size_t>(n) * half_dim);
-    std::vector<int32_t> assign(n);
 
     for (int s = 0; s < nsubspaces; ++s) {
-        int32_t* assign_first  = nullptr;
-        int32_t* assign_second = nullptr;
-
         // We need assignments for both halves simultaneously to build the IMI
         std::vector<int32_t> asgn1(n), asgn2(n);
 
@@ -223,10 +227,12 @@ void IndexSuCo::add(idx_t n, const float* x) {
                     (half == 0) ? asgn1.data() : asgn2.data());
         }
 
-        // Insert into IMI
-        idx_t base_id = ntotal; // global ID of the first vector being added
+        // Insert into flat inv_lists
+        idx_t base_id = ntotal;
         for (idx_t i = 0; i < n; ++i) {
-            imi[s][{asgn1[i], asgn2[i]}].push_back(base_id + i);
+            size_t bucket = static_cast<size_t>(asgn1[i]) * ncentroids_half
+                    + asgn2[i];
+            inv_lists[s][bucket].push_back(base_id + i);
         }
     }
 
@@ -238,34 +244,31 @@ void IndexSuCo::add(idx_t n, const float* x) {
 // ============================================================================
 
 void IndexSuCo::dynamic_activate(
-        int                                       subspace_idx,
-        const std::vector<float>&                 dists1,
-        const std::vector<int32_t>&               idx1,
-        const std::vector<float>&                 dists2,
-        const std::vector<int32_t>&               idx2,
-        idx_t                                     collision_num,
-        std::vector<std::pair<int32_t,int32_t>>&  out_cells) const {
-    // activated_cell[pos] = {combined_distance, current_idx2_pointer}
-    // We represent the activation list as a vector; for moderate ncentroids_half
-    // (default 50) a linear scan for the minimum is faster than a heap because
-    // cache effects dominate.
+        int            subspace_idx,
+        const float*   dists1,
+        const int32_t* idx1,
+        const float*   dists2,
+        const int32_t* idx2,
+        idx_t          collision_num,
+        uint8_t*       sc_scores) const {
     struct ActivatedEntry {
-        float    combined_dist;
-        int32_t  idx2_ptr; // current pointer into idx2 for this activation row
+        float   combined_dist;
+        int32_t idx2_ptr;
     };
 
-    const SuCoIMI& cur_imi = imi[subspace_idx];
+    const auto& lists = inv_lists[subspace_idx];
     std::vector<ActivatedEntry> active;
     active.reserve(ncentroids_half);
 
-    // Initialise: activate the first entry of idx1
+    // Activate the first row of idx1
     active.push_back({dists1[idx1[0]] + dists2[idx2[0]], 0});
 
     idx_t retrieved_num = 0;
+    int   exhausted_count = 0; // number of entries with combined_dist == FLT_MAX
 
-    while (true) {
+    while (exhausted_count < static_cast<int>(active.size())) {
         // Find activated entry with minimum combined distance (linear scan)
-        int pos = 0;
+        int   pos  = 0;
         float best = active[0].combined_dist;
         for (int z = 1; z < static_cast<int>(active.size()); ++z) {
             if (active[z].combined_dist < best) {
@@ -277,25 +280,25 @@ void IndexSuCo::dynamic_activate(
         int32_t c1 = idx1[pos];
         int32_t c2 = idx2[active[pos].idx2_ptr];
 
-        // Retrieve the IMI cell
-        auto it = cur_imi.find({c1, c2});
-        if (it != cur_imi.end() && active[pos].combined_dist < FLT_MAX) {
-            out_cells.emplace_back(c1, c2);
-            retrieved_num += static_cast<idx_t>(it->second.size());
-            if (retrieved_num >= collision_num) {
-                break;
+        // Retrieve the flat inv_list bucket and increment sc_scores
+        size_t bucket = static_cast<size_t>(c1) * ncentroids_half + c2;
+        const auto& lst = lists[bucket];
+        for (idx_t vid : lst) {
+            if (sc_scores[vid] < 255u) {
+                sc_scores[vid]++;
             }
         }
+        retrieved_num += static_cast<idx_t>(lst.size());
+        if (retrieved_num >= collision_num) {
+            break;
+        }
 
-        // Activate the next row of idx1 if this entry just became active
-        // (i.e. its idx2 pointer was 0) and there is a next row
-        if (active[pos].idx2_ptr == 0 && pos < ncentroids_half - 1) {
-            int next_pos = static_cast<int>(active.size());
-            // Only activate if we haven't already
-            if (next_pos <= pos + 1) {
-                active.push_back(
-                        {dists1[idx1[pos + 1]] + dists2[idx2[0]], 0});
-            }
+        // Activate next row of idx1 if this is the first time processing pos
+        if (active[pos].idx2_ptr == 0
+                && pos + 1 < ncentroids_half
+                && pos + 1 == static_cast<int>(active.size())) {
+            active.push_back(
+                    {dists1[idx1[pos + 1]] + dists2[idx2[0]], 0});
         }
 
         // Advance this row's idx2 pointer, or mark exhausted
@@ -304,19 +307,8 @@ void IndexSuCo::dynamic_activate(
             active[pos].combined_dist =
                     dists1[idx1[pos]] + dists2[idx2[active[pos].idx2_ptr]];
         } else {
-            active[pos].combined_dist = FLT_MAX; // mark exhausted
-        }
-
-        // Safety: if all entries are exhausted, stop
-        bool all_exhausted = true;
-        for (const auto& e : active) {
-            if (e.combined_dist < FLT_MAX) {
-                all_exhausted = false;
-                break;
-            }
-        }
-        if (all_exhausted) {
-            break;
+            active[pos].combined_dist = FLT_MAX;
+            exhausted_count++;
         }
     }
 }
@@ -332,20 +324,17 @@ void IndexSuCo::search_one(
         idx_t*       out_labels) const {
     FAISS_THROW_IF_NOT_MSG(ntotal > 0, "IndexSuCo: index is empty");
 
-    // collision_num = alpha * ntotal (number of points to retrieve per subspace)
     const idx_t collision_num = static_cast<idx_t>(
             std::max(1.0f, collision_ratio * static_cast<float>(ntotal)));
-
-    // candidate_num = beta * ntotal (size of re-rank pool)
     const idx_t candidate_num = static_cast<idx_t>(
             std::max(static_cast<float>(k),
                      candidate_ratio * static_cast<float>(ntotal)));
 
     // -------------------------------------------------------------------------
-    // 1. Collision counting: for each subspace, run Dynamic Activation
-    //    and increment SC-scores for every retrieved point.
+    // 1. Collision counting: run Dynamic Activation per subspace and
+    //    increment SC-scores directly.
     // -------------------------------------------------------------------------
-    std::vector<uint8_t> sc_scores(ntotal, 0); // SC-score per data point
+    std::vector<uint8_t> sc_scores(ntotal, 0);
 
     std::vector<float>   dists1(ncentroids_half), dists2(ncentroids_half);
     std::vector<int32_t> idx1(ncentroids_half),   idx2(ncentroids_half);
@@ -353,7 +342,6 @@ void IndexSuCo::search_one(
     for (int s = 0; s < nsubspaces; ++s) {
         int col_start = s * subspace_dim;
 
-        // Distance from query to each first-half centroid
         const float* cents1 = centroids.data() +
                 static_cast<size_t>(s * 2) * ncentroids_half * half_dim;
         for (int c = 0; c < ncentroids_half; ++c) {
@@ -363,7 +351,6 @@ void IndexSuCo::search_one(
                     half_dim);
         }
 
-        // Distance from query to each second-half centroid
         const float* cents2 = centroids.data() +
                 static_cast<size_t>(s * 2 + 1) * ncentroids_half * half_dim;
         for (int c = 0; c < ncentroids_half; ++c) {
@@ -373,47 +360,30 @@ void IndexSuCo::search_one(
                     half_dim);
         }
 
-        // Argsort dists1 and dists2 ascending
         std::iota(idx1.begin(), idx1.end(), 0);
-        std::sort(idx1.begin(), idx1.end(), [&](int a, int b) {
-            return dists1[a] < dists1[b];
-        });
+        std::sort(idx1.begin(), idx1.end(),
+                  [&](int a, int b) { return dists1[a] < dists1[b]; });
         std::iota(idx2.begin(), idx2.end(), 0);
-        std::sort(idx2.begin(), idx2.end(), [&](int a, int b) {
-            return dists2[a] < dists2[b];
-        });
+        std::sort(idx2.begin(), idx2.end(),
+                  [&](int a, int b) { return dists2[a] < dists2[b]; });
 
-        // Dynamic Activation: collect IMI cells
-        std::vector<std::pair<int32_t,int32_t>> cells;
-        dynamic_activate(s, dists1, idx1, dists2, idx2, collision_num, cells);
-
-        // Increment SC-scores for all retrieved points
-        for (const auto& cell : cells) {
-            auto it = imi[s].find(cell);
-            if (it != imi[s].end()) {
-                for (idx_t vid : it->second) {
-                    if (sc_scores[vid] < 255u) {
-                        sc_scores[vid]++;
-                    }
-                }
-            }
-        }
+        dynamic_activate(
+                s,
+                dists1.data(), idx1.data(),
+                dists2.data(), idx2.data(),
+                collision_num,
+                sc_scores.data());
     }
 
     // -------------------------------------------------------------------------
-    // 2. SC-score selection: choose the top-candidate_num points by SC-score.
-    //    (mirrors the "release" logic in the original query.cpp)
-    //    We find the minimum SC-score threshold such that at least
-    //    candidate_num points are selected.
+    // 2. SC-score selection: find threshold such that >= candidate_num points
+    //    are included in the candidate set.
     // -------------------------------------------------------------------------
-
-    // Count how many points have each SC-score value (0 .. nsubspaces)
     std::vector<idx_t> score_hist(nsubspaces + 1, 0);
     for (idx_t i = 0; i < ntotal; ++i) {
         score_hist[sc_scores[i]]++;
     }
 
-    // Walk from high to low score to find the cutoff threshold
     int threshold_score = 0;
     idx_t cumulative = 0;
     for (int sc = nsubspaces; sc >= 0; --sc) {
@@ -425,7 +395,6 @@ void IndexSuCo::search_one(
         }
     }
 
-    // Collect candidate indices (all points with sc_scores >= threshold_score)
     std::vector<idx_t> candidates;
     candidates.reserve(candidate_num + score_hist[threshold_score]);
     for (idx_t i = 0; i < ntotal; ++i) {
@@ -435,7 +404,7 @@ void IndexSuCo::search_one(
     }
 
     // -------------------------------------------------------------------------
-    // 3. Re-ranking: compute exact L2 distances for all candidates, return top-k
+    // 3. Re-ranking: exact L2 distances for candidates, return top-k.
     // -------------------------------------------------------------------------
     const idx_t nc = static_cast<idx_t>(candidates.size());
     std::vector<float> cand_dists(nc);
@@ -448,7 +417,6 @@ void IndexSuCo::search_one(
                 d);
     }
 
-    // Partial sort to get top-k
     idx_t result_k = std::min(k, nc);
     std::vector<idx_t> order(nc);
     std::iota(order.begin(), order.end(), 0);
@@ -462,7 +430,6 @@ void IndexSuCo::search_one(
         out_dist[j]   = cand_dists[order[j]];
         out_labels[j] = candidates[order[j]];
     }
-    // Pad with -1 / +inf if fewer candidates than k
     for (idx_t j = result_k; j < k; ++j) {
         out_dist[j]   = FLT_MAX;
         out_labels[j] = -1;
@@ -487,6 +454,7 @@ void IndexSuCo::search(
             k <= ntotal,
             "IndexSuCo: k cannot exceed the number of indexed vectors");
 
+#pragma omp parallel for if (n > 1) schedule(dynamic, 1)
     for (idx_t i = 0; i < n; ++i) {
         search_one(
                 x + i * d,
@@ -508,13 +476,11 @@ void IndexSuCo::write_index(const char* fname) const {
     FAISS_THROW_IF_NOT_FMT(fp, "IndexSuCo::write_index: cannot open '%s'", fname);
 
     // ---- header ----
-    // magic + version
     const uint32_t magic   = 0x5375436F; // 'SuCo'
-    const uint32_t version = 1;
+    const uint32_t version = 2;          // v2: flat inv_lists format
     fwrite(&magic,   sizeof(uint32_t), 1, fp);
     fwrite(&version, sizeof(uint32_t), 1, fp);
 
-    // scalar fields
     int64_t dd = d;
     fwrite(&dd,               sizeof(int64_t), 1, fp);
     fwrite(&nsubspaces,       sizeof(int),     1, fp);
@@ -529,18 +495,19 @@ void IndexSuCo::write_index(const char* fname) const {
     size_t ncents = (size_t)nsubspaces * 2 * ncentroids_half * half_dim;
     fwrite(centroids.data(), sizeof(float), ncents, fp);
 
-    // ---- IMI ----
+    // ---- flat inv_lists ----
+    // For each subspace: ncentroids_half^2 buckets, each preceded by its size.
+    size_t nbuckets = (size_t)ncentroids_half * ncentroids_half;
     for (int s = 0; s < nsubspaces; ++s) {
-        size_t nbuckets = imi[s].size();
-        fwrite(&nbuckets, sizeof(size_t), 1, fp);
-        for (const auto& kv : imi[s]) {
-            int32_t c1 = kv.first.first;
-            int32_t c2 = kv.first.second;
-            fwrite(&c1, sizeof(int32_t), 1, fp);
-            fwrite(&c2, sizeof(int32_t), 1, fp);
-            size_t nids = kv.second.size();
+        FAISS_THROW_IF_NOT_MSG(
+                inv_lists[s].size() == nbuckets,
+                "IndexSuCo::write_index: inv_lists size mismatch");
+        for (size_t b = 0; b < nbuckets; ++b) {
+            size_t nids = inv_lists[s][b].size();
             fwrite(&nids, sizeof(size_t), 1, fp);
-            fwrite(kv.second.data(), sizeof(idx_t), nids, fp);
+            if (nids > 0) {
+                fwrite(inv_lists[s][b].data(), sizeof(idx_t), nids, fp);
+            }
         }
     }
 
@@ -568,8 +535,9 @@ void IndexSuCo::read_index(const char* fname) {
             magic == 0x5375436F,
             "IndexSuCo::read_index: bad magic, not a SuCo index file");
     FAISS_THROW_IF_NOT_MSG(
-            version == 1,
-            "IndexSuCo::read_index: unsupported version");
+            version == 2,
+            "IndexSuCo::read_index: unsupported version (expected 2; "
+            "please rebuild the index)");
 
     int64_t dd;
     fread(&dd,               sizeof(int64_t), 1, fp);
@@ -581,8 +549,8 @@ void IndexSuCo::read_index(const char* fname) {
     int64_t ntotal_r;
     fread(&ntotal_r, sizeof(int64_t), 1, fp);
 
-    d           = static_cast<idx_t>(dd);
-    ntotal      = static_cast<idx_t>(ntotal_r);
+    d            = static_cast<idx_t>(dd);
+    ntotal       = static_cast<idx_t>(ntotal_r);
     subspace_dim = static_cast<int>(d) / nsubspaces;
     half_dim     = subspace_dim / 2;
 
@@ -591,22 +559,18 @@ void IndexSuCo::read_index(const char* fname) {
     centroids.resize(ncents);
     fread(centroids.data(), sizeof(float), ncents, fp);
 
-    // IMI
-    imi.resize(nsubspaces);
+    // flat inv_lists
+    size_t nbuckets = (size_t)ncentroids_half * ncentroids_half;
+    inv_lists.resize(nsubspaces);
     for (int s = 0; s < nsubspaces; ++s) {
-        imi[s].clear();
-        size_t nbuckets;
-        fread(&nbuckets, sizeof(size_t), 1, fp);
-        imi[s].reserve(nbuckets);
+        inv_lists[s].resize(nbuckets);
         for (size_t b = 0; b < nbuckets; ++b) {
-            int32_t c1, c2;
-            fread(&c1, sizeof(int32_t), 1, fp);
-            fread(&c2, sizeof(int32_t), 1, fp);
             size_t nids;
             fread(&nids, sizeof(size_t), 1, fp);
-            std::vector<idx_t> ids(nids);
-            fread(ids.data(), sizeof(idx_t), nids, fp);
-            imi[s][{c1, c2}] = std::move(ids);
+            inv_lists[s][b].resize(nids);
+            if (nids > 0) {
+                fread(inv_lists[s][b].data(), sizeof(idx_t), nids, fp);
+            }
         }
     }
 
