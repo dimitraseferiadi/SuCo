@@ -276,6 +276,58 @@ def sweep_ivfflat(
 
 
 # ============================================================================
+# IVFPQ sweep
+# ============================================================================
+
+def build_ivfpq(
+    xb: np.ndarray,
+    xt: np.ndarray,
+    *,
+    nlist: int = 1024,
+    M: int = 8,
+    nbits: int = 8,
+) -> "faiss.IndexIVFPQ":
+    """Build an IVFPQ index.  M sub-quantisers, nbits bits each."""
+    d = xb.shape[1]
+    assert d % M == 0, f"d ({d}) must be divisible by M ({M})"
+    print(f"    Building IVFPQ (nlist={nlist}, M={M}, nbits={nbits}) "
+          f"on {len(xb):,} vectors …", flush=True)
+    quantizer = faiss.IndexFlatL2(d)
+    index = faiss.IndexIVFPQ(quantizer, d, nlist, M, nbits)
+    t0 = time.perf_counter()
+    index.train(xt)
+    index.add(xb)
+    print(f"    Built   in {fmt_time(time.perf_counter() - t0)}")
+    return index
+
+
+def sweep_ivfpq(
+    index: "faiss.IndexIVFPQ",
+    xq: np.ndarray,
+    gt: np.ndarray,
+    *,
+    k: int = 10,
+    nprobe_values=NPROBE_VALUES,
+) -> list[dict]:
+    results = []
+    print(f"\n    {'nprobe':>8}  {'QPS':>8}  {'R@1':>7}  {'R@10':>7}")
+    print(f"    {'-'*8}  {'-'*8}  {'-'*7}  {'-'*7}")
+
+    for nprobe in nprobe_values:
+        index.nprobe = nprobe
+        I, qps = warmup_and_time(index, xq, k)
+        r1  = recall_at_k(I, gt, 1)
+        r10 = recall_at_k(I, gt, min(10, k))
+        print(f"    {nprobe:>8}  {qps:8.0f}  {r1:7.4f}  {r10:7.4f}", flush=True)
+        results.append(dict(
+            method="IVFPQ", param=nprobe,
+            qps=qps, recall1=r1, recall10=r10,
+        ))
+
+    return results
+
+
+# ============================================================================
 # Per-dataset runner
 # ============================================================================
 
@@ -370,6 +422,8 @@ STYLE = {
                     label="HNSW  (efSearch sweep)"),
     "IVFFlat": dict(color="#457b9d", marker="s", lw=2.0, ms=6,  zorder=4,
                     label="IVFFlat  (nprobe sweep)"),
+    "IVFPQ":   dict(color="#2a9d8f", marker="D", lw=2.0, ms=6,  zorder=3,
+                    label="IVFPQ  (nprobe sweep)"),
 }
 
 
@@ -452,6 +506,8 @@ def parse_args() -> argparse.Namespace:
                    help="Skip HNSW sweep (saves build time).")
     p.add_argument("--skip-ivfflat", action="store_true",
                    help="Skip IVFFlat sweep.")
+    p.add_argument("--skip-ivfpq",   action="store_true",
+                   help="Skip IVFPQ sweep.")
 
     # Sweep configuration
     p.add_argument("--alpha-values", type=float, nargs="+",
@@ -496,6 +552,7 @@ def main() -> None:
             alpha_values=args.alpha_values,
             skip_hnsw=args.skip_hnsw,
             skip_ivfflat=args.skip_ivfflat,
+            skip_ivfpq=args.skip_ivfpq,
             k=args.k,
         )
         del xb, xt  # free RAM (xq and gt still needed for plot labels, but we're done)
@@ -517,6 +574,7 @@ def main() -> None:
             alpha_values=args.alpha_values,
             skip_hnsw=args.skip_hnsw,
             skip_ivfflat=args.skip_ivfflat,
+            skip_ivfpq=args.skip_ivfpq,
             k=args.k,
         )
         del xb, xt
@@ -538,6 +596,7 @@ def main() -> None:
             alpha_values=args.alpha_values,
             skip_hnsw=args.skip_hnsw,
             skip_ivfflat=args.skip_ivfflat,
+            skip_ivfpq=args.skip_ivfpq,
             k=args.k,
         )
         del xb, xt

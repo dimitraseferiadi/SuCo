@@ -1,0 +1,154 @@
+Log: /Users/dhm/Documents/SuCo/logs//bench_all_20260309_133500.log
+
+##########################################################################
+##  SuCo Full Benchmark Suite  —  Mon Mar  9 13:35:00 EET 2026
+##########################################################################
+  data-dir     : /Users/dhm/Documents/data/
+  index-dir    : /Users/dhm/Documents/indices/
+  deep-nb      : 1000000
+  sift10m-mat  : /Users/dhm/Documents/data/SIFT10M/SIFT10Mfeatures.mat
+  spacev10m-dir: /Users/dhm/Documents/data/spacev10m/
+
+##########################################################################
+##  SIFT1M  (d=128, nb=1M, nq=10K)
+##########################################################################
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_sift1m.py --data-dir /Users/dhm/Documents/data/ --index-path /Users/dhm/Documents/indices//sift1m.idx --sweep
+
+======================================================================
+  Loading SIFT1M dataset  (d=128, nb=1 000 000, nq=10 000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  d         : 128
+  nb (base) : 1,000,000
+  nq        : 10,000
+  maxtrain  : 100,000
+  OMP threads: 10
+  Loading base … shape=(1000000, 128)
+  Loading queries … shape=(10000, 128)
+  Loading train … shape=(100000, 128)
+  Loading ground truth … IndexSuCo::train: d=128  nsubspaces=8  ncentroids_half=50  n=100000
+Sampling a subset of 12800 / 100000 for training
+Clustering 12800 points in 8D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=1.50435e+07 imbalance=1.331 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=1.07529e+07 imbalance=1.297 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=1.00232e+07 imbalance=1.298 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=9.73329e+06 imbalance=1.316 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=9.55335e+06 imbalance=1.331 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=9.4322e+06 imbalance=1.343 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=9.33514e+06 imbalance=1.357 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=9.26578e+06 imbalance=1.371 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=9.2183e+06 imbalance=1.387 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=9.1783e+06 imbalance=1.400 nsplit=0       
+  trained subspace 0 half 0
+Sampling a subset of 12800 / 100000 for training
+Clustering 12800 points in 8D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=2.79878e+07 imbalance=1.373 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=2.18092e+07 imbalance=1.283 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=2.07286e+07 imbalance=1.261 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=2.01919e+07 imbalance=1.251 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=1.98662e+07 imbalance=1.242 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=1.96434e+07 imbalance=1.239 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=1.94706e+07 imbalance=1.235 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=1.93375e+07 imbalance=1.232 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=1.92242e+07 imbalance=1.229 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=1.91297e+07 imbalance=1.225 nsplit=0       
+  trained subspace 0 half 1
+Sampling a subset of 12800 / 100000 for training
+Clustering 12800 points in 8D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=2.94187e+07 imbalance=1.402 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=2.17784e+07 imbalance=1.338 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=2.0448e+07 imbalance=1.301 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=1.99084e+07 imbalance=1.284 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=1.96046e+07 imbalance=1.273 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=1.93784e+07 imbalance=1.267 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=1.92109e+07 imbalance=1.259 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=1.90793e+07 imbalance=1.251 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=1.89819e+07 imbalance=1.245 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=1.89091e+07 imbalance=1.242 nsplit=0       
+  trained subspace 1 half 0
+Sampling a subset of 12800 / 100000 for training
+Clustering 12800 points in 8D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=1.49367e+07 imbalance=1.445 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=1.10667e+07 imbalance=1.338 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=1.02656e+07 imbalance=1.313 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=9.93161e+06 imbalance=1.309 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=9.73681e+06 imbalance=1.307 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=9.59155e+06 imbalance=1.306 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=9.46702e+06 imbalance=1.308 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=9.37316e+06 imbalance=1.310 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=9.30064e+06 imbalance=1.316 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=9.23893e+06 imbalance=1.320 nsplit=0       
+  trained subspace 1 half 1
+Sampling a subset of 12800 / 100000 for training
+Clustering 12800 points in 8D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=2.80426e+07 imbalance=1.414 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=2.00111e+07 imbalance=1.246 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=1.84733e+07 imbalance=1.191 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=1.78276e+07 imbalance=1.171 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=1.74987e+07 imbalance=1.165 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=1.72853e+07 imbalance=1.168 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=1.71212e+07 imbalance=1.169 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=1.69831e+07 imbalance=1.173 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=1.6879e+07 imbalance=1.175 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=1.68134e+07 imbalance=1.177 nsplit=0       
+  trained subspace 2 half 0
+Sampling a subset of 12800 / 100000 for training
+Clustering 12800 points in 8D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=2.89866e+07 imbalance=1.487 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=2.12571e+07 imbalance=1.300 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=1.98972e+07 imbalance=1.253 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=1.92409e+07 imbalance=1.228 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=1.88484e+07 imbalance=1.215 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=1.86321e+07 imbalance=1.209 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=1.84945e+07 imbalance=1.205 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=1.83929e+07 imbalance=1.200 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=1.83202e+07 imbalance=1.195 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=1.82653e+07 imbalance=1.192 nsplit=0       
+  trained subspace 2 half 1
+Sampling a subset of 12800 / 100000 for training
+Clustering 12800 points in 8D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=3.26679e+07 imbalance=1.409 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=2.20584e+07 imbalance=1.230 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=2.03868e+07 imbalance=1.164 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=1.96654e+07 imbalance=1.142 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=1.92769e+07 imbalance=1.142 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=1.90417e+07 imbalance=1.147 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=1.89039e+07 imbalance=1.153 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=1.87997e+07 imbalance=1.163 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=1.87315e+07 imbalance=1.170 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=1.86804e+07 imbalance=1.176 nsplit=0       
+  trained subspace 3 half 0
+Sampling a subset of 12800 / 100000 for training
+Clustering 12800 points in 8D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=2.93388e+07 imbalance=1.689 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=2.07034e+07 imbalance=1.533 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=1.93501e+07 imbalance=1.448 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=1.88547e+07 imbalance=1.410 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=1.85638e+07 imbalance=1.391 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=1.83433e+07 imbalance=1.380 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=1.81738e+07 imbalance=1.375 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=1.80574e+07 imbalance=1.379 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=1.79676e+07 imbalance=1.378 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=1.78948e+07 imbalance=1.383 nsplit=0       
+  trained subspace 3 half 1
+Sampling a subset of 12800 / 100000 for training
+Clustering 12800 points in 8D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=2.65806e+07 imbalance=1.407 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=1.95876e+07 imbalance=1.334 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=1.84064e+07 imbalance=1.282 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=1.78878e+07 imbalance=1.250 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=1.76003e+07 imbalance=1.228 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=1.7402e+07 imbalance=1.219 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=1.72773e+07 imbalance=1.217 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=1.7194e+07 imbalance=1.221 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=1.71328e+07 imbalance=1.227 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=1.70806e+07 imbalance=1.233 nsplit=0       
+  trained subspace 4 half 0
+Sampling a subset of 12800 / 100000 for training
+Clustering 12800 points in 8D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=3.12677e+07 imbalance=1.653 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=2.22602e+07 imbalance=1.496 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=2.0801e+07 imbalance=1.427 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=2.009e+07 imbalance=1.376 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=1.96796e+07 imbalance=1.345 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=1.94329e+07 imbalance=1.330 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=1.92565e+07 imbalance=1.319 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=1.91377e+07 imbalance=1.311 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=1.9054e+07 imbalance=1.306 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=1.89978e+07 imbalance=1.302 nsplit=0       
+  trained subspace 4 half 1
+Sampling a subset of 12800 / 100000 for training
+Clustering 12800 points in 8D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=3.02585e+07 imbalance=1.448 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=2.16923e+07 imbalance=1.365 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=2.03639e+07 imbalance=1.309 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=1.96969e+07 imbalance=1.291 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=1.9348e+07 imbalance=1.288 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=1.91469e+07 imbalance=1.286 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=1.90016e+07 imbalance=1.282 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=1.88751e+07 imbalance=1.281 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=1.87614e+07 imbalance=1.277 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=1.86493e+07 imbalance=1.278 nsplit=0       
+  trained subspace 5 half 0
+Sampling a subset of 12800 / 100000 for training
+Clustering 12800 points in 8D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=2.79946e+07 imbalance=1.210 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=2.04333e+07 imbalance=1.182 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=1.91594e+07 imbalance=1.169 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=1.87356e+07 imbalance=1.168 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=1.84859e+07 imbalance=1.170 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=1.83284e+07 imbalance=1.176 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=1.82149e+07 imbalance=1.186 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=1.81238e+07 imbalance=1.192 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=1.80506e+07 imbalance=1.194 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=1.7997e+07 imbalance=1.198 nsplit=0       
+  trained subspace 5 half 1
+Sampling a subset of 12800 / 100000 for training
+Clustering 12800 points in 8D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=1.53949e+07 imbalance=1.355 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=1.073e+07 imbalance=1.269 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=9.82702e+06 imbalance=1.240 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=9.35255e+06 imbalance=1.239 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=9.07635e+06 imbalance=1.254 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=8.92194e+06 imbalance=1.274 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=8.83081e+06 imbalance=1.292 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=8.76138e+06 imbalance=1.308 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=8.70942e+06 imbalance=1.319 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=8.66992e+06 imbalance=1.330 nsplit=0       
+  trained subspace 6 half 0
+Sampling a subset of 12800 / 100000 for training
+Clustering 12800 points in 8D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=2.86812e+07 imbalance=1.304 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=2.18472e+07 imbalance=1.215 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=2.03811e+07 imbalance=1.193 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=1.98172e+07 imbalance=1.182 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=1.94986e+07 imbalance=1.176 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=1.92931e+07 imbalance=1.173 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=1.91298e+07 imbalance=1.176 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=1.90192e+07 imbalance=1.180 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=1.89466e+07 imbalance=1.183 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=1.88987e+07 imbalance=1.186 nsplit=0       
+  trained subspace 6 half 1
+Sampling a subset of 12800 / 100000 for training
+Clustering 12800 points in 8D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=2.97484e+07 imbalance=1.446 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=2.21558e+07 imbalance=1.339 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=2.06871e+07 imbalance=1.323 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=2.00204e+07 imbalance=1.311 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=1.96756e+07 imbalance=1.302 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=1.94489e+07 imbalance=1.295 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=1.92975e+07 imbalance=1.289 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=1.91964e+07 imbalance=1.285 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=1.91233e+07 imbalance=1.280 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=1.90681e+07 imbalance=1.276 nsplit=0       
+  trained subspace 7 half 0
+Sampling a subset of 12800 / 100000 for training
+Clustering 12800 points in 8D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=1.55631e+07 imbalance=1.353 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=1.08228e+07 imbalance=1.245 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=9.93613e+06 imbalance=1.218 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=9.56602e+06 imbalance=1.204 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=9.35016e+06 imbalance=1.201 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=9.23304e+06 imbalance=1.205 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=9.14628e+06 imbalance=1.209 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=9.0836e+06 imbalance=1.211 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=9.03292e+06 imbalance=1.213 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=8.9942e+06 imbalance=1.218 nsplit=0       shape=(10000, 100)
+
+======================================================================
+  IndexSuCo benchmark  (SIFT1M, d=128)
+======================================================================
+  nsubspaces      = 8  (half_dim=8)
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Training on 100,000 vectors  (d=128) …
+  Training done in 0.07s
+  Adding 1,000,000 vectors …
+       100,000 / 1,000,000  (10.0%)       200,000 / 1,000,000  (20.0%)       300,000 / 1,000,000  (30.0%)       400,000 / 1,000,000  (40.0%)       500,000 / 1,000,000  (50.0%)       600,000 / 1,000,000  (60.0%)       700,000 / 1,000,000  (70.0%)       800,000 / 1,000,000  (80.0%)       900,000 / 1,000,000  (90.0%)     1,000,000 / 1,000,000  (100.0%)
+  Add done in 0.51s
+  Saving index to /Users/dhm/Documents/indices//sift1m.idx …
+  Searching 10,000 queries (k=10) …
+
+  trained subspace 7 half 1
+IndexSuCo::add: adding 100000 vectors (current ntotal=0)
+IndexSuCo::add: adding 100000 vectors (current ntotal=100000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=200000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=300000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=400000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=500000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=600000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=700000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=800000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=900000)
+IndexSuCo::write_index: saved to '/Users/dhm/Documents/indices//sift1m.idx'
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmp0hubkmfy.idx'
+Traceback (most recent call last):
+  File "/Users/dhm/Documents/SuCo/benchs/bench_suco_sift1m.py", line 1353, in <module>
+    main()
+  File "/Users/dhm/Documents/SuCo/benchs/bench_suco_sift1m.py", line 1200, in main
+    run_benchmark(
+  File "/Users/dhm/Documents/SuCo/benchs/bench_suco_sift1m.py", line 251, in run_benchmark
+    D, I = index.search(xq, k)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/dhm/Documents/SuCo/.venv/lib/python3.12/site-packages/faiss/class_wrappers.py", line 398, in replacement_search
+    self.search_c(n, swig_ptr(x), k, swig_ptr(D), swig_ptr(I), params)
+  File "/Users/dhm/Documents/SuCo/.venv/lib/python3.12/site-packages/faiss/swigfaiss.py", line 12863, in search
+    return _swigfaiss.IndexSuCo_search(self, n, x, k, distances, labels, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt
