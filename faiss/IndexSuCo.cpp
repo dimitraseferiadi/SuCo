@@ -92,17 +92,19 @@ void IndexSuCo::assign_to_centroids(
         int          ncentroids,
         const float* cents,
         int32_t*     out_assign) {
-    // Use an IndexFlatL2 over the centroids to find nearest centroid per vector.
-    // This reuses FAISS SIMD-accelerated distance computation.
-    IndexFlatL2 idx(dim);
-    idx.add(ncentroids, cents);
-
-    std::vector<float> dummy_dists(n);
-    std::vector<idx_t> assign_l(n);
-    idx.search(n, vecs, 1, dummy_dists.data(), assign_l.data());
-
+    // Use knn_L2sqr (k=1) to avoid a per-call IndexFlatL2 allocation while
+    // still leveraging FAISS BLAS/SIMD vectorisation.
+    std::vector<float> dists(n);
+    std::vector<idx_t> labels(n);
+    knn_L2sqr(
+            vecs, cents,
+            static_cast<size_t>(dim),
+            static_cast<size_t>(n),
+            static_cast<size_t>(ncentroids),
+            static_cast<size_t>(1),
+            dists.data(), labels.data());
     for (idx_t i = 0; i < n; ++i) {
-        out_assign[i] = static_cast<int32_t>(assign_l[i]);
+        out_assign[i] = static_cast<int32_t>(labels[i]);
     }
 }
 
@@ -284,9 +286,7 @@ void IndexSuCo::dynamic_activate(
         size_t bucket = static_cast<size_t>(c1) * ncentroids_half + c2;
         const auto& lst = lists[bucket];
         for (idx_t vid : lst) {
-            if (sc_scores[vid] < 255u) {
-                sc_scores[vid]++;
-            }
+            sc_scores[vid]++;
         }
         retrieved_num += static_cast<idx_t>(lst.size());
         if (retrieved_num >= collision_num) {
@@ -321,20 +321,25 @@ void IndexSuCo::search_one(
         const float* xq,
         idx_t        k,
         float*       out_dist,
-        idx_t*       out_labels) const {
+        idx_t*       out_labels,
+        uint8_t*     scratch_buf,
+        float        cr,
+        float        cdr) const {
     FAISS_THROW_IF_NOT_MSG(ntotal > 0, "IndexSuCo: index is empty");
 
     const idx_t collision_num = static_cast<idx_t>(
-            std::max(1.0f, collision_ratio * static_cast<float>(ntotal)));
+            std::max(1.0f, cr * static_cast<float>(ntotal)));
     const idx_t candidate_num = static_cast<idx_t>(
             std::max(static_cast<float>(k),
-                     candidate_ratio * static_cast<float>(ntotal)));
+                     cdr * static_cast<float>(ntotal)));
 
     // -------------------------------------------------------------------------
     // 1. Collision counting: run Dynamic Activation per subspace and
     //    increment SC-scores directly.
+    //    Use the pre-allocated scratch_buf to eliminate per-query heap alloc.
     // -------------------------------------------------------------------------
-    std::vector<uint8_t> sc_scores(ntotal, 0);
+    std::fill(scratch_buf, scratch_buf + ntotal, uint8_t(0));
+    uint8_t* sc_scores = scratch_buf;
 
     std::vector<float>   dists1(ncentroids_half), dists2(ncentroids_half);
     std::vector<int32_t> idx1(ncentroids_half),   idx2(ncentroids_half);
@@ -342,23 +347,24 @@ void IndexSuCo::search_one(
     for (int s = 0; s < nsubspaces; ++s) {
         int col_start = s * subspace_dim;
 
+        // Batch all centroid distances in one fvec_L2sqr_ny call (vectorised)
         const float* cents1 = centroids.data() +
                 static_cast<size_t>(s * 2) * ncentroids_half * half_dim;
-        for (int c = 0; c < ncentroids_half; ++c) {
-            dists1[c] = fvec_L2sqr(
-                    xq + col_start,
-                    cents1 + static_cast<size_t>(c) * half_dim,
-                    half_dim);
-        }
+        fvec_L2sqr_ny(
+                dists1.data(),
+                xq + col_start,
+                cents1,
+                static_cast<size_t>(half_dim),
+                static_cast<size_t>(ncentroids_half));
 
         const float* cents2 = centroids.data() +
                 static_cast<size_t>(s * 2 + 1) * ncentroids_half * half_dim;
-        for (int c = 0; c < ncentroids_half; ++c) {
-            dists2[c] = fvec_L2sqr(
-                    xq + col_start + half_dim,
-                    cents2 + static_cast<size_t>(c) * half_dim,
-                    half_dim);
-        }
+        fvec_L2sqr_ny(
+                dists2.data(),
+                xq + col_start + half_dim,
+                cents2,
+                static_cast<size_t>(half_dim),
+                static_cast<size_t>(ncentroids_half));
 
         std::iota(idx1.begin(), idx1.end(), 0);
         std::sort(idx1.begin(), idx1.end(),
@@ -372,7 +378,7 @@ void IndexSuCo::search_one(
                 dists1.data(), idx1.data(),
                 dists2.data(), idx2.data(),
                 collision_num,
-                sc_scores.data());
+                sc_scores);
     }
 
     // -------------------------------------------------------------------------
@@ -404,18 +410,23 @@ void IndexSuCo::search_one(
     }
 
     // -------------------------------------------------------------------------
-    // 3. Re-ranking: exact L2 distances for candidates, return top-k.
+    // 3. Re-ranking: gather candidates into a contiguous buffer, then compute
+    //    all L2 distances in one vectorised pairwise_L2sqr call.
     // -------------------------------------------------------------------------
     const idx_t nc = static_cast<idx_t>(candidates.size());
-    std::vector<float> cand_dists(nc);
 
+    // Gathering eliminates the random-access cache misses that occur when
+    // computing distances directly against scattered positions in xb.
+    std::vector<float> cand_buf(static_cast<size_t>(nc) * d);
     for (idx_t j = 0; j < nc; ++j) {
-        idx_t vid = candidates[j];
-        cand_dists[j] = fvec_L2sqr(
-                xq,
-                xb.data() + static_cast<size_t>(vid) * d,
-                d);
+        std::memcpy(
+                cand_buf.data() + static_cast<size_t>(j) * d,
+                xb.data() + static_cast<size_t>(candidates[j]) * d,
+                d * sizeof(float));
     }
+
+    std::vector<float> cand_dists(nc);
+    pairwise_L2sqr(d, 1, xq, nc, cand_buf.data(), cand_dists.data());
 
     idx_t result_k = std::min(k, nc);
     std::vector<idx_t> order(nc);
@@ -446,7 +457,7 @@ void IndexSuCo::search(
         idx_t                  k,
         float*                 distances,
         idx_t*                 labels,
-        const SearchParameters*) const {
+        const SearchParameters* params) const {
     FAISS_THROW_IF_NOT_MSG(
             is_trained, "IndexSuCo: must call train() before search()");
     FAISS_THROW_IF_NOT_MSG(k > 0, "IndexSuCo: k must be > 0");
@@ -454,13 +465,41 @@ void IndexSuCo::search(
             k <= ntotal,
             "IndexSuCo: k cannot exceed the number of indexed vectors");
 
+    // Extract per-search ratio overrides from SearchParametersSuCo, if given.
+    float cr  = collision_ratio;
+    float cdr = candidate_ratio;
+    if (params) {
+        const auto* sp = dynamic_cast<const SearchParametersSuCo*>(params);
+        FAISS_THROW_IF_NOT_MSG(
+                sp,
+                "IndexSuCo::search: params must be of type SearchParametersSuCo");
+        if (sp->collision_ratio > 0.0f) cr  = sp->collision_ratio;
+        if (sp->candidate_ratio > 0.0f) cdr = sp->candidate_ratio;
+    }
+
+    // Pre-allocate one sc_scores scratch buffer per OpenMP thread to avoid
+    // a per-query heap allocation of O(ntotal) bytes.
+    int nthreads = 1;
+#ifdef _OPENMP
+    nthreads = omp_get_max_threads();
+#endif
+    std::vector<std::vector<uint8_t>> scratch_bufs(
+            nthreads, std::vector<uint8_t>(ntotal, 0));
+
 #pragma omp parallel for if (n > 1) schedule(dynamic, 1)
     for (idx_t i = 0; i < n; ++i) {
+        int tid = 0;
+#ifdef _OPENMP
+        tid = omp_get_thread_num();
+#endif
         search_one(
                 x + i * d,
                 k,
                 distances + i * k,
-                labels    + i * k);
+                labels    + i * k,
+                scratch_bufs[tid].data(),
+                cr,
+                cdr);
     }
 }
 
@@ -477,7 +516,7 @@ void IndexSuCo::write_index(const char* fname) const {
 
     // ---- header ----
     const uint32_t magic   = 0x5375436F; // 'SuCo'
-    const uint32_t version = 2;          // v2: flat inv_lists format
+    const uint32_t version = 3;          // v3: uint64_t size fields
     fwrite(&magic,   sizeof(uint32_t), 1, fp);
     fwrite(&version, sizeof(uint32_t), 1, fp);
 
@@ -503,8 +542,8 @@ void IndexSuCo::write_index(const char* fname) const {
                 inv_lists[s].size() == nbuckets,
                 "IndexSuCo::write_index: inv_lists size mismatch");
         for (size_t b = 0; b < nbuckets; ++b) {
-            size_t nids = inv_lists[s][b].size();
-            fwrite(&nids, sizeof(size_t), 1, fp);
+            uint64_t nids = static_cast<uint64_t>(inv_lists[s][b].size());
+            fwrite(&nids, sizeof(uint64_t), 1, fp);
             if (nids > 0) {
                 fwrite(inv_lists[s][b].data(), sizeof(idx_t), nids, fp);
             }
@@ -512,8 +551,8 @@ void IndexSuCo::write_index(const char* fname) const {
     }
 
     // ---- raw vectors ----
-    size_t nxb = xb.size();
-    fwrite(&nxb, sizeof(size_t), 1, fp);
+    uint64_t nxb = static_cast<uint64_t>(xb.size());
+    fwrite(&nxb, sizeof(uint64_t), 1, fp);
     if (nxb > 0) {
         fwrite(xb.data(), sizeof(float), nxb, fp);
     }
@@ -529,25 +568,29 @@ void IndexSuCo::read_index(const char* fname) {
     FAISS_THROW_IF_NOT_FMT(fp, "IndexSuCo::read_index: cannot open '%s'", fname);
 
     uint32_t magic, version;
-    fread(&magic,   sizeof(uint32_t), 1, fp);
-    fread(&version, sizeof(uint32_t), 1, fp);
+    FAISS_THROW_IF_NOT_MSG(
+            fread(&magic,   sizeof(uint32_t), 1, fp) == 1,
+            "IndexSuCo::read_index: unexpected EOF reading magic");
+    FAISS_THROW_IF_NOT_MSG(
+            fread(&version, sizeof(uint32_t), 1, fp) == 1,
+            "IndexSuCo::read_index: unexpected EOF reading version");
     FAISS_THROW_IF_NOT_MSG(
             magic == 0x5375436F,
             "IndexSuCo::read_index: bad magic, not a SuCo index file");
     FAISS_THROW_IF_NOT_MSG(
-            version == 2,
-            "IndexSuCo::read_index: unsupported version (expected 2; "
+            version == 3,
+            "IndexSuCo::read_index: unsupported version (expected 3; "
             "please rebuild the index)");
 
     int64_t dd;
-    fread(&dd,               sizeof(int64_t), 1, fp);
-    fread(&nsubspaces,       sizeof(int),     1, fp);
-    fread(&ncentroids_half,  sizeof(int),     1, fp);
-    fread(&collision_ratio,  sizeof(float),   1, fp);
-    fread(&candidate_ratio,  sizeof(float),   1, fp);
-    fread(&niter,            sizeof(int),     1, fp);
+    FAISS_THROW_IF_NOT_MSG(fread(&dd,              sizeof(int64_t), 1, fp) == 1, "IndexSuCo::read_index: unexpected EOF");
+    FAISS_THROW_IF_NOT_MSG(fread(&nsubspaces,      sizeof(int),     1, fp) == 1, "IndexSuCo::read_index: unexpected EOF");
+    FAISS_THROW_IF_NOT_MSG(fread(&ncentroids_half, sizeof(int),     1, fp) == 1, "IndexSuCo::read_index: unexpected EOF");
+    FAISS_THROW_IF_NOT_MSG(fread(&collision_ratio, sizeof(float),   1, fp) == 1, "IndexSuCo::read_index: unexpected EOF");
+    FAISS_THROW_IF_NOT_MSG(fread(&candidate_ratio, sizeof(float),   1, fp) == 1, "IndexSuCo::read_index: unexpected EOF");
+    FAISS_THROW_IF_NOT_MSG(fread(&niter,           sizeof(int),     1, fp) == 1, "IndexSuCo::read_index: unexpected EOF");
     int64_t ntotal_r;
-    fread(&ntotal_r, sizeof(int64_t), 1, fp);
+    FAISS_THROW_IF_NOT_MSG(fread(&ntotal_r, sizeof(int64_t), 1, fp) == 1, "IndexSuCo::read_index: unexpected EOF");
 
     d            = static_cast<idx_t>(dd);
     ntotal       = static_cast<idx_t>(ntotal_r);
@@ -557,7 +600,9 @@ void IndexSuCo::read_index(const char* fname) {
     // centroids
     size_t ncents = (size_t)nsubspaces * 2 * ncentroids_half * half_dim;
     centroids.resize(ncents);
-    fread(centroids.data(), sizeof(float), ncents, fp);
+    FAISS_THROW_IF_NOT_MSG(
+            fread(centroids.data(), sizeof(float), ncents, fp) == ncents,
+            "IndexSuCo::read_index: unexpected EOF reading centroids");
 
     // flat inv_lists
     size_t nbuckets = (size_t)ncentroids_half * ncentroids_half;
@@ -565,21 +610,29 @@ void IndexSuCo::read_index(const char* fname) {
     for (int s = 0; s < nsubspaces; ++s) {
         inv_lists[s].resize(nbuckets);
         for (size_t b = 0; b < nbuckets; ++b) {
-            size_t nids;
-            fread(&nids, sizeof(size_t), 1, fp);
-            inv_lists[s][b].resize(nids);
+            uint64_t nids;
+            FAISS_THROW_IF_NOT_MSG(
+                    fread(&nids, sizeof(uint64_t), 1, fp) == 1,
+                    "IndexSuCo::read_index: unexpected EOF reading bucket size");
+            inv_lists[s][b].resize(static_cast<size_t>(nids));
             if (nids > 0) {
-                fread(inv_lists[s][b].data(), sizeof(idx_t), nids, fp);
+                FAISS_THROW_IF_NOT_MSG(
+                        fread(inv_lists[s][b].data(), sizeof(idx_t), nids, fp) == nids,
+                        "IndexSuCo::read_index: unexpected EOF reading bucket ids");
             }
         }
     }
 
     // raw vectors
-    size_t nxb;
-    fread(&nxb, sizeof(size_t), 1, fp);
-    xb.resize(nxb);
+    uint64_t nxb;
+    FAISS_THROW_IF_NOT_MSG(
+            fread(&nxb, sizeof(uint64_t), 1, fp) == 1,
+            "IndexSuCo::read_index: unexpected EOF reading vector count");
+    xb.resize(static_cast<size_t>(nxb));
     if (nxb > 0) {
-        fread(xb.data(), sizeof(float), nxb, fp);
+        FAISS_THROW_IF_NOT_MSG(
+                fread(xb.data(), sizeof(float), nxb, fp) == nxb,
+                "IndexSuCo::read_index: unexpected EOF reading vectors");
     }
 
     fclose(fp);

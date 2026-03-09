@@ -51,6 +51,34 @@
 namespace faiss {
 
 // ---------------------------------------------------------------------------
+// SearchParametersSuCo
+// ---------------------------------------------------------------------------
+
+/**
+ * Per-search parameter overrides for IndexSuCo.
+ *
+ * Pass to IndexSuCo::search() to vary collision_ratio or candidate_ratio for
+ * a single search call without mutating the index.  This is the idiomatic
+ * FAISS approach and is thread-safe: multiple threads can query the same index
+ * with different parameters simultaneously.
+ *
+ * A value <= 0 means "use the index member variable as the default".
+ */
+struct SearchParametersSuCo : SearchParameters {
+    /// Override collision_ratio (alpha) for this search; <= 0 → index default.
+    float collision_ratio = -1.0f;
+    /// Override candidate_ratio (beta) for this search; <= 0 → index default.
+    float candidate_ratio = -1.0f;
+
+    explicit SearchParametersSuCo(
+            float collision_ratio = -1.0f,
+            float candidate_ratio = -1.0f)
+            : collision_ratio(collision_ratio),
+              candidate_ratio(candidate_ratio) {}
+    ~SearchParametersSuCo() override = default;
+};
+
+// ---------------------------------------------------------------------------
 // IndexSuCo
 // ---------------------------------------------------------------------------
 struct IndexSuCo : Index {
@@ -233,12 +261,20 @@ private:
      * @param k           Number of NNs to return.
      * @param out_dist    Output distances, length k.
      * @param out_labels  Output global IDs, length k.
+     * @param scratch_buf Pre-allocated uint8_t buffer of length >= ntotal.
+     *                    Will be zeroed at the start of each call.  Passing
+     *                    a per-thread buffer avoids a per-query heap allocation.
+     * @param cr          collision_ratio to use (overrides the member value).
+     * @param cdr         candidate_ratio to use (overrides the member value).
      */
     void search_one(
             const float* xq,
             idx_t        k,
             float*       out_dist,
-            idx_t*       out_labels) const;
+            idx_t*       out_labels,
+            uint8_t*     scratch_buf,
+            float        cr,
+            float        cdr) const;
 };
 
 } // namespace faiss

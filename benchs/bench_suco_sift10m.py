@@ -57,7 +57,6 @@ import argparse
 import os
 import sys
 import time
-import datetime
 
 import numpy as np
 
@@ -69,44 +68,6 @@ try:
 except ImportError as e:
     sys.exit(f"Cannot import faiss: {e}\n"
              "Build FAISS with IndexSuCo and run from the repo root.")
-
-# ---------------------------------------------------------------------------
-# Tee: write stdout (and stderr) to both the terminal and a log file
-# ---------------------------------------------------------------------------
-
-class _Tee:
-    """Minimal file-like object that mirrors writes to two streams."""
-
-    def __init__(self, primary, secondary):
-        self._p = primary
-        self._s = secondary
-
-    def write(self, data):
-        self._p.write(data)
-        self._s.write(data)
-        return len(data)
-
-    def flush(self):
-        self._p.flush()
-        self._s.flush()
-
-    def fileno(self):           # needed by some C-level code (e.g. faiss verbose)
-        return self._p.fileno()
-
-    def isatty(self):
-        return False
-
-
-def _setup_log(log_dir: str) -> str:
-    """Open a timestamped log file and tee stdout / stderr through it."""
-    os.makedirs(log_dir, exist_ok=True)
-    ts      = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    logpath = os.path.join(log_dir, f"bench_suco_sift10m_{ts}.log")
-    lf      = open(logpath, "w", buffering=1)
-    sys.stdout = _Tee(sys.__stdout__, lf)
-    sys.stderr = _Tee(sys.__stderr__, lf)
-    return logpath
-
 
 # ---------------------------------------------------------------------------
 # SIFT10M data loader
@@ -199,17 +160,85 @@ def recall_at_k_topR(I: np.ndarray, gt: np.ndarray, k: int, r: int) -> float:
     return hits / (nq * r)
 
 
-# ---------------------------------------------------------------------------
-# Misc
-# ---------------------------------------------------------------------------
+def approx_ratio(
+    xb: np.ndarray,
+    xq: np.ndarray,
+    D: np.ndarray,
+    I: np.ndarray,
+    gt: np.ndarray,
+    k: int,
+) -> float:
+    """
+    Mean distance approximation ratio (paper metric):
+        mean_{q, j in [k]}  L2(q, approx_j) / L2(q, true_j)
+    D[q, j] is the squared L2 returned by FAISS search.
+    """
+    k_use = min(k, D.shape[1], gt.shape[1])
+    nq    = len(xq)
+    approx_l2 = np.sqrt(np.maximum(D[:, :k_use], 0.0)).astype(np.float64)
+    true_l2   = np.zeros((nq, k_use), dtype=np.float64)
+    for j in range(k_use):
+        diff = xq.astype(np.float64) - xb[gt[:, j]].astype(np.float64)
+        true_l2[:, j] = np.sqrt((diff * diff).sum(axis=1))
+    mask   = true_l2 > 0
+    ratios = np.where(mask, approx_l2 / np.where(mask, true_l2, 1.0), 1.0)
+    return float(ratios.mean())
+
 
 def fmt_time(seconds: float) -> str:
     return f"{seconds/60:.1f}min" if seconds >= 60 else f"{seconds:.2f}s"
 
 
+def _index_size_mb(index) -> float:
+    """Return serialized size of the index in MiB (disk / RAM footprint proxy)."""
+    try:
+        buf = faiss.serialize_index(index)
+        return buf.nbytes / (1024.0 * 1024.0)
+    except Exception:
+        # Fallback for wrappers (e.g. IndexSuCo) that expose write_index(path).
+        import tempfile
+        with tempfile.NamedTemporaryFile(suffix=".idx", delete=False) as f:
+            tmppath = f.name
+        try:
+            index.write_index(tmppath)
+            return os.path.getsize(tmppath) / (1024.0 * 1024.0)
+        finally:
+            try:
+                os.unlink(tmppath)
+            except OSError:
+                pass
+
+
 def print_header(title: str) -> None:
     bar = "=" * 70
     print(f"\n{bar}\n  {title}\n{bar}")
+
+
+# ---------------------------------------------------------------------------
+# Batched add helper
+# ---------------------------------------------------------------------------
+
+# 100K × 128 × 4 bytes ≈ 51 MB per batch
+ADD_BATCH_SIZE = 100_000
+
+
+def add_batched(index, xb, verbose: bool = False) -> float:
+    """
+    Add vectors in `xb` to `index` in chunks of ADD_BATCH_SIZE.
+    Returns total wall-clock time in seconds.
+    """
+    nb = len(xb)
+    t0 = time.perf_counter()
+    for i0 in range(0, nb, ADD_BATCH_SIZE):
+        batch = np.ascontiguousarray(xb[i0:i0 + ADD_BATCH_SIZE], dtype='float32')
+        index.add(batch)
+        if verbose:
+            done = min(i0 + ADD_BATCH_SIZE, nb)
+            print(f"\r    {done:>10,} / {nb:,}  ({done/nb*100:.1f}%)",
+                  end="", flush=True)
+    if verbose:
+        print()
+    return time.perf_counter() - t0
 
 
 # ---------------------------------------------------------------------------
@@ -255,7 +284,7 @@ def run_benchmark(
             print(f"  Loaded in {fmt_time(t_load)}")
     else:
         if verbose:
-            print(f"  Training on {len(xt):,} vectors …")
+            print(f"  Training on {len(xt):,} vectors  (d={d}) …")
         t0 = time.perf_counter()
         index.train(xt)
         t_train = time.perf_counter() - t0
@@ -264,9 +293,7 @@ def run_benchmark(
 
         if verbose:
             print(f"  Adding {nb:,} vectors …")
-        t0 = time.perf_counter()
-        index.add(xb)
-        t_add = time.perf_counter() - t0
+        t_add = add_batched(index, xb, verbose=verbose)
         if verbose:
             print(f"  Add done in {fmt_time(t_add)}")
 
@@ -275,8 +302,11 @@ def run_benchmark(
                 print(f"  Saving index to {index_path} …")
             index.write_index(index_path)
 
-    # Warm-up (not timed)
-    index.search(xq[:1], k)
+    size_mb = _index_size_mb(index)
+
+    # Warm-up  (3 × 5-query batches for stable cache state)
+    for _ in range(3):
+        index.search(xq[:min(5, nq)], k)
 
     if verbose:
         print(f"  Searching {nq:,} queries (k={k}) …")
@@ -286,38 +316,61 @@ def run_benchmark(
     ms_per_q = t_search / nq * 1000.0
     qps      = nq / t_search
 
-    r1  = recall_at_k(I, gt, 1)
-    r10 = recall_at_k(I, gt, min(10, k))
+    r1     = recall_at_k(I, gt, 1)
+    k_r    = min(10, k, gt.shape[1])
+    r10    = recall_at_k(I, gt, k_r)
+    r10r10 = recall_at_k_topR(I, gt, k_r, k_r)
+    ratio  = approx_ratio(xb, xq, D, I, gt, k_r)
+    r20  = recall_at_k(I, gt, min(20,  k, gt.shape[1])) if min(k, gt.shape[1]) >= 20  else None
+    r30  = recall_at_k(I, gt, min(30,  k, gt.shape[1])) if min(k, gt.shape[1]) >= 30  else None
+    r40  = recall_at_k(I, gt, min(40,  k, gt.shape[1])) if min(k, gt.shape[1]) >= 40  else None
+    r50  = recall_at_k(I, gt, min(50,  k, gt.shape[1])) if min(k, gt.shape[1]) >= 50  else None
+    r100 = recall_at_k(I, gt, min(100, k, gt.shape[1])) if min(k, gt.shape[1]) >= 100 else None
 
     if verbose:
-        index_size_mib = (
-            os.path.getsize(index_path) / 1024**2
-            if index_path and os.path.exists(index_path) else 0.0
-        )
         print(f"\n  Results:")
         print(f"    ntotal          = {index.ntotal:,}")
+        print(f"    nsubspaces      = {nsubspaces}  (half_dim={d // nsubspaces // 2})")
+        print(f"    OMP threads     = {faiss.omp_get_max_threads()}")
         print(f"    train time      = {fmt_time(t_train)}")
         print(f"    add time        = {fmt_time(t_add)}")
-        print(f"    search time     = {t_search * 1000:.1f}ms total")
+        print(f"    build time      = {fmt_time(t_train + t_add)}")
+        print(f"    index size      = {size_mb:.1f} MiB")
+        print(f"    search time     = {t_search*1000:.1f}ms total")
         print(f"    ms / query      = {ms_per_q:.3f}")
         print(f"    QPS             = {qps:.0f}")
         print(f"    Recall@1        = {r1:.4f}")
         print(f"    Recall@10       = {r10:.4f}")
-        if index_size_mib:
-            print(f"    index size      = {index_size_mib:.1f} MiB")
+        print(f"    10-Recall@10    = {r10r10:.4f}")
+        print(f"    Dist ratio      = {ratio:.4f}")
+        if r20  is not None: print(f"    Recall@20       = {r20:.4f}")
+        if r30  is not None: print(f"    Recall@30       = {r30:.4f}")
+        if r40  is not None: print(f"    Recall@40       = {r40:.4f}")
+        if r50  is not None: print(f"    Recall@50       = {r50:.4f}")
+        if r100 is not None: print(f"    Recall@100      = {r100:.4f}")
 
     return dict(
         nsubspaces=nsubspaces,
         ncentroids_half=ncentroids_half,
         collision_ratio=collision_ratio,
         candidate_ratio=candidate_ratio,
+        half_dim=d // nsubspaces // 2,
         t_train=t_train,
         t_add=t_add,
+        t_build=t_train + t_add,
+        index_size_mb=size_mb,
         t_search_ms=t_search * 1000,
         ms_per_query=ms_per_q,
         qps=qps,
         recall_at_1=r1,
         recall_at_10=r10,
+        recall_10r10=r10r10,
+        dist_ratio=ratio,
+        recall_at_20=r20,
+        recall_at_30=r30,
+        recall_at_40=r40,
+        recall_at_50=r50,
+        recall_at_100=r100,
     )
 
 
@@ -344,30 +397,44 @@ SWEEP_CONFIGS = [
 
 def run_sweep(xb, xq, xt, gt, k: int = 10) -> None:
     print_header("Parameter Sweep  (SIFT10M, d=128)")
-    d = xb.shape[1]
     header = (
         f"{'Ns':>3}  {'hd':>3}  {'nc':>4}  {'alpha':>6}  {'beta':>7}  "
-        f"{'ms/q':>7}  {'QPS':>7}  {'R@1':>6}  {'R@10':>6}"
+        f"{'ms/q':>7}  {'QPS':>7}  {'R@1':>6}  {'R@10':>6}  "
+        f"{'10R@10':>8}  {'ratio':>8}"
     )
     print(header)
     print("-" * len(header))
 
+    d  = xb.shape[1]
+    nq = len(xq)
+    cur_ns = cur_nc = None
+    index  = None
+
     for ns, nc, alpha, beta in SWEEP_CONFIGS:
-        hd = d // (2 * ns)
-        r = run_benchmark(
-            xb, xq, xt, gt,
-            nsubspaces=ns,
-            ncentroids_half=nc,
-            collision_ratio=alpha,
-            candidate_ratio=beta,
-            k=k,
-            verbose=False,
-        )
+        if (ns, nc) != (cur_ns, cur_nc):
+            index = faiss.IndexSuCo(d, ns, nc, alpha, beta, 10)
+            index.train(xt)
+            add_batched(index, xb)
+            cur_ns, cur_nc = ns, nc
+
+        index.collision_ratio = alpha
+        index.candidate_ratio = beta
+        for _ in range(3):  # warm-up (3 batches for stable cache)
+            index.search(xq[:min(5, len(xq))], k)
+        t0 = time.perf_counter()
+        D, I = index.search(xq, k)
+        t_s = time.perf_counter() - t0
+        k_r    = min(10, k, gt.shape[1])
+        r1     = recall_at_k(I, gt, 1)
+        r10    = recall_at_k(I, gt, k_r)
+        r10r10 = recall_at_k_topR(I, gt, k_r, k_r)
+        ratio  = approx_ratio(xb, xq, D, I, gt, k_r)
         print(
-            f"{r['nsubspaces']:>3}  {hd:>3}  {r['ncentroids_half']:>4}  "
-            f"{r['collision_ratio']:>6.3f}  {r['candidate_ratio']:>7.4f}  "
-            f"{r['ms_per_query']:>7.3f}  {r['qps']:>7.0f}  "
-            f"{r['recall_at_1']:>6.4f}  {r['recall_at_10']:>6.4f}"
+            f"{ns:>3}  {d // ns // 2:>3}  {nc:>4}  "
+            f"{alpha:>6.3f}  {beta:>7.4f}  "
+            f"{t_s/nq*1000:>7.3f}  {nq/t_s:>7.0f}  "
+            f"{r1:>6.4f}  {r10:>6.4f}  "
+            f"{r10r10:>8.4f}  {ratio:>8.4f}"
         )
 
 
@@ -379,9 +446,7 @@ def compare_vs_flat(xb: np.ndarray, xq: np.ndarray, gt: np.ndarray,
                     k: int = 10) -> None:
     print_header("Baseline: IndexFlatL2  (SIFT10M)")
     flat = faiss.IndexFlatL2(xb.shape[1])
-    flat.add(xb)
-
-    flat.search(xq[:1], k)   # warm-up
+    add_batched(flat, xb, verbose=False)
 
     t0 = time.perf_counter()
     _, I_flat = flat.search(xq, k)
@@ -389,202 +454,629 @@ def compare_vs_flat(xb: np.ndarray, xq: np.ndarray, gt: np.ndarray,
 
     r1  = recall_at_k(I_flat, gt, 1)
     r10 = recall_at_k(I_flat, gt, min(10, k))
-    print(f"  ms/query  = {t_flat / xq.shape[0] * 1000:.3f}")
-    print(f"  QPS       = {xq.shape[0] / t_flat:.0f}")
-    print(f"  Recall@1  = {r1:.4f}  (upper bound for approximate methods)")
+    print(f"  ms/query  = {t_flat/xq.shape[0]*1000:.3f}")
+    print(f"  QPS       = {xq.shape[0]/t_flat:.0f}")
+    print(f"  Recall@1  = {r1:.4f}  (upper bound for SuCo)")
     print(f"  Recall@10 = {r10:.4f}")
 
 
 # ---------------------------------------------------------------------------
-# HNSW sweep
+# HNSW benchmark
 # ---------------------------------------------------------------------------
 
-def run_hnsw_sweep(xb: np.ndarray, xq: np.ndarray, gt: np.ndarray,
-                   k: int = 10, M: int = 32, ef_construction: int = 200) -> None:
-    print_header(f"HNSW efSearch sweep  (M={M}, efConstruction={ef_construction})")
-    ef_values = [8, 16, 32, 64, 128, 256, 512]
+HNSW_EF_SWEEP = [8, 16, 32, 64, 128, 256, 512]
 
+
+def run_hnsw_benchmark(
+    xb: np.ndarray,
+    xq: np.ndarray,
+    gt: np.ndarray,
+    *,
+    M: int               = 32,
+    ef_construction: int = 200,
+    ef_search: int       = 128,
+    k: int               = 10,
+    index_path: str      = "",
+    verbose: bool        = True,
+) -> dict:
+    """Build IndexHNSWFlat (or load), search, return metrics dict."""
+    nb, d = xb.shape
+    nq    = xq.shape[0]
+
+    index = faiss.IndexHNSWFlat(d, M)
+    index.hnsw.efConstruction = ef_construction
+
+    hnsw_path = (index_path.replace(".idx", "") + f"_hnsw_M{M}_efc{ef_construction}.idx"
+                 if index_path else "")
+
+    if hnsw_path and os.path.exists(hnsw_path):
+        if verbose:
+            print(f"  Loading HNSW index from {hnsw_path} …")
+        t0 = time.perf_counter()
+        index = faiss.read_index(hnsw_path)
+        t_load = time.perf_counter() - t0
+        t_add  = 0.0
+        if verbose:
+            print(f"  Loaded in {fmt_time(t_load)}")
+    else:
+        if verbose:
+            print(f"  Building HNSW (M={M}, efConstruction={ef_construction}) "
+                  f"on {nb:,} vectors …")
+        t_add = add_batched(index, xb, verbose=verbose)
+        if verbose:
+            print(f"  Build done in {fmt_time(t_add)}")
+        if hnsw_path:
+            if verbose:
+                print(f"  Saving HNSW index to {hnsw_path} …")
+            faiss.write_index(index, hnsw_path)
+
+    size_mb = _index_size_mb(index)
+    index.hnsw.efSearch = ef_search
+    for _ in range(3):  # warm-up (3 batches for stable cache)
+            index.search(xq[:min(5, len(xq))], k)
+
+    if verbose:
+        print(f"  Searching {nq:,} queries (k={k}, efSearch={ef_search}) …")
+    t0 = time.perf_counter()
+    D, I = index.search(xq, k)
+    t_search = time.perf_counter() - t0
+    ms_per_q = t_search / nq * 1000.0
+    qps      = nq / t_search
+
+    r1  = recall_at_k(I, gt, 1)
+    r10 = recall_at_k(I, gt, min(10, k))
+
+    if verbose:
+        print(f"\n  Results:")
+        print(f"    ntotal          = {index.ntotal:,}")
+        print(f"    M               = {M}")
+        print(f"    efConstruction  = {ef_construction}")
+        print(f"    efSearch        = {ef_search}")
+        print(f"    build time      = {fmt_time(t_add)}")
+        print(f"    index size      = {size_mb:.1f} MiB")
+        print(f"    search time     = {t_search*1000:.1f}ms total")
+        print(f"    ms / query      = {ms_per_q:.3f}")
+        print(f"    QPS             = {qps:.0f}")
+        print(f"    Recall@1        = {r1:.4f}")
+        print(f"    Recall@10       = {r10:.4f}")
+
+    return dict(
+        M=M, ef_construction=ef_construction, ef_search=ef_search,
+        t_build=t_add, index_size_mb=size_mb, t_search_ms=t_search * 1000,
+        ms_per_query=ms_per_q, qps=qps, recall_at_1=r1, recall_at_10=r10,
+    )
+
+
+def run_hnsw_ef_sweep(
+    xb: np.ndarray,
+    xq: np.ndarray,
+    gt: np.ndarray,
+    *,
+    M: int               = 32,
+    ef_construction: int = 200,
+    k: int               = 10,
+    index_path: str      = "",
+) -> None:
+    """Build HNSW once, sweep efSearch to trace the recall/QPS curve."""
+    print_header(f"HNSW efSearch sweep  (M={M}, efConstruction={ef_construction})")
     header = f"{'efSearch':>8}  {'ms/q':>7}  {'QPS':>7}  {'R@1':>6}  {'R@10':>6}"
     print(header)
     print("-" * len(header))
 
-    d  = xb.shape[1]
-    nq = xq.shape[0]
-
-    print(f"  Building HNSW index (M={M}, efConstruction={ef_construction}) …",
-          flush=True)
-    t0 = time.perf_counter()
+    nb, d = xb.shape
     index = faiss.IndexHNSWFlat(d, M)
     index.hnsw.efConstruction = ef_construction
-    index.add(xb)
-    t_build = time.perf_counter() - t0
-    print(f"  Build done in {fmt_time(t_build)}\n")
 
-    index.search(xq[:1], k)   # warm-up
+    hnsw_path = (index_path.replace(".idx", "") + f"_hnsw_M{M}_efc{ef_construction}.idx"
+                 if index_path else "")
 
-    for ef in ef_values:
-        index.hnsw.efSearch = ef
+    if hnsw_path and os.path.exists(hnsw_path):
+        print(f"  Loading HNSW index from {hnsw_path} …")
+        index = faiss.read_index(hnsw_path)
+    else:
+        print(f"  Building HNSW (M={M}, efConstruction={ef_construction}) "
+              f"on {nb:,} vectors …")
+        t_build = add_batched(index, xb, verbose=True)
+        print(f"  Build done in {fmt_time(t_build)}")
+        if hnsw_path:
+            faiss.write_index(index, hnsw_path)
+
+    nq = xq.shape[0]
+    for efs in HNSW_EF_SWEEP:
+        index.hnsw.efSearch = efs
+        for _ in range(3):  # warm-up (3 batches for stable cache)
+            index.search(xq[:min(5, len(xq))], k)
         t0 = time.perf_counter()
         _, I = index.search(xq, k)
-        t   = time.perf_counter() - t0
-        ms_q = t / nq * 1000
-        qps  = nq / t
-        r1   = recall_at_k(I, gt, 1)
-        r10  = recall_at_k(I, gt, min(10, k))
-        print(f"{ef:>8}  {ms_q:>7.3f}  {qps:>7.0f}  {r1:>6.4f}  {r10:>6.4f}")
+        t_s = time.perf_counter() - t0
+        r1  = recall_at_k(I, gt, 1)
+        r10 = recall_at_k(I, gt, min(10, k))
+        print(f"{efs:>8}  {t_s/nq*1000:>7.3f}  {nq/t_s:>7.0f}  "
+              f"{r1:>6.4f}  {r10:>6.4f}")
 
 
 # ---------------------------------------------------------------------------
-# IVFFlat sweep
+# IVFFlat benchmark
 # ---------------------------------------------------------------------------
 
-def run_ivfflat_sweep(xb: np.ndarray, xq: np.ndarray, gt: np.ndarray,
-                      k: int = 10, nlist: int = 4096) -> None:
-    print_header(f"IVFFlat nprobe sweep  (nlist={nlist}, SIFT10M, d={xb.shape[1]})")
-    nprobe_values = [1, 4, 16, 64, 128, 256, 512, 1024]
+IVF_NPROBE_SWEEP = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512]
 
-    header = f"{'nprobe':>7}  {'ms/q':>7}  {'QPS':>7}  {'R@1':>6}  {'R@10':>6}"
-    print(header)
-    print("-" * len(header))
 
-    d  = xb.shape[1]
-    nq = xq.shape[0]
+def run_ivfflat_benchmark(
+    xb: np.ndarray,
+    xq: np.ndarray,
+    xt: np.ndarray,
+    gt: np.ndarray,
+    *,
+    nlist: int      = 4096,
+    nprobe: int     = 64,
+    k: int          = 10,
+    index_path: str = "",
+    verbose: bool   = True,
+) -> dict:
+    """Build IndexIVFFlat (or load from index_path), search xq, return metrics dict."""
+    nb, d = xb.shape
+    nq    = xq.shape[0]
 
-    print(f"  Building IVFFlat index (nlist={nlist}) …", flush=True)
-    t0        = time.perf_counter()
     quantizer = faiss.IndexFlatL2(d)
     index     = faiss.IndexIVFFlat(quantizer, d, nlist)
-    xt_ivf    = xb if len(xb) <= 500_000 else xb[
-        np.random.default_rng(42).choice(len(xb), 500_000, replace=False)
-    ]
-    index.train(xt_ivf)
-    index.add(xb)
-    t_build = time.perf_counter() - t0
-    print(f"  Build done in {fmt_time(t_build)}\n")
 
-    index.search(xq[:1], k)   # warm-up
+    ivf_path = (index_path.replace(".idx", "") + f"_ivfflat_nlist{nlist}.idx"
+                if index_path else "")
 
-    for nprobe in nprobe_values:
-        if nprobe > nlist:
-            continue
-        index.nprobe = nprobe
+    if ivf_path and os.path.exists(ivf_path):
+        if verbose:
+            print(f"  Loading IVFFlat index from {ivf_path} …")
         t0 = time.perf_counter()
-        _, I = index.search(xq, k)
-        t    = time.perf_counter() - t0
-        ms_q = t / nq * 1000
-        qps  = nq / t
-        r1   = recall_at_k(I, gt, 1)
-        r10  = recall_at_k(I, gt, min(10, k))
-        print(f"{nprobe:>7}  {ms_q:>7.3f}  {qps:>7.0f}  {r1:>6.4f}  {r10:>6.4f}")
+        index = faiss.read_index(ivf_path)
+        t_load = time.perf_counter() - t0
+        t_train = t_add = 0.0
+        if verbose:
+            print(f"  Loaded in {fmt_time(t_load)}")
+    else:
+        if verbose:
+            print(f"  Training IVFFlat (nlist={nlist}) on {len(xt):,} vectors …")
+        t0 = time.perf_counter()
+        index.train(xt)
+        t_train = time.perf_counter() - t0
+        if verbose:
+            print(f"  Training done in {fmt_time(t_train)}")
 
+        if verbose:
+            print(f"  Adding {nb:,} vectors …")
+        t_add = add_batched(index, xb, verbose=verbose)
+        if verbose:
+            print(f"  Add done in {fmt_time(t_add)}")
 
-# ---------------------------------------------------------------------------
-# IVFPQ sweep
-# ---------------------------------------------------------------------------
+        if ivf_path:
+            if verbose:
+                print(f"  Saving IVFFlat index to {ivf_path} …")
+            faiss.write_index(index, ivf_path)
 
-def run_ivfpq_sweep(xb: np.ndarray, xq: np.ndarray, gt: np.ndarray,
-                    k: int = 10, nlist: int = 4096,
-                    m: int = 16, nbits: int = 8) -> None:
-    """
-    IVFPQ nprobe sweep.  m PQ sub-quantisers, nbits bits each.
-    For d=128: m must divide d → valid values: 2,4,8,16,32,64,128.
-    Default m=16 → 16 bytes / vector (8× compression).
-    """
-    print_header(
-        f"IVFPQ nprobe sweep  (nlist={nlist}, m={m}, nbits={nbits}, "
-        f"SIFT10M, d={xb.shape[1]})"
+    size_mb = _index_size_mb(index)
+    index.nprobe = nprobe
+    for _ in range(3):  # warm-up (3 batches for stable cache)
+            index.search(xq[:min(5, len(xq))], k)
+
+    if verbose:
+        print(f"  Searching {nq:,} queries (k={k}, nprobe={nprobe}) …")
+    t0 = time.perf_counter()
+    D, I = index.search(xq, k)
+    t_search = time.perf_counter() - t0
+    ms_per_q = t_search / nq * 1000.0
+    qps      = nq / t_search
+
+    r1  = recall_at_k(I, gt, 1)
+    r10 = recall_at_k(I, gt, min(10, k))
+
+    if verbose:
+        print(f"\n  Results:")
+        print(f"    ntotal          = {index.ntotal:,}")
+        print(f"    nlist           = {nlist}")
+        print(f"    nprobe          = {nprobe}")
+        print(f"    train time      = {fmt_time(t_train)}")
+        print(f"    add time        = {fmt_time(t_add)}")
+        print(f"    build time      = {fmt_time(t_train + t_add)}")
+        print(f"    index size      = {size_mb:.1f} MiB")
+        print(f"    search time     = {t_search*1000:.1f}ms total")
+        print(f"    ms / query      = {ms_per_q:.3f}")
+        print(f"    QPS             = {qps:.0f}")
+        print(f"    Recall@1        = {r1:.4f}")
+        print(f"    Recall@10       = {r10:.4f}")
+
+    return dict(
+        nlist=nlist, nprobe=nprobe,
+        t_train=t_train, t_add=t_add, t_build=t_train + t_add,
+        index_size_mb=size_mb, t_search_ms=t_search * 1000,
+        ms_per_query=ms_per_q, qps=qps, recall_at_1=r1, recall_at_10=r10,
     )
-    nprobe_values = [1, 4, 16, 64, 128, 256, 512, 1024]
 
+
+def run_ivfflat_nprobe_sweep(
+    xb: np.ndarray,
+    xq: np.ndarray,
+    xt: np.ndarray,
+    gt: np.ndarray,
+    *,
+    nlist: int       = 4096,
+    k: int           = 10,
+    index_path: str  = "",
+    dataset_tag: str = "",
+) -> None:
+    """Build IVFFlat once, sweep nprobe to show the recall/QPS trade-off."""
+    tag = f", {dataset_tag}" if dataset_tag else ""
+    print_header(f"IVFFlat nprobe sweep  (nlist={nlist}{tag})")
     header = f"{'nprobe':>7}  {'ms/q':>7}  {'QPS':>7}  {'R@1':>6}  {'R@10':>6}"
     print(header)
     print("-" * len(header))
 
-    d  = xb.shape[1]
-    nq = xq.shape[0]
-
-    print(f"  Building IVFPQ index (nlist={nlist}, m={m}, nbits={nbits}) …",
-          flush=True)
-    t0        = time.perf_counter()
+    nb, d = xb.shape
     quantizer = faiss.IndexFlatL2(d)
-    index     = faiss.IndexIVFPQ(quantizer, d, nlist, m, nbits)
-    xt_pq     = xb if len(xb) <= 500_000 else xb[
-        np.random.default_rng(42).choice(len(xb), 500_000, replace=False)
-    ]
-    index.train(xt_pq)
-    index.add(xb)
-    t_build = time.perf_counter() - t0
-    print(f"  Build done in {fmt_time(t_build)}\n")
+    index     = faiss.IndexIVFFlat(quantizer, d, nlist)
 
-    index.search(xq[:1], k)   # warm-up
+    ivf_path = (index_path.replace(".idx", "") + f"_ivfflat_nlist{nlist}.idx"
+                if index_path else "")
 
-    for nprobe in nprobe_values:
+    if ivf_path and os.path.exists(ivf_path):
+        print(f"  Loading IVFFlat index from {ivf_path} …")
+        index = faiss.read_index(ivf_path)
+    else:
+        print(f"  Training IVFFlat (nlist={nlist}) on {len(xt):,} vectors …")
+        index.train(xt)
+        print(f"  Adding {nb:,} vectors …")
+        add_batched(index, xb, verbose=True)
+        if ivf_path:
+            faiss.write_index(index, ivf_path)
+
+    nq = xq.shape[0]
+    for nprobe in IVF_NPROBE_SWEEP:
         if nprobe > nlist:
-            continue
+            break
         index.nprobe = nprobe
+        for _ in range(3):  # warm-up (3 batches for stable cache)
+            index.search(xq[:min(5, len(xq))], k)
         t0 = time.perf_counter()
         _, I = index.search(xq, k)
-        t    = time.perf_counter() - t0
-        ms_q = t / nq * 1000
-        qps  = nq / t
-        r1   = recall_at_k(I, gt, 1)
-        r10  = recall_at_k(I, gt, min(10, k))
-        print(f"{nprobe:>7}  {ms_q:>7.3f}  {qps:>7.0f}  {r1:>6.4f}  {r10:>6.4f}")
+        t_s = time.perf_counter() - t0
+        r1  = recall_at_k(I, gt, 1)
+        r10 = recall_at_k(I, gt, min(10, k))
+        print(f"{nprobe:>7}  {t_s/nq*1000:>7.3f}  {nq/t_s:>7.0f}  "
+              f"{r1:>6.4f}  {r10:>6.4f}")
 
 
 # ---------------------------------------------------------------------------
-# OPQ + IVFPQ sweep
+# IVFPQ benchmark
 # ---------------------------------------------------------------------------
 
-def run_opqpq_sweep(xb: np.ndarray, xq: np.ndarray, gt: np.ndarray,
-                    k: int = 10, nlist: int = 4096,
-                    m: int = 16, nbits: int = 8) -> None:
-    """
-    OPQ pre-rotation + IVFPQ nprobe sweep.
-    OPQ rotates the space to equalise variance across PQ sub-spaces.
-    Built via faiss.index_factory: "OPQ{m},IVF{nlist},PQ{m}x{nbits}".
-    """
-    factory_str = f"OPQ{m},IVF{nlist},PQ{m}x{nbits}"
-    print_header(
-        f"OPQ+IVFPQ nprobe sweep  (factory='{factory_str}', SIFT10M, "
-        f"d={xb.shape[1]})"
+def run_ivfpq_benchmark(
+    xb: np.ndarray,
+    xq: np.ndarray,
+    xt: np.ndarray,
+    gt: np.ndarray,
+    *,
+    nlist: int      = 4096,
+    nprobe: int     = 64,
+    pq_m: int       = 16,
+    pq_nbits: int   = 8,
+    k: int          = 10,
+    index_path: str = "",
+    verbose: bool   = True,
+) -> dict:
+    """Build IndexIVFPQ (or load from index_path), search xq, return metrics dict."""
+    nb, d = xb.shape
+    nq    = xq.shape[0]
+
+    if d % pq_m != 0:
+        raise ValueError(f"pq_m={pq_m} must divide d={d}")
+
+    quantizer = faiss.IndexFlatL2(d)
+    index     = faiss.IndexIVFPQ(quantizer, d, nlist, pq_m, pq_nbits)
+
+    ivfpq_path = (index_path.replace(".idx", "") + f"_ivfpq_nlist{nlist}_m{pq_m}_b{pq_nbits}.idx"
+                  if index_path else "")
+
+    if ivfpq_path and os.path.exists(ivfpq_path):
+        if verbose:
+            print(f"  Loading IVFPQ index from {ivfpq_path} …")
+        t0 = time.perf_counter()
+        index = faiss.read_index(ivfpq_path)
+        t_load = time.perf_counter() - t0
+        t_train = t_add = 0.0
+        if verbose:
+            print(f"  Loaded in {fmt_time(t_load)}")
+    else:
+        if verbose:
+            print(f"  Training IVFPQ (nlist={nlist}, m={pq_m}, nbits={pq_nbits}) "
+                  f"on {len(xt):,} vectors …")
+        t0 = time.perf_counter()
+        index.train(xt)
+        t_train = time.perf_counter() - t0
+        if verbose:
+            print(f"  Training done in {fmt_time(t_train)}")
+
+        if verbose:
+            print(f"  Adding {nb:,} vectors …")
+        t_add = add_batched(index, xb, verbose=verbose)
+        if verbose:
+            print(f"  Add done in {fmt_time(t_add)}")
+
+        if ivfpq_path:
+            if verbose:
+                print(f"  Saving IVFPQ index to {ivfpq_path} …")
+            faiss.write_index(index, ivfpq_path)
+
+    size_mb = _index_size_mb(index)
+    index.nprobe = nprobe
+    for _ in range(3):  # warm-up (3 batches for stable cache)
+            index.search(xq[:min(5, len(xq))], k)
+
+    if verbose:
+        print(f"  Searching {nq:,} queries (k={k}, nprobe={nprobe}) …")
+    t0 = time.perf_counter()
+    D, I = index.search(xq, k)
+    t_search = time.perf_counter() - t0
+    ms_per_q = t_search / nq * 1000.0
+    qps      = nq / t_search
+
+    r1  = recall_at_k(I, gt, 1)
+    r10 = recall_at_k(I, gt, min(10, k))
+
+    if verbose:
+        print(f"\n  Results:")
+        print(f"    ntotal          = {index.ntotal:,}")
+        print(f"    nlist           = {nlist}")
+        print(f"    nprobe          = {nprobe}")
+        print(f"    pq_m            = {pq_m}  (code_size={pq_m * pq_nbits}b = {pq_m * pq_nbits // 8}B/vec)")
+        print(f"    pq_nbits        = {pq_nbits}")
+        print(f"    train time      = {fmt_time(t_train)}")
+        print(f"    add time        = {fmt_time(t_add)}")
+        print(f"    build time      = {fmt_time(t_train + t_add)}")
+        print(f"    index size      = {size_mb:.1f} MiB")
+        print(f"    search time     = {t_search*1000:.1f}ms total")
+        print(f"    ms / query      = {ms_per_q:.3f}")
+        print(f"    QPS             = {qps:.0f}")
+        print(f"    Recall@1        = {r1:.4f}")
+        print(f"    Recall@10       = {r10:.4f}")
+
+    return dict(
+        nlist=nlist, nprobe=nprobe, pq_m=pq_m, pq_nbits=pq_nbits,
+        t_train=t_train, t_add=t_add, t_build=t_train + t_add,
+        index_size_mb=size_mb, t_search_ms=t_search * 1000,
+        ms_per_query=ms_per_q, qps=qps, recall_at_1=r1, recall_at_10=r10,
     )
-    nprobe_values = [1, 4, 16, 64, 128, 256, 512, 1024]
 
+
+def run_ivfpq_nprobe_sweep(
+    xb: np.ndarray,
+    xq: np.ndarray,
+    xt: np.ndarray,
+    gt: np.ndarray,
+    *,
+    nlist: int       = 4096,
+    pq_m: int        = 16,
+    pq_nbits: int    = 8,
+    k: int           = 10,
+    index_path: str  = "",
+    dataset_tag: str = "",
+) -> None:
+    """Build IVFPQ once, sweep nprobe to show the recall/QPS trade-off."""
+    tag = f", {dataset_tag}" if dataset_tag else ""
+    print_header(f"IVFPQ nprobe sweep  (nlist={nlist}, m={pq_m}, nbits={pq_nbits}{tag})")
     header = f"{'nprobe':>7}  {'ms/q':>7}  {'QPS':>7}  {'R@1':>6}  {'R@10':>6}"
     print(header)
     print("-" * len(header))
 
-    d  = xb.shape[1]
+    nb, d = xb.shape
+    if d % pq_m != 0:
+        raise ValueError(f"pq_m={pq_m} must divide d={d}")
+
+    quantizer = faiss.IndexFlatL2(d)
+    index     = faiss.IndexIVFPQ(quantizer, d, nlist, pq_m, pq_nbits)
+
+    ivfpq_path = (index_path.replace(".idx", "") + f"_ivfpq_nlist{nlist}_m{pq_m}_b{pq_nbits}.idx"
+                  if index_path else "")
+
+    if ivfpq_path and os.path.exists(ivfpq_path):
+        print(f"  Loading IVFPQ index from {ivfpq_path} …")
+        index = faiss.read_index(ivfpq_path)
+    else:
+        print(f"  Training IVFPQ (nlist={nlist}, m={pq_m}, nbits={pq_nbits}) "
+              f"on {len(xt):,} vectors …")
+        index.train(xt)
+        print(f"  Adding {nb:,} vectors …")
+        add_batched(index, xb, verbose=True)
+        if ivfpq_path:
+            faiss.write_index(index, ivfpq_path)
+
     nq = xq.shape[0]
+    for nprobe in IVF_NPROBE_SWEEP:
+        if nprobe > nlist:
+            break
+        index.nprobe = nprobe
+        for _ in range(3):  # warm-up (3 batches for stable cache)
+            index.search(xq[:min(5, len(xq))], k)
+        t0 = time.perf_counter()
+        _, I = index.search(xq, k)
+        t_s = time.perf_counter() - t0
+        r1  = recall_at_k(I, gt, 1)
+        r10 = recall_at_k(I, gt, min(10, k))
+        print(f"{nprobe:>7}  {t_s/nq*1000:>7.3f}  {nq/t_s:>7.0f}  "
+              f"{r1:>6.4f}  {r10:>6.4f}")
 
-    print(f"  Building OPQ+IVFPQ index via index_factory('{factory_str}') …",
-          flush=True)
-    t0      = time.perf_counter()
-    index   = faiss.index_factory(d, factory_str)
-    xt_opq  = xb if len(xb) <= 500_000 else xb[
-        np.random.default_rng(42).choice(len(xb), 500_000, replace=False)
-    ]
-    index.train(xt_opq)
-    index.add(xb)
-    t_build = time.perf_counter() - t0
-    print(f"  Build done in {fmt_time(t_build)}\n")
 
-    index.search(xq[:1], k)   # warm-up
+# ---------------------------------------------------------------------------
+# OPQ + IVFPQ benchmark functions
+# ---------------------------------------------------------------------------
+
+def run_opqpq_benchmark(
+    xb: np.ndarray,
+    xq: np.ndarray,
+    xt: np.ndarray,
+    gt: np.ndarray,
+    *,
+    nlist: int       = 4096,
+    pq_m: int        = 16,
+    pq_nbits: int    = 8,
+    nprobe: int      = 32,
+    opq_niter: int   = 25,
+    k: int           = 10,
+    index_path: str  = "",
+    verbose: bool    = True,
+    dataset_tag: str = "",
+) -> dict:
+    """OPQ pre-rotation + IVFPQ: reduces IVFPQ's recall ceiling."""
+    tag = f", {dataset_tag}" if dataset_tag else ""
+    if verbose:
+        print_header(f"OPQ+IVFPQ benchmark  "
+                     f"(nlist={nlist}, m={pq_m}, nbits={pq_nbits}, "
+                     f"nprobe={nprobe}{tag})")
+
+    nb, d = xb.shape
+    nq    = xq.shape[0]
+    if d % pq_m != 0:
+        raise ValueError(f"pq_m={pq_m} must divide d={d}")
+
+    opqpq_path = (index_path.replace(".idx", "")
+                  + f"_opqpq_nlist{nlist}_m{pq_m}_b{pq_nbits}.idx"
+                  if index_path else "")
+
+    if opqpq_path and os.path.exists(opqpq_path):
+        if verbose:
+            print(f"  Loading OPQ+IVFPQ index from {opqpq_path} …")
+        index = faiss.read_index(opqpq_path)
+        t_train, t_add = 0.0, 0.0
+    else:
+        opq       = faiss.OPQMatrix(d, pq_m)
+        opq.niter = opq_niter
+        quantizer = faiss.IndexFlatL2(d)
+        sub       = faiss.IndexIVFPQ(quantizer, d, nlist, pq_m, pq_nbits)
+        index     = faiss.IndexPreTransform(opq, sub)
+        index.verbose = False
+        if verbose:
+            print(f"  Training OPQ+IVFPQ "
+                  f"(nlist={nlist}, m={pq_m}, nbits={pq_nbits}, "
+                  f"opq_niter={opq_niter}) on {len(xt):,} vectors …")
+        t0 = time.perf_counter()
+        index.train(xt)
+        t_train = time.perf_counter() - t0
+        if verbose:
+            print(f"  Train done in {fmt_time(t_train)}")
+            print(f"  Adding {nb:,} vectors …")
+        t_add = add_batched(index, xb, verbose=verbose)
+        if verbose:
+            print(f"  Add done in {fmt_time(t_add)}")
+        if opqpq_path:
+            if verbose:
+                print(f"  Saving OPQ+IVFPQ index to {opqpq_path} …")
+            faiss.write_index(index, opqpq_path)
+
+    size_mb = _index_size_mb(index)
+    ivf     = faiss.extract_index_ivf(index)
+    ivf.nprobe = nprobe
+    for _ in range(3):  # warm-up (3 batches for stable cache)
+            index.search(xq[:min(5, len(xq))], k)
+
+    if verbose:
+        print(f"  Searching {nq:,} queries (k={k}, nprobe={nprobe}) …")
+    t0 = time.perf_counter()
+    D, I = index.search(xq, k)
+    t_search = time.perf_counter() - t0
+    ms_per_q = t_search / nq * 1000.0
+    qps      = nq / t_search
+
+    r1  = recall_at_k(I, gt, 1)
+    r10 = recall_at_k(I, gt, min(10, k))
+
+    if verbose:
+        print(f"\n  Results:")
+        print(f"    ntotal          = {index.ntotal:,}")
+        print(f"    nlist           = {nlist}")
+        print(f"    nprobe          = {nprobe}")
+        print(f"    pq_m            = {pq_m}  (code_size={pq_m * pq_nbits}b = {pq_m * pq_nbits // 8}B/vec)")
+        print(f"    pq_nbits        = {pq_nbits}")
+        print(f"    opq_niter       = {opq_niter}")
+        print(f"    train time      = {fmt_time(t_train)}")
+        print(f"    add time        = {fmt_time(t_add)}")
+        print(f"    build time      = {fmt_time(t_train + t_add)}")
+        print(f"    index size      = {size_mb:.1f} MiB")
+        print(f"    search time     = {t_search*1000:.1f}ms total")
+        print(f"    ms / query      = {ms_per_q:.3f}")
+        print(f"    QPS             = {qps:.0f}")
+        print(f"    Recall@1        = {r1:.4f}")
+        print(f"    Recall@10       = {r10:.4f}")
+
+    return dict(
+        nlist=nlist, nprobe=nprobe, pq_m=pq_m, pq_nbits=pq_nbits,
+        opq_niter=opq_niter,
+        t_train=t_train, t_add=t_add, t_build=t_train + t_add,
+        index_size_mb=size_mb, t_search_ms=t_search * 1000,
+        ms_per_query=ms_per_q, qps=qps, recall_at_1=r1, recall_at_10=r10,
+    )
+
+
+def run_opqpq_nprobe_sweep(
+    xb: np.ndarray,
+    xq: np.ndarray,
+    xt: np.ndarray,
+    gt: np.ndarray,
+    *,
+    nlist: int       = 4096,
+    pq_m: int        = 16,
+    pq_nbits: int    = 8,
+    opq_niter: int   = 25,
+    k: int           = 10,
+    index_path: str  = "",
+    dataset_tag: str = "",
+) -> None:
+    """Build OPQ+IVFPQ once, sweep nprobe to show the recall/QPS trade-off."""
+    tag = f", {dataset_tag}" if dataset_tag else ""
+    print_header(f"OPQ+IVFPQ nprobe sweep  "
+                 f"(nlist={nlist}, m={pq_m}, nbits={pq_nbits}{tag})")
+    header = f"{'nprobe':>7}  {'ms/q':>7}  {'QPS':>7}  {'R@1':>6}  {'R@10':>6}"
+    print(header)
+    print("-" * len(header))
+
+    nb, d = xb.shape
+    if d % pq_m != 0:
+        raise ValueError(f"pq_m={pq_m} must divide d={d}")
+
+    opqpq_path = (index_path.replace(".idx", "")
+                  + f"_opqpq_nlist{nlist}_m{pq_m}_b{pq_nbits}.idx"
+                  if index_path else "")
+
+    if opqpq_path and os.path.exists(opqpq_path):
+        print(f"  Loading OPQ+IVFPQ index from {opqpq_path} …")
+        index = faiss.read_index(opqpq_path)
+    else:
+        opq       = faiss.OPQMatrix(d, pq_m)
+        opq.niter = opq_niter
+        quantizer = faiss.IndexFlatL2(d)
+        sub       = faiss.IndexIVFPQ(quantizer, d, nlist, pq_m, pq_nbits)
+        index     = faiss.IndexPreTransform(opq, sub)
+        index.verbose = False
+        print(f"  Training OPQ+IVFPQ (nlist={nlist}, m={pq_m}, nbits={pq_nbits}, "
+              f"opq_niter={opq_niter}) on {len(xt):,} vectors …")
+        index.train(xt)
+        print(f"  Adding {nb:,} vectors …")
+        add_batched(index, xb, verbose=True)
+        if opqpq_path:
+            faiss.write_index(index, opqpq_path)
 
     ivf = faiss.extract_index_ivf(index)
-    for nprobe in nprobe_values:
+    nq  = xq.shape[0]
+    for nprobe in IVF_NPROBE_SWEEP:
         if nprobe > nlist:
-            continue
+            break
         ivf.nprobe = nprobe
+        for _ in range(3):  # warm-up (3 batches for stable cache)
+            index.search(xq[:min(5, len(xq))], k)
         t0 = time.perf_counter()
         _, I = index.search(xq, k)
-        t    = time.perf_counter() - t0
-        ms_q = t / nq * 1000
-        qps  = nq / t
-        r1   = recall_at_k(I, gt, 1)
-        r10  = recall_at_k(I, gt, min(10, k))
-        print(f"{nprobe:>7}  {ms_q:>7.3f}  {qps:>7.0f}  {r1:>6.4f}  {r10:>6.4f}")
+        t_s = time.perf_counter() - t0
+        r1  = recall_at_k(I, gt, 1)
+        r10 = recall_at_k(I, gt, min(10, k))
+        print(f"{nprobe:>7}  {t_s/nq*1000:>7.3f}  {nq/t_s:>7.0f}  "
+              f"{r1:>6.4f}  {r10:>6.4f}")
 
 
 # ---------------------------------------------------------------------------
@@ -598,7 +1090,7 @@ def parse_args():
     )
     p.add_argument(
         "--mat-path",
-        default="/Users/dhm/Documents/data/SIFT10M/SIFT10Mfeatures.mat",
+        default="data/SIFT10M/SIFT10Mfeatures.mat",
         help="Path to SIFT10Mfeatures.mat (HDF5 v7.3, key 'fea', "
              "shape (11164866, 128), uint8).",
     )
@@ -631,19 +1123,22 @@ def parse_args():
     # ---- SuCo parameters ----
     p.add_argument(
         "--nsubspaces", type=int, default=8,
-        help="Number of subspaces Ns (d/Ns must be even; valid: 1,2,4,8,16,32,64).",
+        help=(
+            "Number of subspaces. Must divide 128 and 128/nsubspaces must be even. "
+            "Default 8 gives half_dim=8. Other valid choices: 4(hd=16), 16(hd=4)."
+        ),
     )
     p.add_argument(
         "--ncentroids-half", type=int, default=50,
-        help="K-means centroids per half-subspace (√K).",
+        help="K-means centroids per half-subspace (sqrt(K)).",
     )
     p.add_argument(
         "--collision-ratio", type=float, default=0.05,
-        help="α: fraction of dataset retrieved per subspace.",
+        help="alpha: fraction of dataset retrieved per subspace.",
     )
     p.add_argument(
         "--candidate-ratio", type=float, default=0.005,
-        help="β: fraction of dataset in the re-rank pool.",
+        help="beta: fraction of dataset in the re-rank pool.",
     )
     p.add_argument(
         "--niter", type=int, default=10,
@@ -651,43 +1146,79 @@ def parse_args():
     )
     p.add_argument(
         "--index-path", default="",
-        help="Save/load the pre-built SuCo index here.",
+        help="Save/load the SuCo index at this path.",
     )
-    # ---- which sections to run ----
-    p.add_argument("--sweep",         action="store_true",
-                   help="Run parameter sweep over (Ns, nc, α, β).")
-    p.add_argument("--flat-baseline", action="store_true",
-                   help="Run brute-force FlatL2 as upper-bound baseline.")
-    p.add_argument("--hnsw-sweep",    action="store_true",
-                   help="Run HNSW efSearch sweep.")
-    p.add_argument("--ivfflat-sweep", action="store_true",
-                   help="Run IVFFlat nprobe sweep.")
-    p.add_argument("--ivfpq-sweep",   action="store_true",
-                   help="Run IVFPQ nprobe sweep.")
-    p.add_argument("--opqpq-sweep",   action="store_true",
-                   help="Run OPQ+IVFPQ nprobe sweep.")
-    # ---- HNSW / IVF tuning knobs ----
-    p.add_argument("--hnsw-m",               type=int,   default=32,
-                   help="HNSW M parameter.")
-    p.add_argument("--hnsw-ef-construction", type=int,   default=200,
-                   help="HNSW efConstruction parameter.")
-    p.add_argument("--ivfflat-nlist",        type=int,   default=4096,
-                   help="IVFFlat number of centroids.")
-    p.add_argument("--pq-nlist",             type=int,   default=4096,
-                   help="nlist for IVFPQ and OPQ+IVFPQ indexes.")
-    p.add_argument("--pq-m",                 type=int,   default=16,
-                   help="Number of PQ sub-quantisers "
-                        "(must divide d=128; valid: 2,4,8,16,32,64,128).")
-    p.add_argument("--pq-nbits",             type=int,   default=8,
-                   help="Bits per PQ code (typically 8).")
-    # ---- logging ----
     p.add_argument(
-        "--log-dir", default="",
-        help="Directory for the timestamped log file.  "
-             "Defaults to  <repo_root>/logs/  (auto-detected from script path).",
+        "--sweep", action="store_true",
+        help="Sweep nsubspaces, collision_ratio, and ncentroids_half.",
     )
-    p.add_argument("--no-log", action="store_true",
-                   help="Disable log file; print to stdout only.")
+    p.add_argument(
+        "--flat-baseline", action="store_true",
+        help="Run brute-force IndexFlatL2 as an upper-bound baseline.",
+    )
+    # ---- HNSW options ----
+    p.add_argument(
+        "--hnsw", action="store_true",
+        help="Run a single IndexHNSWFlat configuration.",
+    )
+    p.add_argument(
+        "--hnsw-sweep", action="store_true",
+        help="Build HNSW once, then sweep efSearch.",
+    )
+    p.add_argument("--hnsw-M", type=int, default=32)
+    p.add_argument("--hnsw-ef-construction", type=int, default=200)
+    p.add_argument("--hnsw-ef-search", type=int, default=128)
+    # ---- IVFFlat options ----
+    p.add_argument(
+        "--ivfflat", action="store_true",
+        help="Run a single IndexIVFFlat configuration.",
+    )
+    p.add_argument(
+        "--ivfflat-sweep", action="store_true",
+        help="Build IVFFlat once, then sweep nprobe to show recall/QPS trade-off.",
+    )
+    # ---- IVFPQ options ----
+    p.add_argument(
+        "--ivfpq", action="store_true",
+        help="Run a single IndexIVFPQ configuration.",
+    )
+    p.add_argument(
+        "--ivfpq-sweep", action="store_true",
+        help="Build IVFPQ once, then sweep nprobe to show recall/QPS trade-off.",
+    )
+    # ---- OPQ+IVFPQ options ----
+    p.add_argument(
+        "--opqpq", action="store_true",
+        help="Run a single OPQ+IVFPQ configuration.",
+    )
+    p.add_argument(
+        "--opqpq-sweep", action="store_true",
+        help="Build OPQ+IVFPQ once, then sweep nprobe to show recall/QPS trade-off.",
+    )
+    p.add_argument(
+        "--opq-niter", type=int, default=25,
+        help="Number of OPQMatrix training iterations.",
+    )
+    # ---- shared IVF parameters ----
+    p.add_argument(
+        "--nlist", type=int, default=4096,
+        help="Number of IVF Voronoi cells.",
+    )
+    p.add_argument(
+        "--nprobe", type=int, default=64,
+        help="Number of IVF cells to probe at query time.",
+    )
+    p.add_argument(
+        "--pq-m", type=int, default=16,
+        help=(
+            "Number of IVFPQ sub-quantizers (must divide d=128). "
+            "Valid choices: 2, 4, 8, 16, 32, 64, 128."
+        ),
+    )
+    p.add_argument(
+        "--pq-nbits", type=int, default=8,
+        help="Bits per IVFPQ code per sub-quantizer (typically 8).",
+    )
     return p.parse_args()
 
 
@@ -698,18 +1229,13 @@ def parse_args():
 def main():
     args = parse_args()
 
-    # ------------------------------------------------------------------
-    # Set up logging
-    # ------------------------------------------------------------------
-    if not args.no_log:
-        if args.log_dir:
-            log_dir = args.log_dir
-        else:
-            # <repo_root>/logs/  — two levels above this file
-            repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            log_dir   = os.path.join(repo_root, "logs")
-        logpath = _setup_log(log_dir)
-        print(f"Log: {logpath}\n")
+    d = 128
+    if d % args.nsubspaces != 0 or (d // args.nsubspaces) % 2 != 0:
+        sys.exit(
+            f"Error: nsubspaces={args.nsubspaces} is invalid for d={d}.\n"
+            f"  Require: {d} % nsubspaces == 0  AND  ({d} // nsubspaces) % 2 == 0.\n"
+            f"  Valid choices: 4, 8, 16, 32."
+        )
 
     # ------------------------------------------------------------------
     # Load dataset
@@ -718,11 +1244,15 @@ def main():
     xb, xq = load_sift10m(args.mat_path, nb=args.nb, nq=args.nq)
     nq = xq.shape[0]
 
+    print(f"  d         : {d}")
+    print(f"  nb (base) : {xb.shape[0]:,}")
+    print(f"  nq        : {nq:,}")
+    print(f"  maxtrain  : {args.maxtrain:,}")
+    print(f"  OMP threads: {faiss.omp_get_max_threads()}")
+
     # ------------------------------------------------------------------
     # Ground truth
     # ------------------------------------------------------------------
-    gt = None
-
     if args.gt_path and os.path.exists(args.gt_path):
         print(f"  Loading precomputed GT from {args.gt_path} …",
               end=" ", flush=True)
@@ -761,10 +1291,9 @@ def main():
     # ------------------------------------------------------------------
     # Main SuCo benchmark
     # ------------------------------------------------------------------
-    d  = xb.shape[1]
-    hd = d // (2 * args.nsubspaces)
+    half_dim = d // args.nsubspaces // 2
     print_header(f"IndexSuCo benchmark  (SIFT10M, d={d})")
-    print(f"  nsubspaces      = {args.nsubspaces}  (half_dim = {hd})")
+    print(f"  nsubspaces      = {args.nsubspaces}  (half_dim={half_dim})")
     print(f"  ncentroids_half = {args.ncentroids_half}")
     print(f"  collision_ratio = {args.collision_ratio}")
     print(f"  candidate_ratio = {args.candidate_ratio}")
@@ -790,44 +1319,136 @@ def main():
         run_sweep(xb, xq, xt, gt, k=args.k)
 
     # ------------------------------------------------------------------
-    # Optional HNSW sweep
+    # HNSW single-configuration
+    # ------------------------------------------------------------------
+    if args.hnsw:
+        print_header(f"IndexHNSWFlat benchmark  (SIFT10M, d={d})")
+        print(f"  M               = {args.hnsw_M}")
+        print(f"  efConstruction  = {args.hnsw_ef_construction}")
+        print(f"  efSearch        = {args.hnsw_ef_search}")
+        print(f"  k               = {args.k}")
+        run_hnsw_benchmark(
+            xb, xq, gt,
+            M=args.hnsw_M,
+            ef_construction=args.hnsw_ef_construction,
+            ef_search=args.hnsw_ef_search,
+            k=args.k,
+            index_path=args.index_path,
+            verbose=True,
+        )
+
+    # ------------------------------------------------------------------
+    # HNSW efSearch sweep
     # ------------------------------------------------------------------
     if args.hnsw_sweep:
-        run_hnsw_sweep(
+        run_hnsw_ef_sweep(
             xb, xq, gt,
-            k=args.k,
-            M=args.hnsw_m,
+            M=args.hnsw_M,
             ef_construction=args.hnsw_ef_construction,
+            k=args.k,
+            index_path=args.index_path,
         )
 
     # ------------------------------------------------------------------
-    # Optional IVFFlat sweep
+    # IVFFlat single-configuration benchmark
+    # ------------------------------------------------------------------
+    if args.ivfflat:
+        print_header(f"IndexIVFFlat benchmark  (SIFT10M, d={d})")
+        print(f"  nlist           = {args.nlist}")
+        print(f"  nprobe          = {args.nprobe}")
+        print(f"  k               = {args.k}")
+        run_ivfflat_benchmark(
+            xb, xq, xt, gt,
+            nlist=args.nlist,
+            nprobe=args.nprobe,
+            k=args.k,
+            index_path=args.index_path,
+            verbose=True,
+        )
+
+    # ------------------------------------------------------------------
+    # IVFFlat nprobe sweep  (recall vs QPS trade-off curve)
     # ------------------------------------------------------------------
     if args.ivfflat_sweep:
-        run_ivfflat_sweep(xb, xq, gt, k=args.k, nlist=args.ivfflat_nlist)
-
-    # ------------------------------------------------------------------
-    # Optional IVFPQ sweep
-    # ------------------------------------------------------------------
-    if args.ivfpq_sweep:
-        run_ivfpq_sweep(
-            xb, xq, gt,
+        run_ivfflat_nprobe_sweep(
+            xb, xq, xt, gt,
+            nlist=args.nlist,
             k=args.k,
-            nlist=args.pq_nlist,
-            m=args.pq_m,
-            nbits=args.pq_nbits,
+            index_path=args.index_path,
+            dataset_tag="SIFT10M, d=128",
         )
 
     # ------------------------------------------------------------------
-    # Optional OPQ+IVFPQ sweep
+    # IVFPQ single-configuration benchmark
+    # ------------------------------------------------------------------
+    if args.ivfpq:
+        print_header(f"IndexIVFPQ benchmark  (SIFT10M, d={d})")
+        print(f"  nlist           = {args.nlist}")
+        print(f"  nprobe          = {args.nprobe}")
+        print(f"  pq_m            = {args.pq_m}")
+        print(f"  pq_nbits        = {args.pq_nbits}")
+        print(f"  k               = {args.k}")
+        run_ivfpq_benchmark(
+            xb, xq, xt, gt,
+            nlist=args.nlist,
+            nprobe=args.nprobe,
+            pq_m=args.pq_m,
+            pq_nbits=args.pq_nbits,
+            k=args.k,
+            index_path=args.index_path,
+            verbose=True,
+        )
+
+    # ------------------------------------------------------------------
+    # IVFPQ nprobe sweep  (recall vs QPS trade-off curve)
+    # ------------------------------------------------------------------
+    if args.ivfpq_sweep:
+        run_ivfpq_nprobe_sweep(
+            xb, xq, xt, gt,
+            nlist=args.nlist,
+            pq_m=args.pq_m,
+            pq_nbits=args.pq_nbits,
+            k=args.k,
+            index_path=args.index_path,
+            dataset_tag="SIFT10M, d=128",
+        )
+
+    # ------------------------------------------------------------------
+    # OPQ+IVFPQ single-configuration benchmark
+    # ------------------------------------------------------------------
+    if args.opqpq:
+        print_header(f"OPQ+IVFPQ benchmark  (SIFT10M, d={d})")
+        print(f"  nlist           = {args.nlist}")
+        print(f"  nprobe          = {args.nprobe}")
+        print(f"  pq_m            = {args.pq_m}")
+        print(f"  pq_nbits        = {args.pq_nbits}")
+        print(f"  opq_niter       = {args.opq_niter}")
+        print(f"  k               = {args.k}")
+        run_opqpq_benchmark(
+            xb, xq, xt, gt,
+            nlist=args.nlist,
+            nprobe=args.nprobe,
+            pq_m=args.pq_m,
+            pq_nbits=args.pq_nbits,
+            opq_niter=args.opq_niter,
+            k=args.k,
+            index_path=args.index_path,
+            verbose=True,
+        )
+
+    # ------------------------------------------------------------------
+    # OPQ+IVFPQ nprobe sweep  (recall vs QPS trade-off curve)
     # ------------------------------------------------------------------
     if args.opqpq_sweep:
-        run_opqpq_sweep(
-            xb, xq, gt,
+        run_opqpq_nprobe_sweep(
+            xb, xq, xt, gt,
+            nlist=args.nlist,
+            pq_m=args.pq_m,
+            pq_nbits=args.pq_nbits,
+            opq_niter=args.opq_niter,
             k=args.k,
-            nlist=args.pq_nlist,
-            m=args.pq_m,
-            nbits=args.pq_nbits,
+            index_path=args.index_path,
+            dataset_tag="SIFT10M, d=128",
         )
 
 

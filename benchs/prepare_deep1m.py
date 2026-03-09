@@ -164,7 +164,7 @@ def main() -> None:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     p.add_argument(
-        "--data-dir", default="/home/dhm/data/",
+        "--data-dir", default="/Users/dhm/Documents/data/",
         help="Root directory containing the deep1b/ sub-folder.",
     )
     p.add_argument(

@@ -74,6 +74,31 @@ def recall_at_k_topR(I: np.ndarray, gt: np.ndarray, k: int, r: int) -> float:
     return hits / (nq * r)
 
 
+def approx_ratio(
+    xb: np.ndarray,
+    xq: np.ndarray,
+    D: np.ndarray,
+    I: np.ndarray,
+    gt: np.ndarray,
+    k: int,
+) -> float:
+    """
+    Mean distance approximation ratio (paper metric):
+        mean_{q, j in [k]}  L2(q, approx_j) / L2(q, true_j)
+    D[q, j] is the squared L2 returned by FAISS search.
+    """
+    k_use = min(k, D.shape[1], gt.shape[1])
+    nq    = len(xq)
+    approx_l2 = np.sqrt(np.maximum(D[:, :k_use], 0.0)).astype(np.float64)
+    true_l2   = np.zeros((nq, k_use), dtype=np.float64)
+    for j in range(k_use):
+        diff = xq.astype(np.float64) - xb[gt[:, j]].astype(np.float64)
+        true_l2[:, j] = np.sqrt((diff * diff).sum(axis=1))
+    mask   = true_l2 > 0
+    ratios = np.where(mask, approx_l2 / np.where(mask, true_l2, 1.0), 1.0)
+    return float(ratios.mean())
+
+
 def fmt_time(seconds: float) -> str:
     if seconds >= 60:
         return f"{seconds/60:.1f}min"
@@ -158,9 +183,10 @@ def run_benchmark(
             index.write_index(index_path)
 
     # ------------------------------------------------------------------
-    # Warm-up search (1 query; not timed)
+    # Warm-up  (3 × 5-query batches for stable cache state)
     # ------------------------------------------------------------------
-    index.search(xq[:1], k)
+    for _ in range(3):
+        index.search(xq[:min(5, nq)], k)
 
     # ------------------------------------------------------------------
     # Timed search
@@ -176,12 +202,21 @@ def run_benchmark(
     # ------------------------------------------------------------------
     # Recall metrics
     # ------------------------------------------------------------------
-    r1  = recall_at_k(I, gt, 1)
-    r10 = recall_at_k(I, gt, min(10, k))
+    r1     = recall_at_k(I, gt, 1)
+    k_r    = min(10, k, gt.shape[1])
+    r10    = recall_at_k(I, gt, k_r)
+    r10r10 = recall_at_k_topR(I, gt, k_r, k_r)
+    ratio  = approx_ratio(xb, xq, D, I, gt, k_r)
+    r20  = recall_at_k(I, gt, min(20,  k, gt.shape[1])) if min(k, gt.shape[1]) >= 20  else None
+    r30  = recall_at_k(I, gt, min(30,  k, gt.shape[1])) if min(k, gt.shape[1]) >= 30  else None
+    r40  = recall_at_k(I, gt, min(40,  k, gt.shape[1])) if min(k, gt.shape[1]) >= 40  else None
+    r50  = recall_at_k(I, gt, min(50,  k, gt.shape[1])) if min(k, gt.shape[1]) >= 50  else None
+    r100 = recall_at_k(I, gt, min(100, k, gt.shape[1])) if min(k, gt.shape[1]) >= 100 else None
 
     if verbose:
         print(f"\n  Results:")
         print(f"    ntotal          = {index.ntotal:,}")
+        print(f"    OMP threads     = {faiss.omp_get_max_threads()}")
         print(f"    train time      = {fmt_time(t_train)}")
         print(f"    add time        = {fmt_time(t_add)}")
         print(f"    search time     = {t_search*1000:.1f}ms total")
@@ -189,6 +224,13 @@ def run_benchmark(
         print(f"    QPS             = {qps:.0f}")
         print(f"    Recall@1        = {r1:.4f}")
         print(f"    Recall@10       = {r10:.4f}")
+        print(f"    10-Recall@10    = {r10r10:.4f}")
+        print(f"    Dist ratio      = {ratio:.4f}")
+        if r20  is not None: print(f"    Recall@20       = {r20:.4f}")
+        if r30  is not None: print(f"    Recall@30       = {r30:.4f}")
+        if r40  is not None: print(f"    Recall@40       = {r40:.4f}")
+        if r50  is not None: print(f"    Recall@50       = {r50:.4f}")
+        if r100 is not None: print(f"    Recall@100      = {r100:.4f}")
 
     return dict(
         nsubspaces=nsubspaces,
@@ -202,6 +244,13 @@ def run_benchmark(
         qps=qps,
         recall_at_1=r1,
         recall_at_10=r10,
+        recall_10r10=r10r10,
+        dist_ratio=ratio,
+        recall_at_20=r20,
+        recall_at_30=r30,
+        recall_at_40=r40,
+        recall_at_50=r50,
+        recall_at_100=r100,
     )
 
 
@@ -228,27 +277,43 @@ SWEEP_CONFIGS = [
 def run_sweep(xb, xq, xt, gt, k: int = 10) -> None:
     print_header("Parameter Sweep")
     header = (
-        f"{'Ns':>3}  {'nc':>4}  {'alpha':>6}  {'beta':>7}  "
-        f"{'ms/q':>7}  {'QPS':>7}  {'R@1':>6}  {'R@10':>6}"
+        f"{'Ns':>3}  {'hd':>3}  {'nc':>4}  {'alpha':>6}  {'beta':>7}  "
+        f"{'ms/q':>7}  {'QPS':>7}  {'R@1':>6}  {'R@10':>6}  "
+        f"{'10R@10':>8}  {'ratio':>8}"
     )
     print(header)
     print("-" * len(header))
 
+    d  = xb.shape[1]
+    nq = len(xq)
+    cur_ns = cur_nc = None
+    index  = None
+
     for ns, nc, alpha, beta in SWEEP_CONFIGS:
-        r = run_benchmark(
-            xb, xq, xt, gt,
-            nsubspaces=ns,
-            ncentroids_half=nc,
-            collision_ratio=alpha,
-            candidate_ratio=beta,
-            k=k,
-            verbose=False,
-        )
+        if (ns, nc) != (cur_ns, cur_nc):
+            index = faiss.IndexSuCo(d, ns, nc, alpha, beta, 10)
+            index.train(xt)
+            index.add(xb)
+            cur_ns, cur_nc = ns, nc
+
+        index.collision_ratio = alpha
+        index.candidate_ratio = beta
+        for _ in range(3):  # warm-up (3 batches for stable cache)
+            index.search(xq[:min(5, len(xq))], k)
+        t0 = time.perf_counter()
+        D, I = index.search(xq, k)
+        t_s = time.perf_counter() - t0
+        k_r    = min(10, k, gt.shape[1])
+        r1     = recall_at_k(I, gt, 1)
+        r10    = recall_at_k(I, gt, k_r)
+        r10r10 = recall_at_k_topR(I, gt, k_r, k_r)
+        ratio  = approx_ratio(xb, xq, D, I, gt, k_r)
         print(
-            f"{r['nsubspaces']:>3}  {r['ncentroids_half']:>4}  "
-            f"{r['collision_ratio']:>6.3f}  {r['candidate_ratio']:>7.4f}  "
-            f"{r['ms_per_query']:>7.3f}  {r['qps']:>7.0f}  "
-            f"{r['recall_at_1']:>6.4f}  {r['recall_at_10']:>6.4f}"
+            f"{ns:>3}  {d // ns // 2:>3}  {nc:>4}  "
+            f"{alpha:>6.3f}  {beta:>7.4f}  "
+            f"{t_s/nq*1000:>7.3f}  {nq/t_s:>7.0f}  "
+            f"{r1:>6.4f}  {r10:>6.4f}  "
+            f"{r10r10:>8.4f}  {ratio:>8.4f}"
         )
 
 
@@ -350,6 +415,7 @@ def main():
     print(f"  nb (base) : {ds.nb:,}")
     print(f"  nq        : {ds.nq:,}")
     print(f"  maxtrain  : {args.maxtrain:,}")
+    print(f"  OMP threads: {faiss.omp_get_max_threads()}")
 
     print("  Loading queries …", end=" ", flush=True)
     xq = ds.get_queries()                              # (10000, 96)
