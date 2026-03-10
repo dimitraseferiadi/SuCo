@@ -1,0 +1,30 @@
+Log: /Users/dhm/Documents/SuCo/logs//bench_all_20260309_221629.log
+
+##########################################################################
+##  SuCo Full Benchmark Suite  —  Mon Mar  9 22:16:29 EET 2026
+##########################################################################
+  data-dir     : /Users/dhm/Documents/data/
+  index-dir    : /Users/dhm/Documents/indices/
+  deep-nb      : 1000000
+  sift10m-mat  : /Users/dhm/Documents/SuCo/data/SIFT10M/SIFT10Mfeatures.mat
+  spacev10m-dir: /Users/dhm/Documents/data/spacev10m/
+
+##########################################################################
+##  SpaceV10M  (d=100, nb=10M)
+##########################################################################
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_spacev10m.py --data-dir /Users/dhm/Documents/data/spacev10m/ --gt-path /Users/dhm/Documents/indices//spacev10m_gt.npy --index-path /Users/dhm/Documents/indices//spacev10m.idx --sweep
+
+======================================================================
+  Loading SpaceV10M dataset  (d=100, nb=10,000,000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/spacev10m/
+  nb (load) : 10,000,000
+  Loading base vectors … shape=(10000000, 100)  dtype=float32
+  Loading queries … shape=(29316, 100)
+  d         : 100
+  nb (base) : 10,000,000
+  nq        : 29,316
+  maxtrain  : 500,000
+  OMP threads: 10
+  Loading precomputed GT from /Users/dhm/Documents/indices//spacev10m_gt.npy … 
