@@ -384,10 +384,30 @@ void IndexSuCo::search_one(
     // -------------------------------------------------------------------------
     // 2. SC-score selection: find threshold such that >= candidate_num points
     //    are included in the candidate set.
+    //    Uses thread-local histograms to parallelise the O(ntotal) sweep.
     // -------------------------------------------------------------------------
-    std::vector<idx_t> score_hist(nsubspaces + 1, 0);
+    int omp_threads = 1;
+#ifdef _OPENMP
+    omp_threads = omp_get_max_threads();
+#endif
+
+    std::vector<std::vector<idx_t>> local_hist(
+            omp_threads, std::vector<idx_t>(nsubspaces + 1, 0));
+
+#pragma omp parallel for schedule(static)
     for (idx_t i = 0; i < ntotal; ++i) {
-        score_hist[sc_scores[i]]++;
+        int tid = 0;
+#ifdef _OPENMP
+        tid = omp_get_thread_num();
+#endif
+        local_hist[tid][sc_scores[i]]++;
+    }
+
+    std::vector<idx_t> score_hist(nsubspaces + 1, 0);
+    for (int t = 0; t < omp_threads; ++t) {
+        for (int sc = 0; sc <= nsubspaces; ++sc) {
+            score_hist[sc] += local_hist[t][sc];
+        }
     }
 
     int threshold_score = 0;
@@ -401,32 +421,43 @@ void IndexSuCo::search_one(
         }
     }
 
-    std::vector<idx_t> candidates;
-    candidates.reserve(candidate_num + score_hist[threshold_score]);
+    // Candidate gather: thread-local vectors to avoid contention
+    std::vector<std::vector<idx_t>> local_cands(omp_threads);
+
+#pragma omp parallel for schedule(static)
     for (idx_t i = 0; i < ntotal; ++i) {
         if (sc_scores[i] >= static_cast<uint8_t>(threshold_score)) {
-            candidates.push_back(i);
+            int tid = 0;
+#ifdef _OPENMP
+            tid = omp_get_thread_num();
+#endif
+            local_cands[tid].push_back(i);
         }
     }
 
+    std::vector<idx_t> candidates;
+    candidates.reserve(candidate_num + score_hist[threshold_score]);
+    for (int t = 0; t < omp_threads; ++t) {
+        candidates.insert(
+                candidates.end(),
+                local_cands[t].begin(),
+                local_cands[t].end());
+    }
+
     // -------------------------------------------------------------------------
-    // 3. Re-ranking: gather candidates into a contiguous buffer, then compute
-    //    all L2 distances in one vectorised pairwise_L2sqr call.
+    // 3. Re-ranking: compute per-candidate L2 distances in parallel.
     // -------------------------------------------------------------------------
     const idx_t nc = static_cast<idx_t>(candidates.size());
 
-    // Gathering eliminates the random-access cache misses that occur when
-    // computing distances directly against scattered positions in xb.
-    std::vector<float> cand_buf(static_cast<size_t>(nc) * d);
-    for (idx_t j = 0; j < nc; ++j) {
-        std::memcpy(
-                cand_buf.data() + static_cast<size_t>(j) * d,
-                xb.data() + static_cast<size_t>(candidates[j]) * d,
-                d * sizeof(float));
-    }
-
     std::vector<float> cand_dists(nc);
-    pairwise_L2sqr(d, 1, xq, nc, cand_buf.data(), cand_dists.data());
+
+#pragma omp parallel for schedule(static)
+    for (idx_t j = 0; j < nc; ++j) {
+        cand_dists[j] = fvec_L2sqr(
+                xq,
+                xb.data() + static_cast<size_t>(candidates[j]) * d,
+                static_cast<size_t>(d));
+    }
 
     idx_t result_k = std::min(k, nc);
     std::vector<idx_t> order(nc);
@@ -477,27 +508,16 @@ void IndexSuCo::search(
         if (sp->candidate_ratio > 0.0f) cdr = sp->candidate_ratio;
     }
 
-    // Pre-allocate one sc_scores scratch buffer per OpenMP thread to avoid
-    // a per-query heap allocation of O(ntotal) bytes.
-    int nthreads = 1;
-#ifdef _OPENMP
-    nthreads = omp_get_max_threads();
-#endif
-    std::vector<std::vector<uint8_t>> scratch_bufs(
-            nthreads, std::vector<uint8_t>(ntotal, 0));
+    // Single shared scratch buffer – search_one parallelises internally.
+    std::vector<uint8_t> scratch_buf(ntotal, 0);
 
-#pragma omp parallel for if (n > 1) schedule(dynamic, 1)
     for (idx_t i = 0; i < n; ++i) {
-        int tid = 0;
-#ifdef _OPENMP
-        tid = omp_get_thread_num();
-#endif
         search_one(
                 x + i * d,
                 k,
                 distances + i * k,
                 labels    + i * k,
-                scratch_bufs[tid].data(),
+                scratch_buf.data(),
                 cr,
                 cdr);
     }
