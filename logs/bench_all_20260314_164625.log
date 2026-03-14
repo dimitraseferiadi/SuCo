@@ -1,0 +1,496 @@
+Log: /Users/dhm/Documents/SuCo/logs//bench_all_20260314_164625.log
+
+##########################################################################
+##  SuCo Full Benchmark Suite  —  Sat Mar 14 16:46:25 EET 2026
+##########################################################################
+  data-dir     : /Users/dhm/Documents/data/
+  index-dir    : /Users/dhm/Documents/indices/
+  deep-nb      : 1000000
+  sift10m-mat  : /Users/dhm/Documents/SuCo/data/SIFT10M/SIFT10Mfeatures.mat
+  spacev10m-dir: /Users/dhm/Documents/SuCo/data/spacev10m/
+
+##########################################################################
+##  Deep1M  (d=96, nb=1000000)
+##########################################################################
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_deep1b.py --data-dir /Users/dhm/Documents/data/ --nb 1000000 --index-path /Users/dhm/Documents/indices//deep_nb1000000.idx --sweep
+
+======================================================================
+  Loading Deep1M dataset  (nb=1,000,000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  dataset   : Deep1M
+  d         : 96
+  nb (base) : 1,000,000
+  nq        : 10,000
+  maxtrain  : 500,000
+  OMP threads: 10
+  Loading queries … shape=(10000, 96)
+  Loading base into RAM … shape=(1000000, 96)  dtype=float32  (loaded into RAM)
+  Loading train … shape=(500000, 96)
+  Loading ground truth … IndexSuCo::train: d=96  nsubspaces=8  ncentroids_half=50  n=500000
+Sampling a subset of 12800 / 500000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=303.633 imbalance=1.364 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=267.778 imbalance=1.156 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=257.673 imbalance=1.102 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=252.738 imbalance=1.075 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=249.461 imbalance=1.059 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=247.179 imbalance=1.051 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=245.608 imbalance=1.047 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=244.554 imbalance=1.046 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=243.711 imbalance=1.044 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=242.985 imbalance=1.043 nsplit=0       
+  trained subspace 0 half 0
+Sampling a subset of 12800 / 500000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=313.399 imbalance=1.506 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=269.32 imbalance=1.168 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=256.95 imbalance=1.085 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=252.119 imbalance=1.057 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=249.41 imbalance=1.046 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=247.411 imbalance=1.041 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=246.048 imbalance=1.038 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=245.068 imbalance=1.035 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=244.366 imbalance=1.033 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=243.858 imbalance=1.034 nsplit=0       
+  trained subspace 0 half 1
+Sampling a subset of 12800 / 500000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=281.019 imbalance=1.376 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=249.65 imbalance=1.152 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=240.293 imbalance=1.081 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=236.182 imbalance=1.055 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=233.94 imbalance=1.044 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=232.379 imbalance=1.038 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=231.277 imbalance=1.035 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=230.45 imbalance=1.034 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=229.734 imbalance=1.034 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=229.101 imbalance=1.032 nsplit=0       
+  trained subspace 1 half 0
+Sampling a subset of 12800 / 500000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=361.837 imbalance=1.303 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=294.233 imbalance=1.136 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=279.222 imbalance=1.081 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=273.404 imbalance=1.056 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=270.49 imbalance=1.042 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=268.708 imbalance=1.034 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=267.406 imbalance=1.030 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=266.414 imbalance=1.028 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=265.514 imbalance=1.027 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=264.792 imbalance=1.026 nsplit=0       
+  trained subspace 1 half 1
+Sampling a subset of 12800 / 500000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=300.592 imbalance=1.362 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=255.921 imbalance=1.149 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=246.833 imbalance=1.090 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=242.714 imbalance=1.062 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=240.28 imbalance=1.051 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=238.497 imbalance=1.044 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=237.163 imbalance=1.040 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=236.154 imbalance=1.039 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=235.41 imbalance=1.037 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=234.788 imbalance=1.035 nsplit=0       
+  trained subspace 2 half 0
+Sampling a subset of 12800 / 500000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=276.418 imbalance=1.385 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=238.166 imbalance=1.139 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=228.441 imbalance=1.082 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=224.204 imbalance=1.057 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=221.619 imbalance=1.045 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=219.905 imbalance=1.038 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=218.723 imbalance=1.032 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=217.769 imbalance=1.030 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=217.051 imbalance=1.028 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=216.493 imbalance=1.026 nsplit=0       
+  trained subspace 2 half 1
+Sampling a subset of 12800 / 500000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=323.737 imbalance=1.281 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=280.641 imbalance=1.089 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=270.098 imbalance=1.050 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=265.34 imbalance=1.037 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=262.583 imbalance=1.034 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=260.673 imbalance=1.030 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=259.112 imbalance=1.029 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=258.004 imbalance=1.028 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=257.143 imbalance=1.027 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=256.532 imbalance=1.028 nsplit=0       
+  trained subspace 3 half 0
+Sampling a subset of 12800 / 500000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=310.98 imbalance=1.334 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=268.29 imbalance=1.122 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=256.616 imbalance=1.074 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=250.954 imbalance=1.058 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=247.6 imbalance=1.053 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=245.395 imbalance=1.050 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=243.996 imbalance=1.048 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=242.849 imbalance=1.045 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=242.07 imbalance=1.044 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=241.441 imbalance=1.044 nsplit=0       
+  trained subspace 3 half 1
+Sampling a subset of 12800 / 500000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=305.682 imbalance=1.335 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=256.944 imbalance=1.115 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=244.374 imbalance=1.054 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=239.53 imbalance=1.039 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=237.284 imbalance=1.032 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=235.913 imbalance=1.030 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=234.88 imbalance=1.030 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=234.094 imbalance=1.030 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=233.482 imbalance=1.030 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=232.99 imbalance=1.029 nsplit=0       
+  trained subspace 4 half 0
+Sampling a subset of 12800 / 500000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=285.705 imbalance=1.230 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=248.67 imbalance=1.091 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=240.233 imbalance=1.057 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=236.534 imbalance=1.041 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=234.269 imbalance=1.033 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=232.853 imbalance=1.030 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=231.941 imbalance=1.027 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=231.333 imbalance=1.027 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=230.808 imbalance=1.027 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=230.371 imbalance=1.027 nsplit=0       
+  trained subspace 4 half 1
+Sampling a subset of 12800 / 500000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=283.646 imbalance=1.346 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=244 imbalance=1.129 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=234.807 imbalance=1.075 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=230.519 imbalance=1.054 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=227.53 imbalance=1.041 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=225.486 imbalance=1.036 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=224.129 imbalance=1.030 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=223.137 imbalance=1.027 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=222.397 imbalance=1.026 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=221.849 imbalance=1.026 nsplit=0       
+  trained subspace 5 half 0
+Sampling a subset of 12800 / 500000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=273.426 imbalance=1.258 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=243.262 imbalance=1.101 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=236.065 imbalance=1.054 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=232.321 imbalance=1.036 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=230.068 imbalance=1.028 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=228.588 imbalance=1.025 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=227.482 imbalance=1.023 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=226.642 imbalance=1.021 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=225.987 imbalance=1.019 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=225.461 imbalance=1.019 nsplit=0       
+  trained subspace 5 half 1
+Sampling a subset of 12800 / 500000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=274.88 imbalance=1.294 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=243.112 imbalance=1.142 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=233.993 imbalance=1.079 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=229.711 imbalance=1.053 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=227.118 imbalance=1.040 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=225.596 imbalance=1.035 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=224.576 imbalance=1.032 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=223.769 imbalance=1.031 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=223.167 imbalance=1.032 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=222.647 imbalance=1.033 nsplit=0       
+  trained subspace 6 half 0
+Sampling a subset of 12800 / 500000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=291.003 imbalance=1.328 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=248.413 imbalance=1.146 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=238.694 imbalance=1.093 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=234.371 imbalance=1.069 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=232.095 imbalance=1.057 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=230.64 imbalance=1.050 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=229.649 imbalance=1.045 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=228.956 imbalance=1.042 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=228.425 imbalance=1.039 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=227.97 imbalance=1.038 nsplit=0       
+  trained subspace 6 half 1
+Sampling a subset of 12800 / 500000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=286.059 imbalance=1.334 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=252.98 imbalance=1.153 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=242.099 imbalance=1.094 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=236.801 imbalance=1.071 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=233.918 imbalance=1.057 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=232.003 imbalance=1.047 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=230.687 imbalance=1.042 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=229.67 imbalance=1.040 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=228.975 imbalance=1.039 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=228.408 imbalance=1.037 nsplit=0       
+  trained subspace 7 half 0
+Sampling a subset of 12800 / 500000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=317.255 imbalance=1.334 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=262.682 imbalance=1.090 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=252.701 imbalance=1.047 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=248.467 imbalance=1.035 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=246.217 imbalance=1.028 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=244.642 imbalance=1.024 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=243.519 imbalance=1.024 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=242.713 imbalance=1.023 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=241.997 imbalance=1.023 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=241.307 imbalance=1.023 nsplit=0       shape=(10000, 100)
+
+======================================================================
+  IndexSuCo benchmark  (Deep1M, d=96)
+======================================================================
+  nsubspaces      = 8
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Training on 500,000 vectors …
+  Training done in 0.16s
+  Adding 1,000,000 vectors …
+         100,000 / 1,000,000  (10.0%)         200,000 / 1,000,000  (20.0%)         300,000 / 1,000,000  (30.0%)         400,000 / 1,000,000  (40.0%)         500,000 / 1,000,000  (50.0%)         600,000 / 1,000,000  (60.0%)         700,000 / 1,000,000  (70.0%)         800,000 / 1,000,000  (80.0%)         900,000 / 1,000,000  (90.0%)       1,000,000 / 1,000,000  (100.0%)
+  Add done in 0.34s
+  Saving index to /Users/dhm/Documents/indices//deep_nb1000000.idx …
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    OMP threads     = 10
+    train time      = 0.16s
+    add time        = 0.34s
+    build time      = 0.50s
+    index size      = 427.4 MiB
+    search time     = 17407.2ms total
+    ms / query      = 1.741
+    QPS             = 574
+    Recall@1        = 0.9961
+    Recall@10       = 0.9963
+    10-Recall@10    = 0.9873
+    Dist ratio      = 1.0003
+
+======================================================================
+  Parameter Sweep
+======================================================================
+ Ns   hd    nc   alpha     beta     ms/q      QPS     R@1    R@10    10R@10     ratio
+-------------------------------------------------------------------------------------
+  8    6    50   0.020   0.0020    1.417      706  0.9711  0.9713    0.9434    1.0015
+  8    6    50   0.050   0.0050    1.765      567  0.9961  0.9963    0.9873    1.0003
+  8    6    50   0.100   0.0100    2.385      419  0.9993  0.9994    0.9972    1.0000
+  8    6    50   0.200   0.0200    3.532      283  0.9996  0.9998    0.9993    1.0000
+  4   12    50   0.050   0.0050    1.613      620  0.9759  0.9761    0.9562    1.0013
+ 12    4    50   0.050   0.0050    1.977      506  0.9981  0.9983    0.9931    1.0001
+  8    6    25   0.050   0.0050    1.739      575  0.9888  0.9889    0.9708    1.0007
+  8    6   100   0.050   0.0050    2.172      460  0.9981  0.9983    0.9951    1.0001
+
+  trained subspace 7 half 1
+IndexSuCo::add: adding 100000 vectors (current ntotal=0)
+IndexSuCo::add: adding 100000 vectors (current ntotal=100000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=200000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=300000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=400000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=500000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=600000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=700000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=800000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=900000)
+IndexSuCo::write_index: saved to '/Users/dhm/Documents/indices//deep_nb1000000.idx'
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmpxsw6iwzx.idx'
+(done in 188s)
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_deep1b.py --data-dir /Users/dhm/Documents/data/ --nb 1000000 --index-path /Users/dhm/Documents/indices//deep_nb1000000.idx --flat-baseline
+
+======================================================================
+  Loading Deep1M dataset  (nb=1,000,000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  dataset   : Deep1M
+  d         : 96
+  nb (base) : 1,000,000
+  nq        : 10,000
+  maxtrain  : 500,000
+  OMP threads: 10
+  Loading queries … shape=(10000, 96)
+  Loading base into RAM … shape=(1000000, 96)  dtype=float32  (loaded into RAM)
+  Loading train … shape=(500000, 96)
+  Loading ground truth … shape=(10000, 100)
+
+======================================================================
+  Baseline: IndexFlatL2
+======================================================================
+  ms/query  = 0.324
+  QPS       = 3088
+  Recall@1  = 0.9997  (upper bound for SuCo)
+  Recall@10 = 0.9999
+
+======================================================================
+  IndexSuCo benchmark  (Deep1M, d=96)
+======================================================================
+  nsubspaces      = 8
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//deep_nb1000000.idx …
+  Loaded in 0.06s
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 427.4 MiB
+    search time     = 18576.9ms total
+    ms / query      = 1.858
+    QPS             = 538
+    Recall@1        = 0.9961
+    Recall@10       = 0.9963
+    10-Recall@10    = 0.9873
+    Dist ratio      = 1.0003
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//deep_nb1000000.idx'  (ntotal=1000000  d=96  nsubspaces=8)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmp4oh_dosd.idx'
+(done in 23s)
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_deep1b.py --data-dir /Users/dhm/Documents/data/ --nb 1000000 --index-path /Users/dhm/Documents/indices//deep_nb1000000.idx --hnsw-sweep
+
+======================================================================
+  Loading Deep1M dataset  (nb=1,000,000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  dataset   : Deep1M
+  d         : 96
+  nb (base) : 1,000,000
+  nq        : 10,000
+  maxtrain  : 500,000
+  OMP threads: 10
+  Loading queries … shape=(10000, 96)
+  Loading base into RAM … shape=(1000000, 96)  dtype=float32  (loaded into RAM)
+  Loading train … shape=(500000, 96)
+  Loading ground truth … shape=(10000, 100)
+
+======================================================================
+  IndexSuCo benchmark  (Deep1M, d=96)
+======================================================================
+  nsubspaces      = 8
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//deep_nb1000000.idx …
+  Loaded in 0.05s
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 427.4 MiB
+    search time     = 19654.7ms total
+    ms / query      = 1.965
+    QPS             = 509
+    Recall@1        = 0.9961
+    Recall@10       = 0.9963
+    10-Recall@10    = 0.9873
+    Dist ratio      = 1.0003
+
+======================================================================
+  HNSW efSearch sweep  (M=32, efConstruction=200)
+======================================================================
+efSearch     ms/q      QPS     R@1    R@10
+------------------------------------------
+  Building HNSW (M=32, efConstruction=200) on 1,000,000 vectors …
+         100,000 / 1,000,000  (10.0%)         200,000 / 1,000,000  (20.0%)         300,000 / 1,000,000  (30.0%)         400,000 / 1,000,000  (40.0%)         500,000 / 1,000,000  (50.0%)         600,000 / 1,000,000  (60.0%)         700,000 / 1,000,000  (70.0%)         800,000 / 1,000,000  (80.0%)         900,000 / 1,000,000  (90.0%)       1,000,000 / 1,000,000  (100.0%)
+  Build done in 1.2min
+       8    0.009   112911  0.8188  0.8190
+      16    0.013    76915  0.9141  0.9143
+      32    0.018    54611  0.9669  0.9671
+      64    0.032    31018  0.9895  0.9897
+     128    0.061    16288  0.9970  0.9972
+     256    0.118     8506  0.9992  0.9994
+     512    0.243     4114  0.9995  0.9997
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//deep_nb1000000.idx'  (ntotal=1000000  d=96  nsubspaces=8)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmpyxg3g62k.idx'
+(done in 94s)
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_deep1b.py --data-dir /Users/dhm/Documents/data/ --nb 1000000 --index-path /Users/dhm/Documents/indices//deep_nb1000000.idx --ivfflat-sweep
+
+======================================================================
+  Loading Deep1M dataset  (nb=1,000,000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  dataset   : Deep1M
+  d         : 96
+  nb (base) : 1,000,000
+  nq        : 10,000
+  maxtrain  : 500,000
+  OMP threads: 10
+  Loading queries … shape=(10000, 96)
+  Loading base into RAM … shape=(1000000, 96)  dtype=float32  (loaded into RAM)
+  Loading train … shape=(500000, 96)
+  Loading ground truth … shape=(10000, 100)
+
+======================================================================
+  IndexSuCo benchmark  (Deep1M, d=96)
+======================================================================
+  nsubspaces      = 8
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//deep_nb1000000.idx …
+  Loaded in 0.05s
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 427.4 MiB
+    search time     = 19912.2ms total
+    ms / query      = 1.991
+    QPS             = 502
+    Recall@1        = 0.9961
+    Recall@10       = 0.9963
+    10-Recall@10    = 0.9873
+    Dist ratio      = 1.0003
+
+======================================================================
+  IVFFlat nprobe sweep  (nlist=1024, Deep1M, d=96)
+======================================================================
+ nprobe     ms/q      QPS     R@1    R@10
+-----------------------------------------
+  Training IVFFlat (nlist=1024) on 500,000 vectors …
+  Adding 1,000,000 vectors …
+         100,000 / 1,000,000  (10.0%)         200,000 / 1,000,000  (20.0%)         300,000 / 1,000,000  (30.0%)         400,000 / 1,000,000  (40.0%)         500,000 / 1,000,000  (50.0%)         600,000 / 1,000,000  (60.0%)         700,000 / 1,000,000  (70.0%)         800,000 / 1,000,000  (80.0%)         900,000 / 1,000,000  (90.0%)       1,000,000 / 1,000,000  (100.0%)
+      1    0.004   224560  0.4886  0.4888
+      2    0.008   125105  0.6611  0.6613
+      4    0.015    65579  0.7974  0.7976
+      8    0.029    34218  0.8952  0.8954
+     16    0.056    17983  0.9538  0.9540
+     32    0.106     9393  0.9836  0.9838
+     64    0.205     4879  0.9959  0.9961
+    128    0.398     2513  0.9988  0.9990
+    256    0.759     1318  0.9994  0.9996
+    512    1.491      671  0.9997  0.9999
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//deep_nb1000000.idx'  (ntotal=1000000  d=96  nsubspaces=8)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmp4rpstgge.idx'
+(done in 54s)
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_deep1b.py --data-dir /Users/dhm/Documents/data/ --nb 1000000 --index-path /Users/dhm/Documents/indices//deep_nb1000000.idx --ivfpq-sweep
+
+======================================================================
+  Loading Deep1M dataset  (nb=1,000,000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  dataset   : Deep1M
+  d         : 96
+  nb (base) : 1,000,000
+  nq        : 10,000
+  maxtrain  : 500,000
+  OMP threads: 10
+  Loading queries … shape=(10000, 96)
+  Loading base into RAM … shape=(1000000, 96)  dtype=float32  (loaded into RAM)
+  Loading train … shape=(500000, 96)
+  Loading ground truth … shape=(10000, 100)
+
+======================================================================
+  IndexSuCo benchmark  (Deep1M, d=96)
+======================================================================
+  nsubspaces      = 8
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//deep_nb1000000.idx …
+  Loaded in 0.07s
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 427.4 MiB
+    search time     = 20112.6ms total
+    ms / query      = 2.011
+    QPS             = 497
+    Recall@1        = 0.9961
+    Recall@10       = 0.9963
+    10-Recall@10    = 0.9873
+    Dist ratio      = 1.0003
+
+======================================================================
+  IVFPQ nprobe sweep  (nlist=1024, m=8, nbits=8, Deep1M, d=96)
+======================================================================
+ nprobe     ms/q      QPS     R@1    R@10
+-----------------------------------------
+  Training IVFPQ (nlist=1024, m=8, nbits=8) on 500,000 vectors …
+  Adding 1,000,000 vectors …
+         100,000 / 1,000,000  (10.0%)         200,000 / 1,000,000  (20.0%)         300,000 / 1,000,000  (30.0%)         400,000 / 1,000,000  (40.0%)         500,000 / 1,000,000  (50.0%)         600,000 / 1,000,000  (60.0%)         700,000 / 1,000,000  (70.0%)         800,000 / 1,000,000  (80.0%)         900,000 / 1,000,000  (90.0%)       1,000,000 / 1,000,000  (100.0%)
+      1    0.002   403192  0.1583  0.3869
+      2    0.003   317219  0.1832  0.4857
+      4    0.005   207903  0.1967  0.5498
+      8    0.008   132035  0.2026  0.5834
+     16    0.014    70710  0.2053  0.5969
+     32    0.024    41160  0.2059  0.5999
+     64    0.045    22235  0.2059  0.6011
+    128    0.087    11461  0.2059  0.6011
+    256    0.165     6056  0.2059  0.6011
+    512    0.327     3058  0.2059  0.6011
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//deep_nb1000000.idx'  (ntotal=1000000  d=96  nsubspaces=8)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmp_0sn5b7h.idx'
+(done in 33s)
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_deep1b.py --data-dir /Users/dhm/Documents/data/ --nb 1000000 --index-path /Users/dhm/Documents/indices//deep_nb1000000.idx --opqpq-sweep
+
+======================================================================
+  Loading Deep1M dataset  (nb=1,000,000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  dataset   : Deep1M
+  d         : 96
+  nb (base) : 1,000,000
+  nq        : 10,000
+  maxtrain  : 500,000
+  OMP threads: 10
+  Loading queries … shape=(10000, 96)
+  Loading base into RAM … shape=(1000000, 96)  dtype=float32  (loaded into RAM)
+  Loading train … shape=(500000, 96)
+  Loading ground truth … shape=(10000, 100)
+
+======================================================================
+  IndexSuCo benchmark  (Deep1M, d=96)
+======================================================================
+  nsubspaces      = 8
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//deep_nb1000000.idx …
+  Loaded in 0.05s
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 427.4 MiB
+    search time     = 19423.0ms total
+    ms / query      = 1.942
+    QPS             = 515
+    Recall@1        = 0.9961
+    Recall@10       = 0.9963
+    10-Recall@10    = 0.9873
+    Dist ratio      = 1.0003
+
+======================================================================
+  OPQ+IVFPQ nprobe sweep  (nlist=1024, m=8, nbits=8, Deep1M, d=96)
+======================================================================
+ nprobe     ms/q      QPS     R@1    R@10
+-----------------------------------------
+  Training OPQ+IVFPQ (nlist=1024, m=8, nbits=8, opq_niter=25) on 500,000 vectors …
+  Adding 1,000,000 vectors …
+         100,000 / 1,000,000  (10.0%)         200,000 / 1,000,000  (20.0%)         300,000 / 1,000,000  (30.0%)         400,000 / 1,000,000  (40.0%)         500,000 / 1,000,000  (50.0%)         600,000 / 1,000,000  (60.0%)         700,000 / 1,000,000  (70.0%)         800,000 / 1,000,000  (80.0%)         900,000 / 1,000,000  (90.0%)       1,000,000 / 1,000,000  (100.0%)
+      1    0.002   411060  0.1733  0.4073
+      2    0.003   321430  0.2066  0.5186
+      4    0.005   219462  0.2236  0.5943
+      8    0.008   128528  0.2312  0.6368
+     16    0.013    74262  0.2343  0.6542
+     32    0.024    40949  0.2351  0.6607
+     64    0.044    22898  0.2353  0.6628
+    128    0.085    11715  0.2353  0.6630
+    256    0.163     6130  0.2353  0.6630
+    512    0.327     3060  0.2353  0.6630
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//deep_nb1000000.idx'  (ntotal=1000000  d=96  nsubspaces=8)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmp46po7yuo.idx'
+(done in 46s)
+
+##########################################################################
+##  All benchmarks finished  —  Sat Mar 14 16:53:43 EET 2026
+##########################################################################

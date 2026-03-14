@@ -13,6 +13,8 @@
 #   --nb NB              Deep1? dataset size: 1000000, 10000000, 100000000 (default: 1000000)
 #   --sift10m-mat PATH   Path to SIFT10Mfeatures.mat (default: data/SIFT10M/SIFT10Mfeatures.mat)
 #   --spacev10m-dir DIR  Directory with SpaceV10M .i8bin files (default: data/spacev10m/)
+#   --make-figures       Generate figures from the benchmark log after run
+#   --linux-log PATH     Optional Linux bench_all log used for cross-platform plots
 #   --dry-run            Print commands without running them
 #   --sift-only          Run only SIFT1M benchmarks
 #   --gist-only          Run only GIST1M benchmarks
@@ -34,6 +36,8 @@ DEEP_NB=1000000
 SIFT10M_MAT="$ROOT_DIR/data/SIFT10M/SIFT10Mfeatures.mat"
 SPACEV10M_DIR="$ROOT_DIR/data/spacev10m/"
 DRY_RUN=0
+MAKE_FIGURES=0
+LINUX_LOG_COMPARE=""
 RUN_SIFT=1
 RUN_GIST=1
 RUN_DEEP=1
@@ -49,6 +53,8 @@ while [[ $# -gt 0 ]]; do
         --nb)             DEEP_NB="$2";        shift 2 ;;
         --sift10m-mat)    SIFT10M_MAT="$2";    shift 2 ;;
         --spacev10m-dir)  SPACEV10M_DIR="$2";  shift 2 ;;
+        --make-figures)   MAKE_FIGURES=1;       shift   ;;
+        --linux-log)      LINUX_LOG_COMPARE="$2"; shift 2 ;;
         --dry-run)        DRY_RUN=1;           shift   ;;
         --sift-only)      RUN_GIST=0; RUN_DEEP=0; RUN_SIFT10M=0; RUN_SPACEV10M=0; shift ;;
         --gist-only)      RUN_SIFT=0; RUN_DEEP=0; RUN_SIFT10M=0; RUN_SPACEV10M=0; shift ;;
@@ -107,6 +113,10 @@ echo "  index-dir    : $INDEX_DIR"
 echo "  deep-nb      : $DEEP_NB"
 echo "  sift10m-mat  : $SIFT10M_MAT"
 echo "  spacev10m-dir: $SPACEV10M_DIR"
+echo "  make-figures : $MAKE_FIGURES"
+if [[ -n "$LINUX_LOG_COMPARE" ]]; then
+    echo "  linux-log    : $LINUX_LOG_COMPARE"
+fi
 [[ $DRY_RUN -eq 1 ]] && echo "  *** DRY RUN — commands will not execute ***"
 
 # ---- SIFT1M ------------------------------------------------------------------
@@ -195,3 +205,12 @@ fi
 
 # ---- footer ------------------------------------------------------------------
 section "All benchmarks finished  —  $(date)"
+
+if [[ $DRY_RUN -eq 0 && $MAKE_FIGURES -eq 1 ]]; then
+    section "Generate figures from logs"
+    PLOT_CMD=("$PYTHON" "$SCRIPT_DIR/plot_benchmarks_from_logs.py" --mac-log "$LOG_FILE")
+    if [[ -n "$LINUX_LOG_COMPARE" ]]; then
+        PLOT_CMD+=(--linux-log "$LINUX_LOG_COMPARE")
+    fi
+    run_bench "${PLOT_CMD[@]}"
+fi

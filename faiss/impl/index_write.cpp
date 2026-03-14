@@ -50,6 +50,7 @@
 #include <faiss/IndexRaBitQFastScan.h>
 #include <faiss/IndexRefine.h>
 #include <faiss/IndexRowwiseMinMax.h>
+#include <faiss/IndexSuCo.h>
 #ifdef FAISS_ENABLE_SVS
 #include <faiss/impl/svs_io.h>
 #include <faiss/svs/IndexSVSFlat.h>
@@ -476,6 +477,10 @@ void write_index(const Index* idx, IOWriter* f, int io_flags) {
         WRITE1(h);
         write_index_header(idx, f);
         WRITEXBVECTOR(idxf->codes);
+    } else if (const IndexSuCo* idxs = dynamic_cast<const IndexSuCo*>(idx)) {
+        uint32_t h = fourcc("IxSC");
+        WRITE1(h);
+        idxs->write_index(f);
     } else if (const IndexLSH* idxl = dynamic_cast<const IndexLSH*>(idx)) {
         uint32_t h = fourcc("IxHe");
         WRITE1(h);

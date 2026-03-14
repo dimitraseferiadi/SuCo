@@ -341,11 +341,13 @@ def run_dataset(
     nsubspaces: int,
     nlist: int = 1024,
     hnsw_M: int = 32,
+    ivfpq_M: int = 8,
     k: int = 10,
     suco_index_path: str = "",
     alpha_values=ALPHA_VALUES,
     skip_hnsw: bool = False,
     skip_ivfflat: bool = False,
+    skip_ivfpq: bool = False,
 ) -> list[dict]:
     """
     Build / load all three indices for one dataset, run all sweeps, and return
@@ -387,6 +389,16 @@ def run_dataset(
             pt["dataset"] = name
         all_results.extend(ivf_pts)
         del ivf
+
+    # ── IVFPQ ────────────────────────────────────────────────────────────
+    if not skip_ivfpq:
+        print("\n  [IVFPQ] nprobe sweep")
+        ivfpq = build_ivfpq(xb, xt, nlist=nlist, M=ivfpq_M)
+        ivfpq_pts = sweep_ivfpq(ivfpq, xq, gt, k=k)
+        for pt in ivfpq_pts:
+            pt["dataset"] = name
+        all_results.extend(ivfpq_pts)
+        del ivfpq
 
     return all_results
 
@@ -548,6 +560,7 @@ def main() -> None:
         all_results += run_dataset(
             "SIFT1M", xb, xq, xt, gt,
             nsubspaces=8,
+            ivfpq_M=8,      # d=128, M=8 → 16 bytes/vec
             suco_index_path=args.sift_index,
             alpha_values=args.alpha_values,
             skip_hnsw=args.skip_hnsw,
@@ -570,6 +583,7 @@ def main() -> None:
         all_results += run_dataset(
             "GIST1M", xb, xq, xt, gt,
             nsubspaces=40,
+            ivfpq_M=60,     # d=960, M=60 → 60 bytes/vec
             suco_index_path=args.gist_index,
             alpha_values=args.alpha_values,
             skip_hnsw=args.skip_hnsw,
@@ -592,6 +606,7 @@ def main() -> None:
         all_results += run_dataset(
             "Deep1M", xb, xq, xt, gt,
             nsubspaces=8,
+            ivfpq_M=8,      # d=96, M=8 → 8 bytes/vec
             suco_index_path=args.deep_index,
             alpha_values=args.alpha_values,
             skip_hnsw=args.skip_hnsw,

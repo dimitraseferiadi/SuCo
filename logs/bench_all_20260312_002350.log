@@ -1,0 +1,586 @@
+Log: /Users/dhm/Documents/SuCo/logs//bench_all_20260312_002350.log
+
+##########################################################################
+##  SuCo Full Benchmark Suite  —  Thu Mar 12 00:23:50 EET 2026
+##########################################################################
+  data-dir     : /Users/dhm/Documents/data/
+  index-dir    : /Users/dhm/Documents/indices/
+  deep-nb      : 10000000
+  sift10m-mat  : /Users/dhm/Documents/SuCo/data/SIFT10M/SIFT10Mfeatures.mat
+  spacev10m-dir: /Users/dhm/Documents/SuCo/data/spacev10m/
+
+##########################################################################
+##  Deep10M  (d=96, nb=10000000)
+##########################################################################
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_deep1b.py --data-dir /Users/dhm/Documents/data/ --nb 10000000 --index-path /Users/dhm/Documents/indices//deep_nb10000000.idx --sweep
+
+======================================================================
+  Loading Deep10M dataset  (nb=10,000,000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  dataset   : Deep10M
+  d         : 96
+  nb (base) : 10,000,000
+  nq        : 10,000
+  maxtrain  : 1,000,000
+  OMP threads: 10
+  Loading queries … shape=(10000, 96)
+  Loading base into RAM … shape=(10000000, 96)  dtype=float32  (loaded into RAM)
+  Loading train … shape=(1000000, 96)
+  Loading ground truth … IndexSuCo::train: d=96  nsubspaces=8  ncentroids_half=50  n=1000000
+Sampling a subset of 12800 / 1000000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=313.553 imbalance=1.323 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=268.208 imbalance=1.134 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=256.699 imbalance=1.077 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=251.839 imbalance=1.055 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=249.189 imbalance=1.051 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=247.399 imbalance=1.050 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=246.053 imbalance=1.051 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=244.888 imbalance=1.050 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=243.872 imbalance=1.050 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=243.02 imbalance=1.052 nsplit=0       
+  trained subspace 0 half 0
+Sampling a subset of 12800 / 1000000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=314.992 imbalance=1.287 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=268.089 imbalance=1.108 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=257.187 imbalance=1.061 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=252.276 imbalance=1.047 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=249.59 imbalance=1.041 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=247.793 imbalance=1.038 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=246.586 imbalance=1.036 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=245.628 imbalance=1.034 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=244.828 imbalance=1.035 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=244.156 imbalance=1.033 nsplit=0       
+  trained subspace 0 half 1
+Sampling a subset of 12800 / 1000000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=277.943 imbalance=1.267 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=245.719 imbalance=1.119 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=236.43 imbalance=1.069 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=232.324 imbalance=1.055 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=229.974 imbalance=1.049 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=228.346 imbalance=1.047 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=227.277 imbalance=1.044 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=226.517 imbalance=1.044 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=225.912 imbalance=1.044 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=225.413 imbalance=1.044 nsplit=0       
+  trained subspace 1 half 0
+Sampling a subset of 12800 / 1000000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=338.646 imbalance=1.309 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=292.767 imbalance=1.106 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=280.674 imbalance=1.058 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=274.95 imbalance=1.042 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=271.628 imbalance=1.035 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=269.233 imbalance=1.031 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=267.327 imbalance=1.027 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=265.814 imbalance=1.025 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=264.752 imbalance=1.022 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=263.833 imbalance=1.020 nsplit=0       
+  trained subspace 1 half 1
+Sampling a subset of 12800 / 1000000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=308.028 imbalance=1.306 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=257.711 imbalance=1.100 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=245.393 imbalance=1.060 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=240.288 imbalance=1.047 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=237.679 imbalance=1.043 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=236.261 imbalance=1.042 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=235.318 imbalance=1.042 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=234.532 imbalance=1.041 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=233.81 imbalance=1.040 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=233.238 imbalance=1.039 nsplit=0       
+  trained subspace 2 half 0
+Sampling a subset of 12800 / 1000000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=270.269 imbalance=1.191 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=238.523 imbalance=1.079 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=230.957 imbalance=1.053 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=226.943 imbalance=1.044 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=224.369 imbalance=1.042 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=222.566 imbalance=1.041 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=221.376 imbalance=1.041 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=220.578 imbalance=1.041 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=220.048 imbalance=1.040 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=219.606 imbalance=1.040 nsplit=0       
+  trained subspace 2 half 1
+Sampling a subset of 12800 / 1000000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=324.565 imbalance=1.330 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=280.921 imbalance=1.128 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=270.663 imbalance=1.085 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=266.352 imbalance=1.063 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=263.837 imbalance=1.051 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=261.995 imbalance=1.043 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=260.561 imbalance=1.039 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=259.392 imbalance=1.034 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=258.511 imbalance=1.031 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=257.814 imbalance=1.030 nsplit=0       
+  trained subspace 3 half 0
+Sampling a subset of 12800 / 1000000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=305.628 imbalance=1.253 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=263.479 imbalance=1.113 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=254.971 imbalance=1.074 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=251.132 imbalance=1.058 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=248.553 imbalance=1.049 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=246.868 imbalance=1.044 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=245.789 imbalance=1.040 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=244.877 imbalance=1.037 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=244.042 imbalance=1.035 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=243.316 imbalance=1.035 nsplit=0       
+  trained subspace 3 half 1
+Sampling a subset of 12800 / 1000000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=304.84 imbalance=1.391 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=253.301 imbalance=1.145 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=242.756 imbalance=1.073 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=238.385 imbalance=1.046 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=236.114 imbalance=1.035 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=234.714 imbalance=1.032 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=233.627 imbalance=1.029 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=232.985 imbalance=1.027 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=232.492 imbalance=1.026 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=232.02 imbalance=1.026 nsplit=0       
+  trained subspace 4 half 0
+Sampling a subset of 12800 / 1000000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=304.238 imbalance=1.358 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=254.087 imbalance=1.129 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=242.787 imbalance=1.066 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=238.13 imbalance=1.045 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=235.521 imbalance=1.036 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=234.104 imbalance=1.031 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=233.176 imbalance=1.028 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=232.457 imbalance=1.027 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=231.916 imbalance=1.025 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=231.476 imbalance=1.025 nsplit=0       
+  trained subspace 4 half 1
+Sampling a subset of 12800 / 1000000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=304.782 imbalance=1.469 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=245.583 imbalance=1.128 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=232.927 imbalance=1.070 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=228.253 imbalance=1.054 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=225.608 imbalance=1.047 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=223.946 imbalance=1.043 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=222.69 imbalance=1.042 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=221.877 imbalance=1.040 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=221.306 imbalance=1.039 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=220.879 imbalance=1.038 nsplit=0       
+  trained subspace 5 half 0
+Sampling a subset of 12800 / 1000000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=295.953 imbalance=1.505 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=249.521 imbalance=1.180 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=236.944 imbalance=1.097 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=231.539 imbalance=1.065 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=228.748 imbalance=1.054 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=227.222 imbalance=1.047 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=226.117 imbalance=1.042 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=225.325 imbalance=1.038 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=224.631 imbalance=1.036 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=224.054 imbalance=1.035 nsplit=0       
+  trained subspace 5 half 1
+Sampling a subset of 12800 / 1000000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=285.584 imbalance=1.346 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=248.385 imbalance=1.146 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=236.624 imbalance=1.088 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=231.751 imbalance=1.062 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=229.012 imbalance=1.048 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=227.337 imbalance=1.039 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=226.263 imbalance=1.036 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=225.487 imbalance=1.033 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=224.905 imbalance=1.032 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=224.434 imbalance=1.031 nsplit=0       
+  trained subspace 6 half 0
+Sampling a subset of 12800 / 1000000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=280.565 imbalance=1.210 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=248.65 imbalance=1.077 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=239.255 imbalance=1.045 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=235.151 imbalance=1.034 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=232.521 imbalance=1.029 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=230.75 imbalance=1.027 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=229.476 imbalance=1.026 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=228.577 imbalance=1.025 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=227.883 imbalance=1.025 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=227.344 imbalance=1.025 nsplit=0       
+  trained subspace 6 half 1
+Sampling a subset of 12800 / 1000000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=292.206 imbalance=1.455 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=253.245 imbalance=1.192 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=241.592 imbalance=1.109 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=236.383 imbalance=1.078 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=233.51 imbalance=1.059 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=231.49 imbalance=1.048 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=230.173 imbalance=1.042 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=229.331 imbalance=1.039 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=228.694 imbalance=1.037 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=228.234 imbalance=1.036 nsplit=0       
+  trained subspace 7 half 0
+Sampling a subset of 12800 / 1000000 for training
+Clustering 12800 points in 6D to 50 clusters, redo 1 times, 10 iterations
+  Preprocessing in 0.00 s
+  Iteration 0 (0.00 s, search 0.00 s): objective=310.505 imbalance=1.268 nsplit=0         Iteration 1 (0.00 s, search 0.00 s): objective=267.615 imbalance=1.094 nsplit=0         Iteration 2 (0.00 s, search 0.00 s): objective=256.861 imbalance=1.056 nsplit=0         Iteration 3 (0.00 s, search 0.00 s): objective=252.049 imbalance=1.046 nsplit=0         Iteration 4 (0.00 s, search 0.00 s): objective=249.111 imbalance=1.040 nsplit=0         Iteration 5 (0.00 s, search 0.00 s): objective=247.072 imbalance=1.039 nsplit=0         Iteration 6 (0.00 s, search 0.00 s): objective=245.686 imbalance=1.037 nsplit=0         Iteration 7 (0.00 s, search 0.00 s): objective=244.704 imbalance=1.036 nsplit=0         Iteration 8 (0.00 s, search 0.00 s): objective=243.946 imbalance=1.036 nsplit=0         Iteration 9 (0.00 s, search 0.00 s): objective=243.286 imbalance=1.035 nsplit=0       shape=(10000, 100)
+
+======================================================================
+  IndexSuCo benchmark  (Deep10M, d=96)
+======================================================================
+  nsubspaces      = 8
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Training on 1,000,000 vectors …
+  Training done in 0.28s
+  Adding 10,000,000 vectors …
+         100,000 / 10,000,000  (1.0%)         200,000 / 10,000,000  (2.0%)         300,000 / 10,000,000  (3.0%)         400,000 / 10,000,000  (4.0%)         500,000 / 10,000,000  (5.0%)         600,000 / 10,000,000  (6.0%)         700,000 / 10,000,000  (7.0%)         800,000 / 10,000,000  (8.0%)         900,000 / 10,000,000  (9.0%)       1,000,000 / 10,000,000  (10.0%)       1,100,000 / 10,000,000  (11.0%)       1,200,000 / 10,000,000  (12.0%)       1,300,000 / 10,000,000  (13.0%)       1,400,000 / 10,000,000  (14.0%)       1,500,000 / 10,000,000  (15.0%)       1,600,000 / 10,000,000  (16.0%)       1,700,000 / 10,000,000  (17.0%)       1,800,000 / 10,000,000  (18.0%)       1,900,000 / 10,000,000  (19.0%)       2,000,000 / 10,000,000  (20.0%)       2,100,000 / 10,000,000  (21.0%)       2,200,000 / 10,000,000  (22.0%)       2,300,000 / 10,000,000  (23.0%)       2,400,000 / 10,000,000  (24.0%)       2,500,000 / 10,000,000  (25.0%)       2,600,000 / 10,000,000  (26.0%)       2,700,000 / 10,000,000  (27.0%)       2,800,000 / 10,000,000  (28.0%)       2,900,000 / 10,000,000  (29.0%)       3,000,000 / 10,000,000  (30.0%)       3,100,000 / 10,000,000  (31.0%)       3,200,000 / 10,000,000  (32.0%)       3,300,000 / 10,000,000  (33.0%)       3,400,000 / 10,000,000  (34.0%)       3,500,000 / 10,000,000  (35.0%)       3,600,000 / 10,000,000  (36.0%)       3,700,000 / 10,000,000  (37.0%)       3,800,000 / 10,000,000  (38.0%)       3,900,000 / 10,000,000  (39.0%)       4,000,000 / 10,000,000  (40.0%)       4,100,000 / 10,000,000  (41.0%)       4,200,000 / 10,000,000  (42.0%)       4,300,000 / 10,000,000  (43.0%)       4,400,000 / 10,000,000  (44.0%)       4,500,000 / 10,000,000  (45.0%)       4,600,000 / 10,000,000  (46.0%)       4,700,000 / 10,000,000  (47.0%)       4,800,000 / 10,000,000  (48.0%)       4,900,000 / 10,000,000  (49.0%)       5,000,000 / 10,000,000  (50.0%)       5,100,000 / 10,000,000  (51.0%)       5,200,000 / 10,000,000  (52.0%)       5,300,000 / 10,000,000  (53.0%)       5,400,000 / 10,000,000  (54.0%)       5,500,000 / 10,000,000  (55.0%)       5,600,000 / 10,000,000  (56.0%)       5,700,000 / 10,000,000  (57.0%)       5,800,000 / 10,000,000  (58.0%)       5,900,000 / 10,000,000  (59.0%)       6,000,000 / 10,000,000  (60.0%)       6,100,000 / 10,000,000  (61.0%)       6,200,000 / 10,000,000  (62.0%)       6,300,000 / 10,000,000  (63.0%)       6,400,000 / 10,000,000  (64.0%)       6,500,000 / 10,000,000  (65.0%)       6,600,000 / 10,000,000  (66.0%)       6,700,000 / 10,000,000  (67.0%)       6,800,000 / 10,000,000  (68.0%)       6,900,000 / 10,000,000  (69.0%)       7,000,000 / 10,000,000  (70.0%)       7,100,000 / 10,000,000  (71.0%)       7,200,000 / 10,000,000  (72.0%)       7,300,000 / 10,000,000  (73.0%)       7,400,000 / 10,000,000  (74.0%)       7,500,000 / 10,000,000  (75.0%)       7,600,000 / 10,000,000  (76.0%)       7,700,000 / 10,000,000  (77.0%)       7,800,000 / 10,000,000  (78.0%)       7,900,000 / 10,000,000  (79.0%)       8,000,000 / 10,000,000  (80.0%)       8,100,000 / 10,000,000  (81.0%)       8,200,000 / 10,000,000  (82.0%)       8,300,000 / 10,000,000  (83.0%)       8,400,000 / 10,000,000  (84.0%)       8,500,000 / 10,000,000  (85.0%)       8,600,000 / 10,000,000  (86.0%)       8,700,000 / 10,000,000  (87.0%)       8,800,000 / 10,000,000  (88.0%)       8,900,000 / 10,000,000  (89.0%)       9,000,000 / 10,000,000  (90.0%)       9,100,000 / 10,000,000  (91.0%)       9,200,000 / 10,000,000  (92.0%)       9,300,000 / 10,000,000  (93.0%)       9,400,000 / 10,000,000  (94.0%)       9,500,000 / 10,000,000  (95.0%)       9,600,000 / 10,000,000  (96.0%)       9,700,000 / 10,000,000  (97.0%)       9,800,000 / 10,000,000  (98.0%)       9,900,000 / 10,000,000  (99.0%)      10,000,000 / 10,000,000  (100.0%)
+  Add done in 4.20s
+  Saving index to /Users/dhm/Documents/indices//deep_nb10000000.idx …
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 10,000,000
+    OMP threads     = 10
+    train time      = 0.28s
+    add time        = 4.20s
+    build time      = 4.48s
+    index size      = 4272.8 MiB
+    search time     = 305474.0ms total
+    ms / query      = 30.547
+    QPS             = 33
+    Recall@1        = 0.9982
+    Recall@10       = 0.9986
+    10-Recall@10    = 0.9967
+    Dist ratio      = 1.0001
+
+======================================================================
+  Parameter Sweep
+======================================================================
+ Ns   hd    nc   alpha     beta     ms/q      QPS     R@1    R@10    10R@10     ratio
+-------------------------------------------------------------------------------------
+  8    6    50   0.020   0.0020   26.156       38  0.9907  0.9913    0.9792    1.0004
+  8    6    50   0.050   0.0050   30.934       32  0.9982  0.9986    0.9967    1.0001
+  8    6    50   0.100   0.0100   36.487       27  0.9988  0.9993    0.9990    1.0000
+  8    6    50   0.200   0.0200   49.410       20  0.9991  0.9998    0.9995    1.0000
+  4   12    50   0.050   0.0050   33.108       30  0.9885  0.9892    0.9798    1.0005
+ 12    4    50   0.050   0.0050   30.635       33  0.9989  0.9994    0.9984    1.0000
+  8    6    25   0.050   0.0050   33.152       30  0.9948  0.9954    0.9892    1.0002
+  8    6   100   0.050   0.0050   37.501       27  0.9992  0.9997    0.9987    1.0000
+
+  trained subspace 7 half 1
+IndexSuCo::add: adding 100000 vectors (current ntotal=0)
+IndexSuCo::add: adding 100000 vectors (current ntotal=100000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=200000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=300000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=400000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=500000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=600000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=700000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=800000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=900000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=1000000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=1100000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=1200000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=1300000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=1400000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=1500000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=1600000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=1700000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=1800000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=1900000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=2000000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=2100000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=2200000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=2300000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=2400000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=2500000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=2600000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=2700000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=2800000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=2900000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=3000000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=3100000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=3200000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=3300000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=3400000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=3500000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=3600000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=3700000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=3800000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=3900000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=4000000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=4100000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=4200000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=4300000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=4400000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=4500000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=4600000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=4700000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=4800000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=4900000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=5000000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=5100000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=5200000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=5300000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=5400000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=5500000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=5600000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=5700000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=5800000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=5900000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=6000000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=6100000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=6200000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=6300000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=6400000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=6500000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=6600000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=6700000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=6800000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=6900000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=7000000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=7100000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=7200000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=7300000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=7400000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=7500000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=7600000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=7700000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=7800000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=7900000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=8000000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=8100000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=8200000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=8300000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=8400000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=8500000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=8600000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=8700000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=8800000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=8900000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=9000000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=9100000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=9200000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=9300000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=9400000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=9500000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=9600000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=9700000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=9800000)
+IndexSuCo::add: adding 100000 vectors (current ntotal=9900000)
+IndexSuCo::write_index: saved to '/Users/dhm/Documents/indices//deep_nb10000000.idx'
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmpd4v3kvg6.idx'
+(done in 4071s)
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_deep1b.py --data-dir /Users/dhm/Documents/data/ --nb 10000000 --index-path /Users/dhm/Documents/indices//deep_nb10000000.idx --flat-baseline
+
+======================================================================
+  Loading Deep10M dataset  (nb=10,000,000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  dataset   : Deep10M
+  d         : 96
+  nb (base) : 10,000,000
+  nq        : 10,000
+  maxtrain  : 1,000,000
+  OMP threads: 10
+  Loading queries … shape=(10000, 96)
+  Loading base into RAM … shape=(10000000, 96)  dtype=float32  (loaded into RAM)
+  Loading train … shape=(1000000, 96)
+  Loading ground truth … shape=(10000, 100)
+
+======================================================================
+  Baseline: IndexFlatL2
+======================================================================
+  ms/query  = 5.518
+  QPS       = 181
+  Recall@1  = 0.9993  (upper bound for SuCo)
+  Recall@10 = 0.9998
+
+======================================================================
+  IndexSuCo benchmark  (Deep10M, d=96)
+======================================================================
+  nsubspaces      = 8
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//deep_nb10000000.idx …
+  Loaded in 1.60s
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 10,000,000
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 4272.8 MiB
+    search time     = 323614.5ms total
+    ms / query      = 32.361
+    QPS             = 31
+    Recall@1        = 0.9982
+    Recall@10       = 0.9986
+    10-Recall@10    = 0.9967
+    Dist ratio      = 1.0001
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//deep_nb10000000.idx'  (ntotal=10000000  d=96  nsubspaces=8)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmpfpp2np9h.idx'
+(done in 390s)
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_deep1b.py --data-dir /Users/dhm/Documents/data/ --nb 10000000 --index-path /Users/dhm/Documents/indices//deep_nb10000000.idx --hnsw-sweep
+
+======================================================================
+  Loading Deep10M dataset  (nb=10,000,000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  dataset   : Deep10M
+  d         : 96
+  nb (base) : 10,000,000
+  nq        : 10,000
+  maxtrain  : 1,000,000
+  OMP threads: 10
+  Loading queries … shape=(10000, 96)
+  Loading base into RAM … shape=(10000000, 96)  dtype=float32  (loaded into RAM)
+  Loading train … shape=(1000000, 96)
+  Loading ground truth … shape=(10000, 100)
+
+======================================================================
+  IndexSuCo benchmark  (Deep10M, d=96)
+======================================================================
+  nsubspaces      = 8
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//deep_nb10000000.idx …
+  Loaded in 1.96s
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 10,000,000
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 4272.8 MiB
+    search time     = 330710.3ms total
+    ms / query      = 33.071
+    QPS             = 30
+    Recall@1        = 0.9982
+    Recall@10       = 0.9986
+    10-Recall@10    = 0.9967
+    Dist ratio      = 1.0001
+
+======================================================================
+  HNSW efSearch sweep  (M=32, efConstruction=200)
+======================================================================
+efSearch     ms/q      QPS     R@1    R@10
+------------------------------------------
+  Building HNSW (M=32, efConstruction=200) on 10,000,000 vectors …
+         100,000 / 10,000,000  (1.0%)         200,000 / 10,000,000  (2.0%)         300,000 / 10,000,000  (3.0%)         400,000 / 10,000,000  (4.0%)         500,000 / 10,000,000  (5.0%)         600,000 / 10,000,000  (6.0%)         700,000 / 10,000,000  (7.0%)         800,000 / 10,000,000  (8.0%)         900,000 / 10,000,000  (9.0%)       1,000,000 / 10,000,000  (10.0%)       1,100,000 / 10,000,000  (11.0%)       1,200,000 / 10,000,000  (12.0%)       1,300,000 / 10,000,000  (13.0%)       1,400,000 / 10,000,000  (14.0%)       1,500,000 / 10,000,000  (15.0%)       1,600,000 / 10,000,000  (16.0%)       1,700,000 / 10,000,000  (17.0%)       1,800,000 / 10,000,000  (18.0%)       1,900,000 / 10,000,000  (19.0%)       2,000,000 / 10,000,000  (20.0%)       2,100,000 / 10,000,000  (21.0%)       2,200,000 / 10,000,000  (22.0%)       2,300,000 / 10,000,000  (23.0%)       2,400,000 / 10,000,000  (24.0%)       2,500,000 / 10,000,000  (25.0%)       2,600,000 / 10,000,000  (26.0%)       2,700,000 / 10,000,000  (27.0%)       2,800,000 / 10,000,000  (28.0%)       2,900,000 / 10,000,000  (29.0%)       3,000,000 / 10,000,000  (30.0%)       3,100,000 / 10,000,000  (31.0%)       3,200,000 / 10,000,000  (32.0%)       3,300,000 / 10,000,000  (33.0%)       3,400,000 / 10,000,000  (34.0%)       3,500,000 / 10,000,000  (35.0%)       3,600,000 / 10,000,000  (36.0%)       3,700,000 / 10,000,000  (37.0%)       3,800,000 / 10,000,000  (38.0%)       3,900,000 / 10,000,000  (39.0%)       4,000,000 / 10,000,000  (40.0%)       4,100,000 / 10,000,000  (41.0%)       4,200,000 / 10,000,000  (42.0%)       4,300,000 / 10,000,000  (43.0%)       4,400,000 / 10,000,000  (44.0%)       4,500,000 / 10,000,000  (45.0%)       4,600,000 / 10,000,000  (46.0%)       4,700,000 / 10,000,000  (47.0%)       4,800,000 / 10,000,000  (48.0%)       4,900,000 / 10,000,000  (49.0%)       5,000,000 / 10,000,000  (50.0%)       5,100,000 / 10,000,000  (51.0%)       5,200,000 / 10,000,000  (52.0%)       5,300,000 / 10,000,000  (53.0%)       5,400,000 / 10,000,000  (54.0%)       5,500,000 / 10,000,000  (55.0%)       5,600,000 / 10,000,000  (56.0%)       5,700,000 / 10,000,000  (57.0%)       5,800,000 / 10,000,000  (58.0%)       5,900,000 / 10,000,000  (59.0%)       6,000,000 / 10,000,000  (60.0%)       6,100,000 / 10,000,000  (61.0%)       6,200,000 / 10,000,000  (62.0%)       6,300,000 / 10,000,000  (63.0%)       6,400,000 / 10,000,000  (64.0%)       6,500,000 / 10,000,000  (65.0%)       6,600,000 / 10,000,000  (66.0%)       6,700,000 / 10,000,000  (67.0%)       6,800,000 / 10,000,000  (68.0%)       6,900,000 / 10,000,000  (69.0%)       7,000,000 / 10,000,000  (70.0%)       7,100,000 / 10,000,000  (71.0%)       7,200,000 / 10,000,000  (72.0%)       7,300,000 / 10,000,000  (73.0%)       7,400,000 / 10,000,000  (74.0%)       7,500,000 / 10,000,000  (75.0%)       7,600,000 / 10,000,000  (76.0%)       7,700,000 / 10,000,000  (77.0%)       7,800,000 / 10,000,000  (78.0%)       7,900,000 / 10,000,000  (79.0%)       8,000,000 / 10,000,000  (80.0%)       8,100,000 / 10,000,000  (81.0%)       8,200,000 / 10,000,000  (82.0%)       8,300,000 / 10,000,000  (83.0%)       8,400,000 / 10,000,000  (84.0%)       8,500,000 / 10,000,000  (85.0%)       8,600,000 / 10,000,000  (86.0%)       8,700,000 / 10,000,000  (87.0%)       8,800,000 / 10,000,000  (88.0%)       8,900,000 / 10,000,000  (89.0%)       9,000,000 / 10,000,000  (90.0%)       9,100,000 / 10,000,000  (91.0%)       9,200,000 / 10,000,000  (92.0%)       9,300,000 / 10,000,000  (93.0%)       9,400,000 / 10,000,000  (94.0%)       9,500,000 / 10,000,000  (95.0%)       9,600,000 / 10,000,000  (96.0%)       9,700,000 / 10,000,000  (97.0%)       9,800,000 / 10,000,000  (98.0%)       9,900,000 / 10,000,000  (99.0%)      10,000,000 / 10,000,000  (100.0%)
+  Build done in 40.2min
+       8    0.013    74326  0.7346  0.7351
+      16    0.019    52906  0.8492  0.8497
+      32    0.032    31674  0.9253  0.9258
+      64    0.081    12389  0.9665  0.9670
+     128    0.194     5150  0.9854  0.9859
+     256    0.333     3000  0.9926  0.9931
+     512    0.663     1508  0.9946  0.9951
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//deep_nb10000000.idx'  (ntotal=10000000  d=96  nsubspaces=8)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmp7fah24d7.idx'
+(done in 3774s)
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_deep1b.py --data-dir /Users/dhm/Documents/data/ --nb 10000000 --index-path /Users/dhm/Documents/indices//deep_nb10000000.idx --ivfflat-sweep
+
+======================================================================
+  Loading Deep10M dataset  (nb=10,000,000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  dataset   : Deep10M
+  d         : 96
+  nb (base) : 10,000,000
+  nq        : 10,000
+  maxtrain  : 1,000,000
+  OMP threads: 10
+  Loading queries … shape=(10000, 96)
+  Loading base into RAM … shape=(10000000, 96)  dtype=float32  (loaded into RAM)
+  Loading train … shape=(1000000, 96)
+  Loading ground truth … shape=(10000, 100)
+
+======================================================================
+  IndexSuCo benchmark  (Deep10M, d=96)
+======================================================================
+  nsubspaces      = 8
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//deep_nb10000000.idx …
+  Loaded in 1.45s
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 10,000,000
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 4272.8 MiB
+    search time     = 423025.2ms total
+    ms / query      = 42.303
+    QPS             = 24
+    Recall@1        = 0.9982
+    Recall@10       = 0.9986
+    10-Recall@10    = 0.9967
+    Dist ratio      = 1.0001
+
+======================================================================
+  IVFFlat nprobe sweep  (nlist=1024, Deep10M, d=96)
+======================================================================
+ nprobe     ms/q      QPS     R@1    R@10
+-----------------------------------------
+  Training IVFFlat (nlist=1024) on 1,000,000 vectors …
+  Adding 10,000,000 vectors …
+         100,000 / 10,000,000  (1.0%)         200,000 / 10,000,000  (2.0%)         300,000 / 10,000,000  (3.0%)         400,000 / 10,000,000  (4.0%)         500,000 / 10,000,000  (5.0%)         600,000 / 10,000,000  (6.0%)         700,000 / 10,000,000  (7.0%)         800,000 / 10,000,000  (8.0%)         900,000 / 10,000,000  (9.0%)       1,000,000 / 10,000,000  (10.0%)       1,100,000 / 10,000,000  (11.0%)       1,200,000 / 10,000,000  (12.0%)       1,300,000 / 10,000,000  (13.0%)       1,400,000 / 10,000,000  (14.0%)       1,500,000 / 10,000,000  (15.0%)       1,600,000 / 10,000,000  (16.0%)       1,700,000 / 10,000,000  (17.0%)       1,800,000 / 10,000,000  (18.0%)       1,900,000 / 10,000,000  (19.0%)       2,000,000 / 10,000,000  (20.0%)       2,100,000 / 10,000,000  (21.0%)       2,200,000 / 10,000,000  (22.0%)       2,300,000 / 10,000,000  (23.0%)       2,400,000 / 10,000,000  (24.0%)       2,500,000 / 10,000,000  (25.0%)       2,600,000 / 10,000,000  (26.0%)       2,700,000 / 10,000,000  (27.0%)       2,800,000 / 10,000,000  (28.0%)       2,900,000 / 10,000,000  (29.0%)       3,000,000 / 10,000,000  (30.0%)       3,100,000 / 10,000,000  (31.0%)       3,200,000 / 10,000,000  (32.0%)       3,300,000 / 10,000,000  (33.0%)       3,400,000 / 10,000,000  (34.0%)       3,500,000 / 10,000,000  (35.0%)       3,600,000 / 10,000,000  (36.0%)       3,700,000 / 10,000,000  (37.0%)       3,800,000 / 10,000,000  (38.0%)       3,900,000 / 10,000,000  (39.0%)       4,000,000 / 10,000,000  (40.0%)       4,100,000 / 10,000,000  (41.0%)       4,200,000 / 10,000,000  (42.0%)       4,300,000 / 10,000,000  (43.0%)       4,400,000 / 10,000,000  (44.0%)       4,500,000 / 10,000,000  (45.0%)       4,600,000 / 10,000,000  (46.0%)       4,700,000 / 10,000,000  (47.0%)       4,800,000 / 10,000,000  (48.0%)       4,900,000 / 10,000,000  (49.0%)       5,000,000 / 10,000,000  (50.0%)       5,100,000 / 10,000,000  (51.0%)       5,200,000 / 10,000,000  (52.0%)       5,300,000 / 10,000,000  (53.0%)       5,400,000 / 10,000,000  (54.0%)       5,500,000 / 10,000,000  (55.0%)       5,600,000 / 10,000,000  (56.0%)       5,700,000 / 10,000,000  (57.0%)       5,800,000 / 10,000,000  (58.0%)       5,900,000 / 10,000,000  (59.0%)       6,000,000 / 10,000,000  (60.0%)       6,100,000 / 10,000,000  (61.0%)       6,200,000 / 10,000,000  (62.0%)       6,300,000 / 10,000,000  (63.0%)       6,400,000 / 10,000,000  (64.0%)       6,500,000 / 10,000,000  (65.0%)       6,600,000 / 10,000,000  (66.0%)       6,700,000 / 10,000,000  (67.0%)       6,800,000 / 10,000,000  (68.0%)       6,900,000 / 10,000,000  (69.0%)       7,000,000 / 10,000,000  (70.0%)       7,100,000 / 10,000,000  (71.0%)       7,200,000 / 10,000,000  (72.0%)       7,300,000 / 10,000,000  (73.0%)       7,400,000 / 10,000,000  (74.0%)       7,500,000 / 10,000,000  (75.0%)       7,600,000 / 10,000,000  (76.0%)       7,700,000 / 10,000,000  (77.0%)       7,800,000 / 10,000,000  (78.0%)       7,900,000 / 10,000,000  (79.0%)       8,000,000 / 10,000,000  (80.0%)       8,100,000 / 10,000,000  (81.0%)       8,200,000 / 10,000,000  (82.0%)       8,300,000 / 10,000,000  (83.0%)       8,400,000 / 10,000,000  (84.0%)       8,500,000 / 10,000,000  (85.0%)       8,600,000 / 10,000,000  (86.0%)       8,700,000 / 10,000,000  (87.0%)       8,800,000 / 10,000,000  (88.0%)       8,900,000 / 10,000,000  (89.0%)       9,000,000 / 10,000,000  (90.0%)       9,100,000 / 10,000,000  (91.0%)       9,200,000 / 10,000,000  (92.0%)       9,300,000 / 10,000,000  (93.0%)       9,400,000 / 10,000,000  (94.0%)       9,500,000 / 10,000,000  (95.0%)       9,600,000 / 10,000,000  (96.0%)       9,700,000 / 10,000,000  (97.0%)       9,800,000 / 10,000,000  (98.0%)       9,900,000 / 10,000,000  (99.0%)      10,000,000 / 10,000,000  (100.0%)
+      1    0.038    26001  0.5449  0.5455
+      2    0.178     5604  0.7113  0.7119
+      4    0.403     2484  0.8460  0.8466
+      8    0.727     1375  0.9264  0.9270
+     16    1.401      714  0.9711  0.9717
+     32    2.715      368  0.9907  0.9913
+     64    5.227      191  0.9972  0.9978
+    128   10.093       99  0.9990  0.9996
+    256   19.567       51  0.9992  0.9998
+    512   38.481       26  0.9992  0.9998
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//deep_nb10000000.idx'  (ntotal=10000000  d=96  nsubspaces=8)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmpijau1bqh.idx'
+(done in 1242s)
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_deep1b.py --data-dir /Users/dhm/Documents/data/ --nb 10000000 --index-path /Users/dhm/Documents/indices//deep_nb10000000.idx --ivfpq-sweep
+
+======================================================================
+  Loading Deep10M dataset  (nb=10,000,000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  dataset   : Deep10M
+  d         : 96
+  nb (base) : 10,000,000
+  nq        : 10,000
+  maxtrain  : 1,000,000
+  OMP threads: 10
+  Loading queries … shape=(10000, 96)
+  Loading base into RAM … shape=(10000000, 96)  dtype=float32  (loaded into RAM)
+  Loading train … shape=(1000000, 96)
+  Loading ground truth … shape=(10000, 100)
+
+======================================================================
+  IndexSuCo benchmark  (Deep10M, d=96)
+======================================================================
+  nsubspaces      = 8
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//deep_nb10000000.idx …
+  Loaded in 1.87s
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 10,000,000
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 4272.8 MiB
+    search time     = 322724.0ms total
+    ms / query      = 32.272
+    QPS             = 31
+    Recall@1        = 0.9982
+    Recall@10       = 0.9986
+    10-Recall@10    = 0.9967
+    Dist ratio      = 1.0001
+
+======================================================================
+  IVFPQ nprobe sweep  (nlist=1024, m=8, nbits=8, Deep10M, d=96)
+======================================================================
+ nprobe     ms/q      QPS     R@1    R@10
+-----------------------------------------
+  Training IVFPQ (nlist=1024, m=8, nbits=8) on 1,000,000 vectors …
+  Adding 10,000,000 vectors …
+         100,000 / 10,000,000  (1.0%)         200,000 / 10,000,000  (2.0%)         300,000 / 10,000,000  (3.0%)         400,000 / 10,000,000  (4.0%)         500,000 / 10,000,000  (5.0%)         600,000 / 10,000,000  (6.0%)         700,000 / 10,000,000  (7.0%)         800,000 / 10,000,000  (8.0%)         900,000 / 10,000,000  (9.0%)       1,000,000 / 10,000,000  (10.0%)       1,100,000 / 10,000,000  (11.0%)       1,200,000 / 10,000,000  (12.0%)       1,300,000 / 10,000,000  (13.0%)       1,400,000 / 10,000,000  (14.0%)       1,500,000 / 10,000,000  (15.0%)       1,600,000 / 10,000,000  (16.0%)       1,700,000 / 10,000,000  (17.0%)       1,800,000 / 10,000,000  (18.0%)       1,900,000 / 10,000,000  (19.0%)       2,000,000 / 10,000,000  (20.0%)       2,100,000 / 10,000,000  (21.0%)       2,200,000 / 10,000,000  (22.0%)       2,300,000 / 10,000,000  (23.0%)       2,400,000 / 10,000,000  (24.0%)       2,500,000 / 10,000,000  (25.0%)       2,600,000 / 10,000,000  (26.0%)       2,700,000 / 10,000,000  (27.0%)       2,800,000 / 10,000,000  (28.0%)       2,900,000 / 10,000,000  (29.0%)       3,000,000 / 10,000,000  (30.0%)       3,100,000 / 10,000,000  (31.0%)       3,200,000 / 10,000,000  (32.0%)       3,300,000 / 10,000,000  (33.0%)       3,400,000 / 10,000,000  (34.0%)       3,500,000 / 10,000,000  (35.0%)       3,600,000 / 10,000,000  (36.0%)       3,700,000 / 10,000,000  (37.0%)       3,800,000 / 10,000,000  (38.0%)       3,900,000 / 10,000,000  (39.0%)       4,000,000 / 10,000,000  (40.0%)       4,100,000 / 10,000,000  (41.0%)       4,200,000 / 10,000,000  (42.0%)       4,300,000 / 10,000,000  (43.0%)       4,400,000 / 10,000,000  (44.0%)       4,500,000 / 10,000,000  (45.0%)       4,600,000 / 10,000,000  (46.0%)       4,700,000 / 10,000,000  (47.0%)       4,800,000 / 10,000,000  (48.0%)       4,900,000 / 10,000,000  (49.0%)       5,000,000 / 10,000,000  (50.0%)       5,100,000 / 10,000,000  (51.0%)       5,200,000 / 10,000,000  (52.0%)       5,300,000 / 10,000,000  (53.0%)       5,400,000 / 10,000,000  (54.0%)       5,500,000 / 10,000,000  (55.0%)       5,600,000 / 10,000,000  (56.0%)       5,700,000 / 10,000,000  (57.0%)       5,800,000 / 10,000,000  (58.0%)       5,900,000 / 10,000,000  (59.0%)       6,000,000 / 10,000,000  (60.0%)       6,100,000 / 10,000,000  (61.0%)       6,200,000 / 10,000,000  (62.0%)       6,300,000 / 10,000,000  (63.0%)       6,400,000 / 10,000,000  (64.0%)       6,500,000 / 10,000,000  (65.0%)       6,600,000 / 10,000,000  (66.0%)       6,700,000 / 10,000,000  (67.0%)       6,800,000 / 10,000,000  (68.0%)       6,900,000 / 10,000,000  (69.0%)       7,000,000 / 10,000,000  (70.0%)       7,100,000 / 10,000,000  (71.0%)       7,200,000 / 10,000,000  (72.0%)       7,300,000 / 10,000,000  (73.0%)       7,400,000 / 10,000,000  (74.0%)       7,500,000 / 10,000,000  (75.0%)       7,600,000 / 10,000,000  (76.0%)       7,700,000 / 10,000,000  (77.0%)       7,800,000 / 10,000,000  (78.0%)       7,900,000 / 10,000,000  (79.0%)       8,000,000 / 10,000,000  (80.0%)       8,100,000 / 10,000,000  (81.0%)       8,200,000 / 10,000,000  (82.0%)       8,300,000 / 10,000,000  (83.0%)       8,400,000 / 10,000,000  (84.0%)       8,500,000 / 10,000,000  (85.0%)       8,600,000 / 10,000,000  (86.0%)       8,700,000 / 10,000,000  (87.0%)       8,800,000 / 10,000,000  (88.0%)       8,900,000 / 10,000,000  (89.0%)       9,000,000 / 10,000,000  (90.0%)       9,100,000 / 10,000,000  (91.0%)       9,200,000 / 10,000,000  (92.0%)       9,300,000 / 10,000,000  (93.0%)       9,400,000 / 10,000,000  (94.0%)       9,500,000 / 10,000,000  (95.0%)       9,600,000 / 10,000,000  (96.0%)       9,700,000 / 10,000,000  (97.0%)       9,800,000 / 10,000,000  (98.0%)       9,900,000 / 10,000,000  (99.0%)      10,000,000 / 10,000,000  (100.0%)
+      1    0.012    82377  0.1278  0.3466
+      2    0.025    39283  0.1444  0.4148
+      4    0.059    16972  0.1575  0.4527
+      8    0.117     8532  0.1612  0.4705
+     16    0.220     4539  0.1619  0.4756
+     32    0.443     2259  0.1620  0.4764
+     64    0.790     1267  0.1621  0.4769
+    128    1.481      675  0.1621  0.4769
+    256    2.872      348  0.1621  0.4769
+    512    5.635      177  0.1621  0.4769
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//deep_nb10000000.idx'  (ntotal=10000000  d=96  nsubspaces=8)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmp6xm0o1s_.idx'
+(done in 8648s)
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_deep1b.py --data-dir /Users/dhm/Documents/data/ --nb 10000000 --index-path /Users/dhm/Documents/indices//deep_nb10000000.idx --opqpq-sweep
+
+======================================================================
+  Loading Deep10M dataset  (nb=10,000,000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  dataset   : Deep10M
+  d         : 96
+  nb (base) : 10,000,000
+  nq        : 10,000
+  maxtrain  : 1,000,000
+  OMP threads: 10
+  Loading queries … shape=(10000, 96)
+  Loading base into RAM … shape=(10000000, 96)  dtype=float32  (loaded into RAM)
+  Loading train … shape=(1000000, 96)
+  Loading ground truth … shape=(10000, 100)
+
+======================================================================
+  IndexSuCo benchmark  (Deep10M, d=96)
+======================================================================
+  nsubspaces      = 8
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//deep_nb10000000.idx …
+  Loaded in 1.56s
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 10,000,000
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 4272.8 MiB
+    search time     = 303559.6ms total
+    ms / query      = 30.356
+    QPS             = 33
+    Recall@1        = 0.9982
+    Recall@10       = 0.9986
+    10-Recall@10    = 0.9967
+    Dist ratio      = 1.0001
+
+======================================================================
+  OPQ+IVFPQ nprobe sweep  (nlist=1024, m=8, nbits=8, Deep10M, d=96)
+======================================================================
+ nprobe     ms/q      QPS     R@1    R@10
+-----------------------------------------
+  Training OPQ+IVFPQ (nlist=1024, m=8, nbits=8, opq_niter=25) on 1,000,000 vectors …
+  Adding 10,000,000 vectors …
+         100,000 / 10,000,000  (1.0%)         200,000 / 10,000,000  (2.0%)         300,000 / 10,000,000  (3.0%)         400,000 / 10,000,000  (4.0%)         500,000 / 10,000,000  (5.0%)         600,000 / 10,000,000  (6.0%)         700,000 / 10,000,000  (7.0%)         800,000 / 10,000,000  (8.0%)         900,000 / 10,000,000  (9.0%)       1,000,000 / 10,000,000  (10.0%)       1,100,000 / 10,000,000  (11.0%)       1,200,000 / 10,000,000  (12.0%)       1,300,000 / 10,000,000  (13.0%)       1,400,000 / 10,000,000  (14.0%)       1,500,000 / 10,000,000  (15.0%)       1,600,000 / 10,000,000  (16.0%)       1,700,000 / 10,000,000  (17.0%)       1,800,000 / 10,000,000  (18.0%)       1,900,000 / 10,000,000  (19.0%)       2,000,000 / 10,000,000  (20.0%)       2,100,000 / 10,000,000  (21.0%)       2,200,000 / 10,000,000  (22.0%)       2,300,000 / 10,000,000  (23.0%)       2,400,000 / 10,000,000  (24.0%)       2,500,000 / 10,000,000  (25.0%)       2,600,000 / 10,000,000  (26.0%)       2,700,000 / 10,000,000  (27.0%)       2,800,000 / 10,000,000  (28.0%)       2,900,000 / 10,000,000  (29.0%)       3,000,000 / 10,000,000  (30.0%)       3,100,000 / 10,000,000  (31.0%)       3,200,000 / 10,000,000  (32.0%)       3,300,000 / 10,000,000  (33.0%)       3,400,000 / 10,000,000  (34.0%)       3,500,000 / 10,000,000  (35.0%)       3,600,000 / 10,000,000  (36.0%)       3,700,000 / 10,000,000  (37.0%)       3,800,000 / 10,000,000  (38.0%)       3,900,000 / 10,000,000  (39.0%)       4,000,000 / 10,000,000  (40.0%)       4,100,000 / 10,000,000  (41.0%)       4,200,000 / 10,000,000  (42.0%)       4,300,000 / 10,000,000  (43.0%)       4,400,000 / 10,000,000  (44.0%)       4,500,000 / 10,000,000  (45.0%)       4,600,000 / 10,000,000  (46.0%)       4,700,000 / 10,000,000  (47.0%)       4,800,000 / 10,000,000  (48.0%)       4,900,000 / 10,000,000  (49.0%)       5,000,000 / 10,000,000  (50.0%)       5,100,000 / 10,000,000  (51.0%)       5,200,000 / 10,000,000  (52.0%)       5,300,000 / 10,000,000  (53.0%)       5,400,000 / 10,000,000  (54.0%)       5,500,000 / 10,000,000  (55.0%)       5,600,000 / 10,000,000  (56.0%)       5,700,000 / 10,000,000  (57.0%)       5,800,000 / 10,000,000  (58.0%)       5,900,000 / 10,000,000  (59.0%)       6,000,000 / 10,000,000  (60.0%)       6,100,000 / 10,000,000  (61.0%)       6,200,000 / 10,000,000  (62.0%)       6,300,000 / 10,000,000  (63.0%)       6,400,000 / 10,000,000  (64.0%)       6,500,000 / 10,000,000  (65.0%)       6,600,000 / 10,000,000  (66.0%)       6,700,000 / 10,000,000  (67.0%)       6,800,000 / 10,000,000  (68.0%)       6,900,000 / 10,000,000  (69.0%)       7,000,000 / 10,000,000  (70.0%)       7,100,000 / 10,000,000  (71.0%)       7,200,000 / 10,000,000  (72.0%)       7,300,000 / 10,000,000  (73.0%)       7,400,000 / 10,000,000  (74.0%)       7,500,000 / 10,000,000  (75.0%)       7,600,000 / 10,000,000  (76.0%)       7,700,000 / 10,000,000  (77.0%)       7,800,000 / 10,000,000  (78.0%)       7,900,000 / 10,000,000  (79.0%)       8,000,000 / 10,000,000  (80.0%)       8,100,000 / 10,000,000  (81.0%)       8,200,000 / 10,000,000  (82.0%)       8,300,000 / 10,000,000  (83.0%)       8,400,000 / 10,000,000  (84.0%)       8,500,000 / 10,000,000  (85.0%)       8,600,000 / 10,000,000  (86.0%)       8,700,000 / 10,000,000  (87.0%)       8,800,000 / 10,000,000  (88.0%)       8,900,000 / 10,000,000  (89.0%)       9,000,000 / 10,000,000  (90.0%)       9,100,000 / 10,000,000  (91.0%)       9,200,000 / 10,000,000  (92.0%)       9,300,000 / 10,000,000  (93.0%)       9,400,000 / 10,000,000  (94.0%)       9,500,000 / 10,000,000  (95.0%)       9,600,000 / 10,000,000  (96.0%)       9,700,000 / 10,000,000  (97.0%)       9,800,000 / 10,000,000  (98.0%)       9,900,000 / 10,000,000  (99.0%)      10,000,000 / 10,000,000  (100.0%)
+      1    0.013    78187  0.1379  0.3744
+      2    0.028    36194  0.1571  0.4497
+      4    0.058    17331  0.1682  0.4973
+      8    0.119     8371  0.1723  0.5151
+     16    0.214     4673  0.1737  0.5240
+     32    0.409     2447  0.1737  0.5262
+     64    0.783     1277  0.1738  0.5269
+    128    1.463      684  0.1738  0.5270
+    256    2.883      347  0.1738  0.5270
+    512    5.643      177  0.1738  0.5270
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//deep_nb10000000.idx'  (ntotal=10000000  d=96  nsubspaces=8)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmpwc6yl67f.idx'
+(done in 9041s)
+
+##########################################################################
+##  All benchmarks finished  —  Thu Mar 12 07:56:36 EET 2026
+##########################################################################

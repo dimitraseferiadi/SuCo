@@ -218,6 +218,12 @@ def run_benchmark(
         t_train = t_add = 0.0
         if verbose:
             print(f"  Loaded in {fmt_time(t_load)}")
+        # Sanity-check: ntotal must match nb to avoid silent wrong-size bugs
+        if index.ntotal != len(xb):
+            raise RuntimeError(
+                f"Loaded index has ntotal={index.ntotal:,} but xb has {len(xb):,} vectors. "
+                f"Delete {index_path} and rerun to rebuild."
+            )
     else:
         # Train
         if verbose:
@@ -1230,12 +1236,18 @@ def main():
     xq = ds.get_queries()                              # (10000, 96)
     print(f"shape={xq.shape}")
 
-    # For large datasets, keep base as a memory-mapped view to avoid a
-    # 35+ GiB contiguous RAM allocation.  add_batched() slices it in chunks.
+    # Load base vectors into RAM when small enough (≤10M → ≤3.84 GB).
+    # For larger datasets keep a memory-mapped view to avoid 35+ GiB allocations.
     base_fvecs = os.path.join(args.data_dir.rstrip("/"), "deep1b", "base.fvecs")
-    print("  Mapping base (mmap) …", end=" ", flush=True)
-    xb = fvecs_mmap(base_fvecs)[:args.nb]             # (nb, 96), pages load on demand
-    print(f"shape={xb.shape}  dtype={xb.dtype}  (not loaded into RAM)")
+    RAM_THRESHOLD = 10_000_000
+    if args.nb <= RAM_THRESHOLD:
+        print("  Loading base into RAM …", end=" ", flush=True)
+        xb = np.array(fvecs_mmap(base_fvecs)[:args.nb])   # contiguous RAM copy
+        print(f"shape={xb.shape}  dtype={xb.dtype}  (loaded into RAM)")
+    else:
+        print("  Mapping base (mmap) …", end=" ", flush=True)
+        xb = fvecs_mmap(base_fvecs)[:args.nb]             # pages load on demand
+        print(f"shape={xb.shape}  dtype={xb.dtype}  (not loaded into RAM)")
 
     print("  Loading train …", end=" ", flush=True)
     xt = ds.get_train(maxtrain=args.maxtrain)
