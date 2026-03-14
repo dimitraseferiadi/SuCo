@@ -1,0 +1,1560 @@
+Log: /Users/dhm/Documents/SuCo/logs//bench_all_20260311_173453.log
+
+##########################################################################
+##  SuCo Full Benchmark Suite  —  Wed Mar 11 17:34:53 EET 2026
+##########################################################################
+  data-dir     : /Users/dhm/Documents/data/
+  index-dir    : /Users/dhm/Documents/indices/
+  deep-nb      : 1000000
+  sift10m-mat  : /Users/dhm/Documents/data/SIFT10M/SIFT10Mfeatures.mat
+  spacev10m-dir: /Users/dhm/Documents/data/spacev10m/
+
+##########################################################################
+##  SIFT1M  (d=128, nb=1M, nq=10K)
+##########################################################################
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_sift1m.py --data-dir /Users/dhm/Documents/data/ --index-path /Users/dhm/Documents/indices//sift1m.idx --sweep
+
+======================================================================
+  Loading SIFT1M dataset  (d=128, nb=1 000 000, nq=10 000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  d         : 128
+  nb (base) : 1,000,000
+  nq        : 10,000
+  maxtrain  : 100,000
+  OMP threads: 10
+  Loading base … shape=(1000000, 128)
+  Loading queries … shape=(10000, 128)
+  Loading train … shape=(100000, 128)
+  Loading ground truth … shape=(10000, 100)
+
+======================================================================
+  IndexSuCo benchmark  (SIFT1M, d=128)
+======================================================================
+  nsubspaces      = 8  (half_dim=8)
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//sift1m.idx …
+  Loaded in 0.21s
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    nsubspaces      = 8  (half_dim=8)
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 549.6 MiB
+    search time     = 30002.3ms total
+    ms / query      = 3.000
+    QPS             = 333
+    Recall@1        = 0.9895
+    Recall@10       = 0.9965
+    10-Recall@10    = 0.9872
+    Dist ratio      = 1.0003
+
+======================================================================
+  Parameter Sweep  (SIFT1M, d=128)
+======================================================================
+ Ns   hd    nc   alpha     beta     ms/q      QPS     R@1    R@10    10R@10     ratio
+-------------------------------------------------------------------------------------
+  4   16    50   0.050   0.0050    3.280      305  0.9766  0.9837    0.9688    1.0010
+  8    8    50   0.050   0.0050    3.013      332  0.9895  0.9965    0.9872    1.0003
+ 16    4    50   0.050   0.0050    3.030      330  0.9896  0.9958    0.9827    1.0004
+  8    8    50   0.020   0.0020    2.417      414  0.9595  0.9661    0.9183    1.0025
+  8    8    50   0.100   0.0100    3.943      254  0.9909  0.9991    0.9964    1.0001
+  8    8    50   0.200   0.0200    5.927      169  0.9928  0.9998    0.9978    1.0000
+  8    8    25   0.050   0.0050    3.007      333  0.9820  0.9888    0.9709    1.0008
+  8    8   100   0.050   0.0050    3.411      293  0.9903  0.9980    0.9935    1.0001
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//sift1m.idx'  (ntotal=1000000  d=128  nsubspaces=8)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmp4lag2gws.idx'
+(done in 316s)
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_sift1m.py --data-dir /Users/dhm/Documents/data/ --index-path /Users/dhm/Documents/indices//sift1m.idx --flat-baseline
+
+======================================================================
+  Loading SIFT1M dataset  (d=128, nb=1 000 000, nq=10 000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  d         : 128
+  nb (base) : 1,000,000
+  nq        : 10,000
+  maxtrain  : 100,000
+  OMP threads: 10
+  Loading base … shape=(1000000, 128)
+  Loading queries … shape=(10000, 128)
+  Loading train … shape=(100000, 128)
+  Loading ground truth … shape=(10000, 100)
+
+======================================================================
+  Baseline: IndexFlatL2  (SIFT1M)
+======================================================================
+  ms/query  = 0.365
+  QPS       = 2742
+  Recall@1  = 0.9914  (upper bound for SuCo)
+  Recall@10 = 1.0000
+
+======================================================================
+  IndexSuCo benchmark  (SIFT1M, d=128)
+======================================================================
+  nsubspaces      = 8  (half_dim=8)
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//sift1m.idx …
+  Loaded in 0.07s
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    nsubspaces      = 8  (half_dim=8)
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 549.6 MiB
+    search time     = 30840.3ms total
+    ms / query      = 3.084
+    QPS             = 324
+    Recall@1        = 0.9895
+    Recall@10       = 0.9965
+    10-Recall@10    = 0.9872
+    Dist ratio      = 1.0003
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//sift1m.idx'  (ntotal=1000000  d=128  nsubspaces=8)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmpp608x811.idx'
+(done in 35s)
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_sift1m.py --data-dir /Users/dhm/Documents/data/ --index-path /Users/dhm/Documents/indices//sift1m.idx --hnsw-sweep
+
+======================================================================
+  Loading SIFT1M dataset  (d=128, nb=1 000 000, nq=10 000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  d         : 128
+  nb (base) : 1,000,000
+  nq        : 10,000
+  maxtrain  : 100,000
+  OMP threads: 10
+  Loading base … shape=(1000000, 128)
+  Loading queries … shape=(10000, 128)
+  Loading train … shape=(100000, 128)
+  Loading ground truth … shape=(10000, 100)
+
+======================================================================
+  IndexSuCo benchmark  (SIFT1M, d=128)
+======================================================================
+  nsubspaces      = 8  (half_dim=8)
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//sift1m.idx …
+  Loaded in 0.07s
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    nsubspaces      = 8  (half_dim=8)
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 549.6 MiB
+    search time     = 30829.9ms total
+    ms / query      = 3.083
+    QPS             = 324
+    Recall@1        = 0.9895
+    Recall@10       = 0.9965
+    10-Recall@10    = 0.9872
+    Dist ratio      = 1.0003
+
+======================================================================
+  HNSW efSearch sweep  (M=32, efConstruction=200)
+======================================================================
+efSearch     ms/q      QPS     R@1    R@10
+------------------------------------------
+  Loading HNSW index from /Users/dhm/Documents/indices//sift1m_hnsw_M32_efc200.idx …
+       8    0.007   140155  0.8109  0.8176
+      16    0.011    91829  0.9106  0.9183
+      32    0.019    53677  0.9612  0.9694
+      64    0.034    29540  0.9826  0.9912
+     128    0.064    15624  0.9897  0.9983
+     256    0.125     7988  0.9912  0.9998
+     512    0.257     3894  0.9913  0.9999
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//sift1m.idx'  (ntotal=1000000  d=128  nsubspaces=8)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmp0hteaas9.idx'
+(done in 36s)
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_sift1m.py --data-dir /Users/dhm/Documents/data/ --index-path /Users/dhm/Documents/indices//sift1m.idx --ivfflat-sweep
+
+======================================================================
+  Loading SIFT1M dataset  (d=128, nb=1 000 000, nq=10 000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  d         : 128
+  nb (base) : 1,000,000
+  nq        : 10,000
+  maxtrain  : 100,000
+  OMP threads: 10
+  Loading base … shape=(1000000, 128)
+  Loading queries … shape=(10000, 128)
+  Loading train … shape=(100000, 128)
+  Loading ground truth … shape=(10000, 100)
+
+======================================================================
+  IndexSuCo benchmark  (SIFT1M, d=128)
+======================================================================
+  nsubspaces      = 8  (half_dim=8)
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//sift1m.idx …
+  Loaded in 0.07s
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    nsubspaces      = 8  (half_dim=8)
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 549.6 MiB
+    search time     = 31214.9ms total
+    ms / query      = 3.121
+    QPS             = 320
+    Recall@1        = 0.9895
+    Recall@10       = 0.9965
+    10-Recall@10    = 0.9872
+    Dist ratio      = 1.0003
+
+======================================================================
+  IVFFlat nprobe sweep  (nlist=1024, SIFT1M, d=128)
+======================================================================
+ nprobe     ms/q      QPS     R@1    R@10
+-----------------------------------------
+  Loading IVFFlat index from /Users/dhm/Documents/indices//sift1m_ivfflat_nlist1024.idx …
+      1    0.006   176814  0.4633  0.4667
+      2    0.011    93024  0.6258  0.6299
+      4    0.021    47754  0.7720  0.7775
+      8    0.041    24588  0.8796  0.8866
+     16    0.080    12555  0.9460  0.9541
+     32    0.153     6517  0.9795  0.9879
+     64    0.298     3352  0.9891  0.9977
+    128    0.577     1733  0.9912  0.9998
+    256    1.116      896  0.9914  1.0000
+    512    2.206      453  0.9914  1.0000
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//sift1m.idx'  (ntotal=1000000  d=128  nsubspaces=8)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmp4ipd0ehg.idx'
+(done in 77s)
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_sift1m.py --data-dir /Users/dhm/Documents/data/ --index-path /Users/dhm/Documents/indices//sift1m.idx --ivfpq-sweep
+
+======================================================================
+  Loading SIFT1M dataset  (d=128, nb=1 000 000, nq=10 000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  d         : 128
+  nb (base) : 1,000,000
+  nq        : 10,000
+  maxtrain  : 100,000
+  OMP threads: 10
+  Loading base … shape=(1000000, 128)
+  Loading queries … shape=(10000, 128)
+  Loading train … shape=(100000, 128)
+  Loading ground truth … shape=(10000, 100)
+
+======================================================================
+  IndexSuCo benchmark  (SIFT1M, d=128)
+======================================================================
+  nsubspaces      = 8  (half_dim=8)
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//sift1m.idx …
+  Loaded in 0.07s
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    nsubspaces      = 8  (half_dim=8)
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 549.6 MiB
+    search time     = 32288.2ms total
+    ms / query      = 3.229
+    QPS             = 310
+    Recall@1        = 0.9895
+    Recall@10       = 0.9965
+    10-Recall@10    = 0.9872
+    Dist ratio      = 1.0003
+
+======================================================================
+  IVFPQ nprobe sweep  (nlist=1024, m=8, nbits=8, SIFT1M, d=128)
+======================================================================
+ nprobe     ms/q      QPS     R@1    R@10
+-----------------------------------------
+  Loading IVFPQ index from /Users/dhm/Documents/indices//sift1m_ivfpq_nlist1024_m8_b8.idx …
+      1    0.002   400523  0.2017  0.4130
+      2    0.003   320862  0.2429  0.5302
+      4    0.004   227330  0.2651  0.6191
+      8    0.007   140867  0.2781  0.6705
+     16    0.013    79170  0.2840  0.6921
+     32    0.023    43597  0.2847  0.6995
+     64    0.044    22868  0.2846  0.7013
+    128    0.084    11959  0.2848  0.7016
+    256    0.163     6130  0.2848  0.7017
+    512    0.332     3013  0.2848  0.7017
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//sift1m.idx'  (ntotal=1000000  d=128  nsubspaces=8)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmp2pafacie.idx'
+(done in 40s)
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_sift1m.py --data-dir /Users/dhm/Documents/data/ --index-path /Users/dhm/Documents/indices//sift1m.idx --opqpq-sweep
+
+======================================================================
+  Loading SIFT1M dataset  (d=128, nb=1 000 000, nq=10 000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  d         : 128
+  nb (base) : 1,000,000
+  nq        : 10,000
+  maxtrain  : 100,000
+  OMP threads: 10
+  Loading base … shape=(1000000, 128)
+  Loading queries … shape=(10000, 128)
+  Loading train … shape=(100000, 128)
+  Loading ground truth … shape=(10000, 100)
+
+======================================================================
+  IndexSuCo benchmark  (SIFT1M, d=128)
+======================================================================
+  nsubspaces      = 8  (half_dim=8)
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//sift1m.idx …
+  Loaded in 0.07s
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    nsubspaces      = 8  (half_dim=8)
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 549.6 MiB
+    search time     = 32082.0ms total
+    ms / query      = 3.208
+    QPS             = 312
+    Recall@1        = 0.9895
+    Recall@10       = 0.9965
+    10-Recall@10    = 0.9872
+    Dist ratio      = 1.0003
+
+======================================================================
+  OPQ+IVFPQ nprobe sweep  (nlist=1024, m=8, nbits=8, SIFT1M, d=128)
+======================================================================
+ nprobe     ms/q      QPS     R@1    R@10
+-----------------------------------------
+  Loading OPQ+IVFPQ index from /Users/dhm/Documents/indices//sift1m_opqpq_nlist1024_m8_b8.idx …
+      1    0.003   390464  0.2087  0.4165
+      2    0.003   326840  0.2490  0.5380
+      4    0.004   228301  0.2747  0.6239
+      8    0.007   143114  0.2873  0.6797
+     16    0.013    77525  0.2911  0.7026
+     32    0.023    43168  0.2921  0.7121
+     64    0.043    23517  0.2924  0.7139
+    128    0.084    11974  0.2924  0.7141
+    256    0.163     6152  0.2924  0.7142
+    512    0.330     3030  0.2924  0.7142
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//sift1m.idx'  (ntotal=1000000  d=128  nsubspaces=8)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmp57hso5_l.idx'
+(done in 39s)
+
+##########################################################################
+##  GIST1M  (d=960, nb=1M, nq=1K)
+##########################################################################
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_gist1m.py --data-dir /Users/dhm/Documents/data/ --index-path /Users/dhm/Documents/indices//gist1m.idx --sweep
+
+======================================================================
+  Loading GIST1M dataset  (d=960, nb=1 000 000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  d         : 960
+  nb (base) : 1,000,000
+  maxtrain  : 100,000
+  OMP threads: 10
+  Loading base … shape=(1000000, 960)
+  Loading queries … shape=(1000, 960)
+  Loading train … shape=(100000, 960)
+  Loading ground truth … shape=(1000, 100)
+  Note: actual nq=1,000 (DatasetGIST1M.nq=10,000 — file has 1,000 queries)
+
+======================================================================
+  IndexSuCo benchmark  (GIST1M, d=960)
+======================================================================
+  nsubspaces      = 40  (half_dim=12)
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//gist1m.idx …
+  Loaded in 2.41s
+  Searching 1,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    nsubspaces      = 40  (half_dim=12)
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 3968.9 MiB
+    search time     = 5506.0ms total
+    ms / query      = 5.506
+    QPS             = 182
+    Recall@1        = 0.9750
+    Recall@10       = 0.9800
+    10-Recall@10    = 0.9467
+    Dist ratio      = 1.0007
+
+======================================================================
+  Parameter Sweep  (GIST1M, d=960)
+======================================================================
+ Ns   hd    nc   alpha     beta     ms/q      QPS     R@1    R@10    10R@10     ratio
+-------------------------------------------------------------------------------------
+  8   60    50   0.050   0.0050    5.723      175  0.8900  0.8980    0.8528    1.0025
+ 16   30    50   0.050   0.0050    5.308      188  0.9450  0.9500    0.9204    1.0011
+ 24   20    50   0.050   0.0050    5.281      189  0.9610  0.9640    0.9233    1.0010
+ 40   12    50   0.050   0.0050    5.528      181  0.9750  0.9800    0.9467    1.0007
+ 60    8    50   0.050   0.0050    6.350      157  0.9730  0.9810    0.9529    1.0007
+ 40   12    50   0.020   0.0020    3.587      279  0.8510  0.8600    0.7651    1.0043
+ 40   12    50   0.100   0.0100    8.869      113  0.9880  0.9980    0.9922    1.0001
+ 40   12    50   0.200   0.0200   16.480       61  0.9890  0.9990    0.9984    1.0000
+ 40   12    25   0.050   0.0050    4.988      200  0.9400  0.9480    0.8998    1.0016
+ 40   12   100   0.050   0.0050    7.142      140  0.9870  0.9920    0.9730    1.0003
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//gist1m.idx'  (ntotal=1000000  d=960  nsubspaces=40)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmpju71ciy_.idx'
+(done in 129s)
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_gist1m.py --data-dir /Users/dhm/Documents/data/ --index-path /Users/dhm/Documents/indices//gist1m.idx --flat-baseline
+
+======================================================================
+  Loading GIST1M dataset  (d=960, nb=1 000 000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  d         : 960
+  nb (base) : 1,000,000
+  maxtrain  : 100,000
+  OMP threads: 10
+  Loading base … shape=(1000000, 960)
+  Loading queries … shape=(1000, 960)
+  Loading train … shape=(100000, 960)
+  Loading ground truth … shape=(1000, 100)
+  Note: actual nq=1,000 (DatasetGIST1M.nq=10,000 — file has 1,000 queries)
+
+======================================================================
+  Baseline: IndexFlatL2  (GIST1M)
+======================================================================
+  ms/query  = 1.538
+  QPS       = 650
+  Recall@1  = 0.9940  (upper bound for SuCo)
+  Recall@10 = 1.0000
+
+======================================================================
+  IndexSuCo benchmark  (GIST1M, d=960)
+======================================================================
+  nsubspaces      = 40  (half_dim=12)
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//gist1m.idx …
+  Loaded in 1.36s
+  Searching 1,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    nsubspaces      = 40  (half_dim=12)
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 3968.9 MiB
+    search time     = 5297.7ms total
+    ms / query      = 5.298
+    QPS             = 189
+    Recall@1        = 0.9750
+    Recall@10       = 0.9800
+    10-Recall@10    = 0.9467
+    Dist ratio      = 1.0007
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//gist1m.idx'  (ntotal=1000000  d=960  nsubspaces=40)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmp77_o1lvw.idx'
+(done in 14s)
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_gist1m.py --data-dir /Users/dhm/Documents/data/ --index-path /Users/dhm/Documents/indices//gist1m.idx --hnsw-sweep
+
+======================================================================
+  Loading GIST1M dataset  (d=960, nb=1 000 000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  d         : 960
+  nb (base) : 1,000,000
+  maxtrain  : 100,000
+  OMP threads: 10
+  Loading base … shape=(1000000, 960)
+  Loading queries … shape=(1000, 960)
+  Loading train … shape=(100000, 960)
+  Loading ground truth … shape=(1000, 100)
+  Note: actual nq=1,000 (DatasetGIST1M.nq=10,000 — file has 1,000 queries)
+
+======================================================================
+  IndexSuCo benchmark  (GIST1M, d=960)
+======================================================================
+  nsubspaces      = 40  (half_dim=12)
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//gist1m.idx …
+  Loaded in 1.39s
+  Searching 1,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    nsubspaces      = 40  (half_dim=12)
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 3968.9 MiB
+    search time     = 5356.5ms total
+    ms / query      = 5.356
+    QPS             = 187
+    Recall@1        = 0.9750
+    Recall@10       = 0.9800
+    10-Recall@10    = 0.9467
+    Dist ratio      = 1.0007
+
+======================================================================
+  HNSW efSearch sweep  (M=32, efConstruction=200)
+======================================================================
+efSearch     ms/q      QPS     R@1    R@10
+------------------------------------------
+  Loading HNSW index from /Users/dhm/Documents/indices//gist1m_hnsw_M32_efc200.idx …
+       8    0.081    12395  0.4960  0.4990
+      16    0.059    17008  0.6510  0.6560
+      32    0.091    10931  0.7730  0.7780
+      64    0.152     6570  0.8830  0.8880
+     128    0.268     3734  0.9330  0.9390
+     256    0.485     2063  0.9620  0.9680
+     512    0.902     1108  0.9800  0.9860
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//gist1m.idx'  (ntotal=1000000  d=960  nsubspaces=40)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmp1mw5dsjz.idx'
+(done in 14s)
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_gist1m.py --data-dir /Users/dhm/Documents/data/ --index-path /Users/dhm/Documents/indices//gist1m.idx --ivfflat-sweep
+
+======================================================================
+  Loading GIST1M dataset  (d=960, nb=1 000 000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  d         : 960
+  nb (base) : 1,000,000
+  maxtrain  : 100,000
+  OMP threads: 10
+  Loading base … shape=(1000000, 960)
+  Loading queries … shape=(1000, 960)
+  Loading train … shape=(100000, 960)
+  Loading ground truth … shape=(1000, 100)
+  Note: actual nq=1,000 (DatasetGIST1M.nq=10,000 — file has 1,000 queries)
+
+======================================================================
+  IndexSuCo benchmark  (GIST1M, d=960)
+======================================================================
+  nsubspaces      = 40  (half_dim=12)
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//gist1m.idx …
+  Loaded in 1.39s
+  Searching 1,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    nsubspaces      = 40  (half_dim=12)
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 3968.9 MiB
+    search time     = 5332.6ms total
+    ms / query      = 5.333
+    QPS             = 188
+    Recall@1        = 0.9750
+    Recall@10       = 0.9800
+    10-Recall@10    = 0.9467
+    Dist ratio      = 1.0007
+
+======================================================================
+  IVFFlat nprobe sweep  (nlist=1024, GIST1M, d=960)
+======================================================================
+ nprobe     ms/q      QPS     R@1    R@10
+-----------------------------------------
+  Loading IVFFlat index from /Users/dhm/Documents/indices//gist1m_ivfflat_nlist1024.idx …
+      1    0.067    14876  0.2770  0.2800
+      2    0.110     9050  0.4260  0.4320
+      4    0.216     4623  0.5680  0.5740
+      8    0.420     2380  0.7110  0.7170
+     16    0.841     1190  0.8490  0.8550
+     32    1.661      602  0.9200  0.9260
+     64    3.256      307  0.9700  0.9760
+    128    6.311      158  0.9890  0.9950
+    256   11.925       84  0.9930  0.9990
+    512   21.462       47  0.9940  1.0000
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//gist1m.idx'  (ntotal=1000000  d=960  nsubspaces=40)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmp_ljoa2yc.idx'
+(done in 59s)
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_gist1m.py --data-dir /Users/dhm/Documents/data/ --index-path /Users/dhm/Documents/indices//gist1m.idx --ivfpq-sweep
+
+======================================================================
+  Loading GIST1M dataset  (d=960, nb=1 000 000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  d         : 960
+  nb (base) : 1,000,000
+  maxtrain  : 100,000
+  OMP threads: 10
+  Loading base … shape=(1000000, 960)
+  Loading queries … shape=(1000, 960)
+  Loading train … shape=(100000, 960)
+  Loading ground truth … shape=(1000, 100)
+  Note: actual nq=1,000 (DatasetGIST1M.nq=10,000 — file has 1,000 queries)
+
+======================================================================
+  IndexSuCo benchmark  (GIST1M, d=960)
+======================================================================
+  nsubspaces      = 40  (half_dim=12)
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//gist1m.idx …
+  Loaded in 1.40s
+  Searching 1,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    nsubspaces      = 40  (half_dim=12)
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 3968.9 MiB
+    search time     = 5367.3ms total
+    ms / query      = 5.367
+    QPS             = 186
+    Recall@1        = 0.9750
+    Recall@10       = 0.9800
+    10-Recall@10    = 0.9467
+    Dist ratio      = 1.0007
+
+======================================================================
+  IVFPQ nprobe sweep  (nlist=1024, m=48, nbits=8, GIST1M, d=960)
+======================================================================
+ nprobe     ms/q      QPS     R@1    R@10
+-----------------------------------------
+  Loading IVFPQ index from /Users/dhm/Documents/indices//gist1m_ivfpq_nlist1024_m48_b8.idx …
+      1    0.015    68787  0.1380  0.2530
+      2    0.022    45232  0.1720  0.3640
+      4    0.032    30946  0.1950  0.4450
+      8    0.055    18336  0.2100  0.5080
+     16    0.097    10305  0.2180  0.5580
+     32    0.176     5695  0.2190  0.5720
+     64    0.342     2920  0.2190  0.5750
+    128    0.677     1477  0.2190  0.5750
+    256    1.269      788  0.2190  0.5750
+    512    2.323      431  0.2190  0.5750
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//gist1m.idx'  (ntotal=1000000  d=960  nsubspaces=40)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmplsgy0z86.idx'
+(done in 16s)
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_gist1m.py --data-dir /Users/dhm/Documents/data/ --index-path /Users/dhm/Documents/indices//gist1m.idx --opqpq-sweep
+
+======================================================================
+  Loading GIST1M dataset  (d=960, nb=1 000 000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  d         : 960
+  nb (base) : 1,000,000
+  maxtrain  : 100,000
+  OMP threads: 10
+  Loading base … shape=(1000000, 960)
+  Loading queries … shape=(1000, 960)
+  Loading train … shape=(100000, 960)
+  Loading ground truth … shape=(1000, 100)
+  Note: actual nq=1,000 (DatasetGIST1M.nq=10,000 — file has 1,000 queries)
+
+======================================================================
+  IndexSuCo benchmark  (GIST1M, d=960)
+======================================================================
+  nsubspaces      = 40  (half_dim=12)
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//gist1m.idx …
+  Loaded in 1.40s
+  Searching 1,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    nsubspaces      = 40  (half_dim=12)
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 3968.9 MiB
+    search time     = 5427.2ms total
+    ms / query      = 5.427
+    QPS             = 184
+    Recall@1        = 0.9750
+    Recall@10       = 0.9800
+    10-Recall@10    = 0.9467
+    Dist ratio      = 1.0007
+
+======================================================================
+  OPQ+IVFPQ nprobe sweep  (nlist=1024, m=48, nbits=8, GIST1M, d=960)
+======================================================================
+ nprobe     ms/q      QPS     R@1    R@10
+-----------------------------------------
+  Loading OPQ+IVFPQ index from /Users/dhm/Documents/indices//gist1m_opqpq_nlist1024_m48_b8.idx …
+      1    0.018    56089  0.1820  0.2800
+      2    0.022    45437  0.2620  0.4240
+      4    0.036    27699  0.3080  0.5460
+      8    0.055    18311  0.3710  0.6770
+     16    0.095    10547  0.4080  0.7930
+     32    0.184     5426  0.4280  0.8420
+     64    0.335     2982  0.4400  0.8830
+    128    0.652     1535  0.4410  0.8920
+    256    1.260      794  0.4410  0.8920
+    512    2.267      441  0.4420  0.8930
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//gist1m.idx'  (ntotal=1000000  d=960  nsubspaces=40)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmpcgy5m06m.idx'
+(done in 16s)
+
+##########################################################################
+##  Deep1M  (d=96, nb=1000000)
+##########################################################################
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_deep1b.py --data-dir /Users/dhm/Documents/data/ --nb 1000000 --index-path /Users/dhm/Documents/indices//deep_nb1000000.idx --sweep
+
+======================================================================
+  Loading Deep1M dataset  (nb=1,000,000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  dataset   : Deep1M
+  d         : 96
+  nb (base) : 1,000,000
+  nq        : 10,000
+  maxtrain  : 500,000
+  OMP threads: 10
+  Loading queries … shape=(10000, 96)
+  Mapping base (mmap) … shape=(1000000, 96)  dtype=float32  (not loaded into RAM)
+  Loading train … shape=(500000, 96)
+  Loading ground truth … shape=(10000, 100)
+
+======================================================================
+  IndexSuCo benchmark  (Deep1M, d=96)
+======================================================================
+  nsubspaces      = 8
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//deep_nb1000000.idx …
+  Loaded in 0.14s
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 427.6 MiB
+    search time     = 30480.8ms total
+    ms / query      = 3.048
+    QPS             = 328
+    Recall@1        = 0.9961
+    Recall@10       = 0.9963
+    10-Recall@10    = 0.9873
+    Dist ratio      = 1.0003
+
+======================================================================
+  Parameter Sweep
+======================================================================
+ Ns   hd    nc   alpha     beta     ms/q      QPS     R@1    R@10    10R@10     ratio
+-------------------------------------------------------------------------------------
+  8    6    50   0.020   0.0020    2.551      392  0.9711  0.9713    0.9434    1.0015
+  8    6    50   0.050   0.0050    2.982      335  0.9961  0.9963    0.9873    1.0003
+  8    6    50   0.100   0.0100    3.598      278  0.9993  0.9994    0.9972    1.0000
+  8    6    50   0.200   0.0200    5.144      194  0.9996  0.9998    0.9993    1.0000
+  4   12    50   0.050   0.0050    3.154      317  0.9759  0.9761    0.9562    1.0013
+ 12    4    50   0.050   0.0050    2.928      342  0.9981  0.9983    0.9931    1.0001
+  8    6    25   0.050   0.0050    2.819      355  0.9888  0.9889    0.9708    1.0007
+  8    6   100   0.050   0.0050    3.426      292  0.9981  0.9983    0.9951    1.0001
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//deep_nb1000000.idx'  (ntotal=1000000  d=96  nsubspaces=8)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmp_cf7ucuz.idx'
+(done in 302s)
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_deep1b.py --data-dir /Users/dhm/Documents/data/ --nb 1000000 --index-path /Users/dhm/Documents/indices//deep_nb1000000.idx --flat-baseline
+
+======================================================================
+  Loading Deep1M dataset  (nb=1,000,000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  dataset   : Deep1M
+  d         : 96
+  nb (base) : 1,000,000
+  nq        : 10,000
+  maxtrain  : 500,000
+  OMP threads: 10
+  Loading queries … shape=(10000, 96)
+  Mapping base (mmap) … shape=(1000000, 96)  dtype=float32  (not loaded into RAM)
+  Loading train … shape=(500000, 96)
+  Loading ground truth … shape=(10000, 100)
+
+======================================================================
+  Baseline: IndexFlatL2
+======================================================================
+  ms/query  = 0.316
+  QPS       = 3168
+  Recall@1  = 0.9997  (upper bound for SuCo)
+  Recall@10 = 0.9999
+
+======================================================================
+  IndexSuCo benchmark  (Deep1M, d=96)
+======================================================================
+  nsubspaces      = 8
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//deep_nb1000000.idx …
+  Loaded in 0.05s
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 427.6 MiB
+    search time     = 29451.9ms total
+    ms / query      = 2.945
+    QPS             = 340
+    Recall@1        = 0.9961
+    Recall@10       = 0.9963
+    10-Recall@10    = 0.9873
+    Dist ratio      = 1.0003
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//deep_nb1000000.idx'  (ntotal=1000000  d=96  nsubspaces=8)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmpen0tl0kj.idx'
+(done in 33s)
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_deep1b.py --data-dir /Users/dhm/Documents/data/ --nb 1000000 --index-path /Users/dhm/Documents/indices//deep_nb1000000.idx --hnsw-sweep
+
+======================================================================
+  Loading Deep1M dataset  (nb=1,000,000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  dataset   : Deep1M
+  d         : 96
+  nb (base) : 1,000,000
+  nq        : 10,000
+  maxtrain  : 500,000
+  OMP threads: 10
+  Loading queries … shape=(10000, 96)
+  Mapping base (mmap) … shape=(1000000, 96)  dtype=float32  (not loaded into RAM)
+  Loading train … shape=(500000, 96)
+  Loading ground truth … shape=(10000, 100)
+
+======================================================================
+  IndexSuCo benchmark  (Deep1M, d=96)
+======================================================================
+  nsubspaces      = 8
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//deep_nb1000000.idx …
+  Loaded in 0.05s
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 427.6 MiB
+    search time     = 29342.6ms total
+    ms / query      = 2.934
+    QPS             = 341
+    Recall@1        = 0.9961
+    Recall@10       = 0.9963
+    10-Recall@10    = 0.9873
+    Dist ratio      = 1.0003
+
+======================================================================
+  HNSW efSearch sweep  (M=32, efConstruction=200)
+======================================================================
+efSearch     ms/q      QPS     R@1    R@10
+------------------------------------------
+  Loading HNSW index from /Users/dhm/Documents/indices//deep_nb1000000_hnsw_M32_efc200.idx …
+       8    0.006   157116  0.8205  0.8207
+      16    0.010   102981  0.9155  0.9157
+      32    0.016    61098  0.9672  0.9674
+      64    0.030    33757  0.9897  0.9899
+     128    0.057    17548  0.9970  0.9972
+     256    0.110     9100  0.9992  0.9994
+     512    0.215     4641  0.9995  0.9997
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//deep_nb1000000.idx'  (ntotal=1000000  d=96  nsubspaces=8)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmpbyqnir26.idx'
+(done in 35s)
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_deep1b.py --data-dir /Users/dhm/Documents/data/ --nb 1000000 --index-path /Users/dhm/Documents/indices//deep_nb1000000.idx --ivfflat-sweep
+
+======================================================================
+  Loading Deep1M dataset  (nb=1,000,000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  dataset   : Deep1M
+  d         : 96
+  nb (base) : 1,000,000
+  nq        : 10,000
+  maxtrain  : 500,000
+  OMP threads: 10
+  Loading queries … shape=(10000, 96)
+  Mapping base (mmap) … shape=(1000000, 96)  dtype=float32  (not loaded into RAM)
+  Loading train … shape=(500000, 96)
+  Loading ground truth … shape=(10000, 100)
+
+======================================================================
+  IndexSuCo benchmark  (Deep1M, d=96)
+======================================================================
+  nsubspaces      = 8
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//deep_nb1000000.idx …
+  Loaded in 0.05s
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 427.6 MiB
+    search time     = 29635.1ms total
+    ms / query      = 2.964
+    QPS             = 337
+    Recall@1        = 0.9961
+    Recall@10       = 0.9963
+    10-Recall@10    = 0.9873
+    Dist ratio      = 1.0003
+
+======================================================================
+  IVFFlat nprobe sweep  (nlist=1024, Deep1M, d=96)
+======================================================================
+ nprobe     ms/q      QPS     R@1    R@10
+-----------------------------------------
+  Loading IVFFlat index from /Users/dhm/Documents/indices//deep_nb1000000_ivfflat_nlist1024.idx …
+      1    0.004   237610  0.4886  0.4888
+      2    0.008   129955  0.6611  0.6613
+      4    0.015    67947  0.7974  0.7976
+      8    0.028    35648  0.8952  0.8954
+     16    0.054    18556  0.9538  0.9540
+     32    0.103     9679  0.9836  0.9838
+     64    0.198     5053  0.9959  0.9961
+    128    0.379     2637  0.9988  0.9990
+    256    0.734     1362  0.9994  0.9996
+    512    1.449      690  0.9997  0.9999
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//deep_nb1000000.idx'  (ntotal=1000000  d=96  nsubspaces=8)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmphbcm3rhq.idx'
+(done in 60s)
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_deep1b.py --data-dir /Users/dhm/Documents/data/ --nb 1000000 --index-path /Users/dhm/Documents/indices//deep_nb1000000.idx --ivfpq-sweep
+
+======================================================================
+  Loading Deep1M dataset  (nb=1,000,000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  dataset   : Deep1M
+  d         : 96
+  nb (base) : 1,000,000
+  nq        : 10,000
+  maxtrain  : 500,000
+  OMP threads: 10
+  Loading queries … shape=(10000, 96)
+  Mapping base (mmap) … shape=(1000000, 96)  dtype=float32  (not loaded into RAM)
+  Loading train … shape=(500000, 96)
+  Loading ground truth … shape=(10000, 100)
+
+======================================================================
+  IndexSuCo benchmark  (Deep1M, d=96)
+======================================================================
+  nsubspaces      = 8
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//deep_nb1000000.idx …
+  Loaded in 0.06s
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 427.6 MiB
+    search time     = 30475.5ms total
+    ms / query      = 3.048
+    QPS             = 328
+    Recall@1        = 0.9961
+    Recall@10       = 0.9963
+    10-Recall@10    = 0.9873
+    Dist ratio      = 1.0003
+
+======================================================================
+  IVFPQ nprobe sweep  (nlist=1024, m=8, nbits=8, Deep1M, d=96)
+======================================================================
+ nprobe     ms/q      QPS     R@1    R@10
+-----------------------------------------
+  Loading IVFPQ index from /Users/dhm/Documents/indices//deep_nb1000000_ivfpq_nlist1024_m8_b8.idx …
+      1    0.003   383823  0.1583  0.3869
+      2    0.003   326051  0.1832  0.4857
+      4    0.004   239031  0.1967  0.5498
+      8    0.007   147964  0.2026  0.5834
+     16    0.012    81872  0.2053  0.5969
+     32    0.022    46046  0.2059  0.5999
+     64    0.040    24784  0.2059  0.6011
+    128    0.078    12792  0.2059  0.6011
+    256    0.148     6739  0.2059  0.6011
+    512    0.298     3360  0.2059  0.6011
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//deep_nb1000000.idx'  (ntotal=1000000  d=96  nsubspaces=8)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmp_3gocqt9.idx'
+(done in 37s)
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_deep1b.py --data-dir /Users/dhm/Documents/data/ --nb 1000000 --index-path /Users/dhm/Documents/indices//deep_nb1000000.idx --opqpq-sweep
+
+======================================================================
+  Loading Deep1M dataset  (nb=1,000,000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  dataset   : Deep1M
+  d         : 96
+  nb (base) : 1,000,000
+  nq        : 10,000
+  maxtrain  : 500,000
+  OMP threads: 10
+  Loading queries … shape=(10000, 96)
+  Mapping base (mmap) … shape=(1000000, 96)  dtype=float32  (not loaded into RAM)
+  Loading train … shape=(500000, 96)
+  Loading ground truth … shape=(10000, 100)
+
+======================================================================
+  IndexSuCo benchmark  (Deep1M, d=96)
+======================================================================
+  nsubspaces      = 8
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//deep_nb1000000.idx …
+  Loaded in 0.05s
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 427.6 MiB
+    search time     = 30364.1ms total
+    ms / query      = 3.036
+    QPS             = 329
+    Recall@1        = 0.9961
+    Recall@10       = 0.9963
+    10-Recall@10    = 0.9873
+    Dist ratio      = 1.0003
+
+======================================================================
+  OPQ+IVFPQ nprobe sweep  (nlist=1024, m=8, nbits=8, Deep1M, d=96)
+======================================================================
+ nprobe     ms/q      QPS     R@1    R@10
+-----------------------------------------
+  Loading OPQ+IVFPQ index from /Users/dhm/Documents/indices//deep_nb1000000_opqpq_nlist1024_m8_b8.idx …
+      1    0.003   372879  0.1733  0.4073
+      2    0.003   327153  0.2066  0.5186
+      4    0.004   237777  0.2236  0.5943
+      8    0.007   144936  0.2312  0.6368
+     16    0.012    84518  0.2343  0.6542
+     32    0.021    47902  0.2351  0.6607
+     64    0.039    25453  0.2353  0.6628
+    128    0.075    13293  0.2353  0.6630
+    256    0.147     6820  0.2353  0.6630
+    512    0.292     3419  0.2353  0.6630
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//deep_nb1000000.idx'  (ntotal=1000000  d=96  nsubspaces=8)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmpvap3gg14.idx'
+(done in 37s)
+
+##########################################################################
+##  SIFT10M  (d=128, nb=10M)
+##########################################################################
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_sift10m.py --mat-path /Users/dhm/Documents/data/SIFT10M/SIFT10Mfeatures.mat --gt-path /Users/dhm/Documents/indices//sift10m_gt.npy --index-path /Users/dhm/Documents/indices//sift10m.idx --sweep
+
+======================================================================
+  Loading SIFT10M dataset  (d=128, nb=10,000,000, nq=10,000)
+======================================================================
+  mat file  : /Users/dhm/Documents/data/SIFT10M/SIFT10Mfeatures.mat
+  total_n   : 11,164,866   d=128
+  Loading base vectors [0 .. 10,000,000) … shape=(10000000, 128)  dtype=float32
+  Loading query vectors [10,000,000 .. 10,010,000) … shape=(10000, 128)
+  d         : 128
+  nb (base) : 10,000,000
+  nq        : 10,000
+  maxtrain  : 500,000
+  OMP threads: 10
+  Loading precomputed GT from /Users/dhm/Documents/indices//sift10m_gt.npy … shape=(10000, 100)
+
+  Training sample ready: (500000, 128)
+
+======================================================================
+  IndexSuCo benchmark  (SIFT10M, d=128)
+======================================================================
+  nsubspaces      = 8  (half_dim=8)
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//sift10m.idx …
+  Loaded in 2.21s
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 10,000,000
+    nsubspaces      = 8  (half_dim=8)
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 5493.5 MiB
+    search time     = 328555.7ms total
+    ms / query      = 32.856
+    QPS             = 30
+    Recall@1        = 0.9983
+    Recall@10       = 0.9995
+    10-Recall@10    = 0.9981
+    Dist ratio      = 1.0000
+
+======================================================================
+  Parameter Sweep  (SIFT10M, d=128)
+======================================================================
+ Ns   hd    nc   alpha     beta     ms/q      QPS     R@1    R@10    10R@10     ratio
+-------------------------------------------------------------------------------------
+  8    8    50   0.020   0.0020   25.713       39  0.9924  0.9938    0.9805    1.0006
+  8    8    50   0.050   0.0050   32.675       31  0.9983  0.9995    0.9981    1.0000
+  8    8    50   0.100   0.0100   38.625       26  0.9992  0.9999    0.9993    1.0000
+  8    8    50   0.200   0.0200   51.997       19  0.9985  0.9999    0.9997    1.0000
+  4   16    50   0.050   0.0050   36.792       27  0.9975  0.9986    0.9951    1.0002
+ 16    4    50   0.050   0.0050   29.897       33  0.9974  0.9984    0.9962    1.0001
+  8    8    25   0.050   0.0050   32.246       31  0.9968  0.9982    0.9947    1.0001
+  8    8   100   0.050   0.0050   33.404       30  0.9985  0.9999    0.9992    1.0000
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//sift10m.idx'  (ntotal=10000000  d=128  nsubspaces=8)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmp1d6xgyqc.idx'
+(done in 3185s)
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_sift10m.py --mat-path /Users/dhm/Documents/data/SIFT10M/SIFT10Mfeatures.mat --gt-path /Users/dhm/Documents/indices//sift10m_gt.npy --index-path /Users/dhm/Documents/indices//sift10m.idx --flat-baseline
+
+======================================================================
+  Loading SIFT10M dataset  (d=128, nb=10,000,000, nq=10,000)
+======================================================================
+  mat file  : /Users/dhm/Documents/data/SIFT10M/SIFT10Mfeatures.mat
+  total_n   : 11,164,866   d=128
+  Loading base vectors [0 .. 10,000,000) … shape=(10000000, 128)  dtype=float32
+  Loading query vectors [10,000,000 .. 10,010,000) … shape=(10000, 128)
+  d         : 128
+  nb (base) : 10,000,000
+  nq        : 10,000
+  maxtrain  : 500,000
+  OMP threads: 10
+  Loading precomputed GT from /Users/dhm/Documents/indices//sift10m_gt.npy … shape=(10000, 100)
+
+  Training sample ready: (500000, 128)
+
+======================================================================
+  Baseline: IndexFlatL2  (SIFT10M)
+======================================================================
+  ms/query  = 3.500
+  QPS       = 286
+  Recall@1  = 1.0000  (upper bound for SuCo)
+  Recall@10 = 1.0000
+
+======================================================================
+  IndexSuCo benchmark  (SIFT10M, d=128)
+======================================================================
+  nsubspaces      = 8  (half_dim=8)
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//sift10m.idx …
+  Loaded in 1.88s
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 10,000,000
+    nsubspaces      = 8  (half_dim=8)
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 5493.5 MiB
+    search time     = 325188.3ms total
+    ms / query      = 32.519
+    QPS             = 31
+    Recall@1        = 0.9983
+    Recall@10       = 0.9995
+    10-Recall@10    = 0.9981
+    Dist ratio      = 1.0000
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//sift10m.idx'  (ntotal=10000000  d=128  nsubspaces=8)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmp3xqi5198.idx'
+(done in 371s)
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_sift10m.py --mat-path /Users/dhm/Documents/data/SIFT10M/SIFT10Mfeatures.mat --gt-path /Users/dhm/Documents/indices//sift10m_gt.npy --index-path /Users/dhm/Documents/indices//sift10m.idx --hnsw-sweep
+
+======================================================================
+  Loading SIFT10M dataset  (d=128, nb=10,000,000, nq=10,000)
+======================================================================
+  mat file  : /Users/dhm/Documents/data/SIFT10M/SIFT10Mfeatures.mat
+  total_n   : 11,164,866   d=128
+  Loading base vectors [0 .. 10,000,000) … shape=(10000000, 128)  dtype=float32
+  Loading query vectors [10,000,000 .. 10,010,000) … shape=(10000, 128)
+  d         : 128
+  nb (base) : 10,000,000
+  nq        : 10,000
+  maxtrain  : 500,000
+  OMP threads: 10
+  Loading precomputed GT from /Users/dhm/Documents/indices//sift10m_gt.npy … shape=(10000, 100)
+
+  Training sample ready: (500000, 128)
+
+======================================================================
+  IndexSuCo benchmark  (SIFT10M, d=128)
+======================================================================
+  nsubspaces      = 8  (half_dim=8)
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//sift10m.idx …
+  Loaded in 2.01s
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 10,000,000
+    nsubspaces      = 8  (half_dim=8)
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 5493.5 MiB
+    search time     = 323215.8ms total
+    ms / query      = 32.322
+    QPS             = 31
+    Recall@1        = 0.9983
+    Recall@10       = 0.9995
+    10-Recall@10    = 0.9981
+    Dist ratio      = 1.0000
+
+======================================================================
+  HNSW efSearch sweep  (M=32, efConstruction=200)
+======================================================================
+efSearch     ms/q      QPS     R@1    R@10
+------------------------------------------
+  Loading HNSW index from /Users/dhm/Documents/indices//sift10m_hnsw_M32_efc200.idx …
+       8    0.031    32215  0.8320  0.8320
+      16    0.015    65879  0.9223  0.9223
+      32    0.023    42684  0.9682  0.9682
+      64    0.039    25938  0.9902  0.9902
+     128    0.069    14452  0.9983  0.9983
+     256    0.136     7335  0.9996  0.9996
+     512    0.288     3476  0.9998  0.9998
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//sift10m.idx'  (ntotal=10000000  d=128  nsubspaces=8)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmpekr228zt.idx'
+(done in 343s)
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_sift10m.py --mat-path /Users/dhm/Documents/data/SIFT10M/SIFT10Mfeatures.mat --gt-path /Users/dhm/Documents/indices//sift10m_gt.npy --index-path /Users/dhm/Documents/indices//sift10m.idx --ivfflat-sweep
+
+======================================================================
+  Loading SIFT10M dataset  (d=128, nb=10,000,000, nq=10,000)
+======================================================================
+  mat file  : /Users/dhm/Documents/data/SIFT10M/SIFT10Mfeatures.mat
+  total_n   : 11,164,866   d=128
+  Loading base vectors [0 .. 10,000,000) … shape=(10000000, 128)  dtype=float32
+  Loading query vectors [10,000,000 .. 10,010,000) … shape=(10000, 128)
+  d         : 128
+  nb (base) : 10,000,000
+  nq        : 10,000
+  maxtrain  : 500,000
+  OMP threads: 10
+  Loading precomputed GT from /Users/dhm/Documents/indices//sift10m_gt.npy … shape=(10000, 100)
+
+  Training sample ready: (500000, 128)
+
+======================================================================
+  IndexSuCo benchmark  (SIFT10M, d=128)
+======================================================================
+  nsubspaces      = 8  (half_dim=8)
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//sift10m.idx …
+  Loaded in 1.85s
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 10,000,000
+    nsubspaces      = 8  (half_dim=8)
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 5493.5 MiB
+    search time     = 329504.1ms total
+    ms / query      = 32.950
+    QPS             = 30
+    Recall@1        = 0.9983
+    Recall@10       = 0.9995
+    10-Recall@10    = 0.9981
+    Dist ratio      = 1.0000
+
+======================================================================
+  IVFFlat nprobe sweep  (nlist=4096, SIFT10M, d=128)
+======================================================================
+ nprobe     ms/q      QPS     R@1    R@10
+-----------------------------------------
+  Loading IVFFlat index from /Users/dhm/Documents/indices//sift10m_ivfflat_nlist4096.idx …
+      1    0.017    58685  0.5114  0.5114
+      2    0.031    32007  0.6727  0.6727
+      4    0.059    16888  0.8071  0.8071
+      8    0.115     8727  0.8985  0.8985
+     16    0.222     4504  0.9562  0.9562
+     32    0.423     2364  0.9824  0.9824
+     64    0.840     1190  0.9940  0.9940
+    128    1.619      618  0.9987  0.9987
+    256    3.100      323  0.9996  0.9996
+    512    5.972      167  0.9999  0.9999
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//sift10m.idx'  (ntotal=10000000  d=128  nsubspaces=8)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmpksjc4h_j.idx'
+(done in 466s)
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_sift10m.py --mat-path /Users/dhm/Documents/data/SIFT10M/SIFT10Mfeatures.mat --gt-path /Users/dhm/Documents/indices//sift10m_gt.npy --index-path /Users/dhm/Documents/indices//sift10m.idx --ivfpq-sweep
+
+======================================================================
+  Loading SIFT10M dataset  (d=128, nb=10,000,000, nq=10,000)
+======================================================================
+  mat file  : /Users/dhm/Documents/data/SIFT10M/SIFT10Mfeatures.mat
+  total_n   : 11,164,866   d=128
+  Loading base vectors [0 .. 10,000,000) … shape=(10000000, 128)  dtype=float32
+  Loading query vectors [10,000,000 .. 10,010,000) … shape=(10000, 128)
+  d         : 128
+  nb (base) : 10,000,000
+  nq        : 10,000
+  maxtrain  : 500,000
+  OMP threads: 10
+  Loading precomputed GT from /Users/dhm/Documents/indices//sift10m_gt.npy … shape=(10000, 100)
+
+  Training sample ready: (500000, 128)
+
+======================================================================
+  IndexSuCo benchmark  (SIFT10M, d=128)
+======================================================================
+  nsubspaces      = 8  (half_dim=8)
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//sift10m.idx …
+  Loaded in 1.96s
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 10,000,000
+    nsubspaces      = 8  (half_dim=8)
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 5493.5 MiB
+    search time     = 340586.4ms total
+    ms / query      = 34.059
+    QPS             = 29
+    Recall@1        = 0.9983
+    Recall@10       = 0.9995
+    10-Recall@10    = 0.9981
+    Dist ratio      = 1.0000
+
+======================================================================
+  IVFPQ nprobe sweep  (nlist=4096, m=16, nbits=8, SIFT10M, d=128)
+======================================================================
+ nprobe     ms/q      QPS     R@1    R@10
+-----------------------------------------
+  Loading IVFPQ index from /Users/dhm/Documents/indices//sift10m_ivfpq_nlist4096_m16_b8.idx …
+      1    0.006   165395  0.2956  0.4944
+      2    0.010    99808  0.3565  0.6392
+      4    0.017    60336  0.3979  0.7570
+      8    0.031    32059  0.4222  0.8330
+     16    0.054    18536  0.4357  0.8774
+     32    0.103     9726  0.4410  0.8949
+     64    0.202     4947  0.4430  0.9016
+    128    0.395     2533  0.4433  0.9043
+    256    0.788     1269  0.4433  0.9048
+    512    1.533      652  0.4433  0.9051
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//sift10m.idx'  (ntotal=10000000  d=128  nsubspaces=8)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmpx7vpy761.idx'
+(done in 383s)
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_sift10m.py --mat-path /Users/dhm/Documents/data/SIFT10M/SIFT10Mfeatures.mat --gt-path /Users/dhm/Documents/indices//sift10m_gt.npy --index-path /Users/dhm/Documents/indices//sift10m.idx --opqpq-sweep
+
+======================================================================
+  Loading SIFT10M dataset  (d=128, nb=10,000,000, nq=10,000)
+======================================================================
+  mat file  : /Users/dhm/Documents/data/SIFT10M/SIFT10Mfeatures.mat
+  total_n   : 11,164,866   d=128
+  Loading base vectors [0 .. 10,000,000) … shape=(10000000, 128)  dtype=float32
+  Loading query vectors [10,000,000 .. 10,010,000) … shape=(10000, 128)
+  d         : 128
+  nb (base) : 10,000,000
+  nq        : 10,000
+  maxtrain  : 500,000
+  OMP threads: 10
+  Loading precomputed GT from /Users/dhm/Documents/indices//sift10m_gt.npy … shape=(10000, 100)
+
+  Training sample ready: (500000, 128)
+
+======================================================================
+  IndexSuCo benchmark  (SIFT10M, d=128)
+======================================================================
+  nsubspaces      = 8  (half_dim=8)
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//sift10m.idx …
+  Loaded in 2.06s
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 10,000,000
+    nsubspaces      = 8  (half_dim=8)
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 5493.5 MiB
+    search time     = 340314.5ms total
+    ms / query      = 34.031
+    QPS             = 29
+    Recall@1        = 0.9983
+    Recall@10       = 0.9995
+    10-Recall@10    = 0.9981
+    Dist ratio      = 1.0000
+
+======================================================================
+  OPQ+IVFPQ nprobe sweep  (nlist=4096, m=16, nbits=8, SIFT10M, d=128)
+======================================================================
+ nprobe     ms/q      QPS     R@1    R@10
+-----------------------------------------
+  Loading OPQ+IVFPQ index from /Users/dhm/Documents/indices//sift10m_opqpq_nlist4096_m16_b8.idx …
+      1    0.006   159797  0.2895  0.4903
+      2    0.010   101163  0.3530  0.6383
+      4    0.017    58994  0.3937  0.7570
+      8    0.030    33313  0.4184  0.8339
+     16    0.055    18088  0.4326  0.8805
+     32    0.108     9246  0.4365  0.8978
+     64    0.205     4867  0.4381  0.9052
+    128    0.406     2461  0.4389  0.9078
+    256    0.794     1259  0.4390  0.9083
+    512    1.581      632  0.4390  0.9084
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//sift10m.idx'  (ntotal=10000000  d=128  nsubspaces=8)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmpw6bf1o6x.idx'
+(done in 384s)
+
+##########################################################################
+##  SpaceV10M  (d=100, nb=10M)
+##########################################################################
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_spacev10m.py --data-dir /Users/dhm/Documents/data/spacev10m/ --gt-path /Users/dhm/Documents/indices//spacev10m_gt.npy --index-path /Users/dhm/Documents/indices//spacev10m.idx --sweep
+
+======================================================================
+  Loading SpaceV10M dataset  (d=100, nb=10,000,000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/spacev10m/
+  nb (load) : 10,000,000
+  Loading base vectors … shape=(10000000, 100)  dtype=float32
+  Loading queries … shape=(29316, 100)
+  d         : 100
+  nb (base) : 10,000,000
+  nq        : 29,316
+  maxtrain  : 500,000
+  OMP threads: 10
+  Loading precomputed GT from /Users/dhm/Documents/indices//spacev10m_gt.npy … 

@@ -1,0 +1,399 @@
+Log: /home/dhm/SuCo/logs//bench_all_20260310_211534.log
+
+##########################################################################
+##  SuCo Full Benchmark Suite  —  Tue 10 Mar 2026 09:15:34 PM EET
+##########################################################################
+  data-dir     : /home/dhm/data/
+  index-dir    : /home/dhm/indices/
+  deep-nb      : 1000000
+  sift10m-mat  : /home/dhm/SuCo/data/SIFT10M/SIFT10Mfeatures.mat
+  spacev10m-dir: /home/dhm/SuCo/data/spacev10m/
+
+##########################################################################
+##  GIST1M  (d=960, nb=1M, nq=1K)
+##########################################################################
+
+>>> python /home/dhm/SuCo/benchs/bench_suco_gist1m.py --data-dir /home/dhm/data/ --index-path /home/dhm/indices//gist1m.idx --sweep
+
+======================================================================
+  Loading GIST1M dataset  (d=960, nb=1 000 000)
+======================================================================
+  data_dir  : /home/dhm/data/
+  d         : 960
+  nb (base) : 1,000,000
+  maxtrain  : 100,000
+  OMP threads: 8
+  Loading base … shape=(1000000, 960)
+  Loading queries … shape=(1000, 960)
+  Loading train … shape=(100000, 960)
+  Loading ground truth … shape=(1000, 100)
+  Note: actual nq=1,000 (DatasetGIST1M.nq=10,000 — file has 1,000 queries)
+
+======================================================================
+  IndexSuCo benchmark  (GIST1M, d=960)
+======================================================================
+  nsubspaces      = 40  (half_dim=12)
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /home/dhm/indices//gist1m.idx …
+  Loaded in 7.00s
+  Searching 1,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    nsubspaces      = 40  (half_dim=12)
+    OMP threads     = 8
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 3968.2 MiB
+    search time     = 38857.8ms total
+    ms / query      = 38.858
+    QPS             = 26
+    Recall@1        = 0.9750
+    Recall@10       = 0.9790
+    10-Recall@10    = 0.9462
+    Dist ratio      = 1.0007
+
+======================================================================
+  Parameter Sweep  (GIST1M, d=960)
+======================================================================
+ Ns   hd    nc   alpha     beta     ms/q      QPS     R@1    R@10    10R@10     ratio
+-------------------------------------------------------------------------------------
+  8   60    50   0.050   0.0050   23.885       42  0.8900  0.8980    0.8528    1.0025
+ 16   30    50   0.050   0.0050   31.037       32  0.9420  0.9480    0.9199    1.0012
+ 24   20    50   0.050   0.0050   36.026       28  0.9600  0.9630    0.9232    1.0010
+ 40   12    50   0.050   0.0050   43.665       23  0.9750  0.9790    0.9462    1.0007
+ 60    8    50   0.050   0.0050   55.128       18  0.9740  0.9810    0.9529    1.0007
+ 40   12    50   0.020   0.0020   26.167       38  0.8540  0.8610    0.7649    1.0043
+ 40   12    50   0.100   0.0100   71.219       14  0.9940  0.9980    0.9921    1.0001
+ 40   12    50   0.200   0.0200  126.080        8  0.9910  0.9990    0.9983    1.0000
+ 40   12    25   0.050   0.0050   43.754       23  0.9400  0.9480    0.8996    1.0016
+ 40   12   100   0.050   0.0050   47.776       21  0.9860  0.9920    0.9735    1.0003
+IndexSuCo::read_index: loaded from '/home/dhm/indices//gist1m.idx'  (ntotal=1000000  d=960  nsubspaces=40)
+IndexSuCo::write_index: saved to '/tmp/tmpd55euum2.idx'
+(done in 882s)
+
+>>> python /home/dhm/SuCo/benchs/bench_suco_gist1m.py --data-dir /home/dhm/data/ --index-path /home/dhm/indices//gist1m.idx --flat-baseline
+
+======================================================================
+  Loading GIST1M dataset  (d=960, nb=1 000 000)
+======================================================================
+  data_dir  : /home/dhm/data/
+  d         : 960
+  nb (base) : 1,000,000
+  maxtrain  : 100,000
+  OMP threads: 8
+  Loading base … shape=(1000000, 960)
+  Loading queries … shape=(1000, 960)
+  Loading train … shape=(100000, 960)
+  Loading ground truth … shape=(1000, 100)
+  Note: actual nq=1,000 (DatasetGIST1M.nq=10,000 — file has 1,000 queries)
+
+======================================================================
+  Baseline: IndexFlatL2  (GIST1M)
+======================================================================
+  ms/query  = 101.816
+  QPS       = 10
+  Recall@1  = 0.9940  (upper bound for SuCo)
+  Recall@10 = 1.0000
+
+======================================================================
+  IndexSuCo benchmark  (GIST1M, d=960)
+======================================================================
+  nsubspaces      = 40  (half_dim=12)
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /home/dhm/indices//gist1m.idx …
+  Loaded in 7.07s
+  Searching 1,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    nsubspaces      = 40  (half_dim=12)
+    OMP threads     = 8
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 3968.2 MiB
+    search time     = 43774.6ms total
+    ms / query      = 43.775
+    QPS             = 23
+    Recall@1        = 0.9750
+    Recall@10       = 0.9790
+    10-Recall@10    = 0.9462
+    Dist ratio      = 1.0007
+IndexSuCo::read_index: loaded from '/home/dhm/indices//gist1m.idx'  (ntotal=1000000  d=960  nsubspaces=40)
+IndexSuCo::write_index: saved to '/tmp/tmpdxipv9wv.idx'
+(done in 168s)
+
+>>> python /home/dhm/SuCo/benchs/bench_suco_gist1m.py --data-dir /home/dhm/data/ --index-path /home/dhm/indices//gist1m.idx --hnsw-sweep
+
+======================================================================
+  Loading GIST1M dataset  (d=960, nb=1 000 000)
+======================================================================
+  data_dir  : /home/dhm/data/
+  d         : 960
+  nb (base) : 1,000,000
+  maxtrain  : 100,000
+  OMP threads: 8
+  Loading base … shape=(1000000, 960)
+  Loading queries … shape=(1000, 960)
+  Loading train … shape=(100000, 960)
+  Loading ground truth … shape=(1000, 100)
+  Note: actual nq=1,000 (DatasetGIST1M.nq=10,000 — file has 1,000 queries)
+
+======================================================================
+  IndexSuCo benchmark  (GIST1M, d=960)
+======================================================================
+  nsubspaces      = 40  (half_dim=12)
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /home/dhm/indices//gist1m.idx …
+  Loaded in 7.18s
+  Searching 1,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    nsubspaces      = 40  (half_dim=12)
+    OMP threads     = 8
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 3968.2 MiB
+    search time     = 43347.1ms total
+    ms / query      = 43.347
+    QPS             = 23
+    Recall@1        = 0.9750
+    Recall@10       = 0.9790
+    10-Recall@10    = 0.9462
+    Dist ratio      = 1.0007
+
+======================================================================
+  HNSW efSearch sweep  (M=32, efConstruction=200)
+======================================================================
+efSearch     ms/q      QPS     R@1    R@10
+------------------------------------------
+  Loading HNSW index from /home/dhm/indices//gist1m_hnsw_M32_efc200.idx …
+       8    0.349     2869  0.4890  0.4930
+      16    0.707     1415  0.6470  0.6520
+      32    1.412      708  0.7770  0.7830
+      64    2.385      419  0.8710  0.8770
+     128    4.204      238  0.9350  0.9410
+     256    7.602      132  0.9650  0.9710
+     512   14.027       71  0.9800  0.9860
+IndexSuCo::read_index: loaded from '/home/dhm/indices//gist1m.idx'  (ntotal=1000000  d=960  nsubspaces=40)
+IndexSuCo::write_index: saved to '/tmp/tmpe_c5xz4u.idx'
+(done in 100s)
+
+>>> python /home/dhm/SuCo/benchs/bench_suco_gist1m.py --data-dir /home/dhm/data/ --index-path /home/dhm/indices//gist1m.idx --ivfflat-sweep
+
+======================================================================
+  Loading GIST1M dataset  (d=960, nb=1 000 000)
+======================================================================
+  data_dir  : /home/dhm/data/
+  d         : 960
+  nb (base) : 1,000,000
+  maxtrain  : 100,000
+  OMP threads: 8
+  Loading base … shape=(1000000, 960)
+  Loading queries … shape=(1000, 960)
+  Loading train … shape=(100000, 960)
+  Loading ground truth … shape=(1000, 100)
+  Note: actual nq=1,000 (DatasetGIST1M.nq=10,000 — file has 1,000 queries)
+
+======================================================================
+  IndexSuCo benchmark  (GIST1M, d=960)
+======================================================================
+  nsubspaces      = 40  (half_dim=12)
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /home/dhm/indices//gist1m.idx …
+  Loaded in 7.12s
+  Searching 1,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    nsubspaces      = 40  (half_dim=12)
+    OMP threads     = 8
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 3968.2 MiB
+    search time     = 43749.4ms total
+    ms / query      = 43.749
+    QPS             = 23
+    Recall@1        = 0.9750
+    Recall@10       = 0.9790
+    10-Recall@10    = 0.9462
+    Dist ratio      = 1.0007
+
+======================================================================
+  IVFFlat nprobe sweep  (nlist=1024, GIST1M, d=960)
+======================================================================
+ nprobe     ms/q      QPS     R@1    R@10
+-----------------------------------------
+  Loading IVFFlat index from /home/dhm/indices//gist1m_ivfflat_nlist1024.idx …
+      1    2.268      441  0.2830  0.2860
+      2    4.079      245  0.4250  0.4310
+      4    7.814      128  0.5730  0.5790
+      8   14.669       68  0.7090  0.7150
+     16   29.108       34  0.8480  0.8540
+     32   56.820       18  0.9200  0.9260
+     64  111.375        9  0.9690  0.9750
+    128  215.631        5  0.9890  0.9950
+    256  407.735        2  0.9930  0.9990
+    512  730.492        1  0.9940  1.0000
+IndexSuCo::read_index: loaded from '/home/dhm/indices//gist1m.idx'  (ntotal=1000000  d=960  nsubspaces=40)
+IndexSuCo::write_index: saved to '/tmp/tmp4r9cgc0u.idx'
+(done in 1676s)
+
+>>> python /home/dhm/SuCo/benchs/bench_suco_gist1m.py --data-dir /home/dhm/data/ --index-path /home/dhm/indices//gist1m.idx --ivfpq-sweep
+
+======================================================================
+  Loading GIST1M dataset  (d=960, nb=1 000 000)
+======================================================================
+  data_dir  : /home/dhm/data/
+  d         : 960
+  nb (base) : 1,000,000
+  maxtrain  : 100,000
+  OMP threads: 8
+  Loading base … shape=(1000000, 960)
+  Loading queries … shape=(1000, 960)
+  Loading train … shape=(100000, 960)
+  Loading ground truth … shape=(1000, 100)
+  Note: actual nq=1,000 (DatasetGIST1M.nq=10,000 — file has 1,000 queries)
+
+======================================================================
+  IndexSuCo benchmark  (GIST1M, d=960)
+======================================================================
+  nsubspaces      = 40  (half_dim=12)
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /home/dhm/indices//gist1m.idx …
+  Loaded in 7.08s
+  Searching 1,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    nsubspaces      = 40  (half_dim=12)
+    OMP threads     = 8
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 3968.2 MiB
+    search time     = 43756.2ms total
+    ms / query      = 43.756
+    QPS             = 23
+    Recall@1        = 0.9750
+    Recall@10       = 0.9790
+    10-Recall@10    = 0.9462
+    Dist ratio      = 1.0007
+
+======================================================================
+  IVFPQ nprobe sweep  (nlist=1024, m=48, nbits=8, GIST1M, d=960)
+======================================================================
+ nprobe     ms/q      QPS     R@1    R@10
+-----------------------------------------
+  Training IVFPQ (nlist=1024, m=48, nbits=8) on 100,000 vectors …
+  Adding 1,000,000 vectors …
+        50,000 / 1,000,000  (5.0%)       100,000 / 1,000,000  (10.0%)       150,000 / 1,000,000  (15.0%)       200,000 / 1,000,000  (20.0%)       250,000 / 1,000,000  (25.0%)       300,000 / 1,000,000  (30.0%)       350,000 / 1,000,000  (35.0%)       400,000 / 1,000,000  (40.0%)       450,000 / 1,000,000  (45.0%)       500,000 / 1,000,000  (50.0%)       550,000 / 1,000,000  (55.0%)       600,000 / 1,000,000  (60.0%)       650,000 / 1,000,000  (65.0%)       700,000 / 1,000,000  (70.0%)       750,000 / 1,000,000  (75.0%)       800,000 / 1,000,000  (80.0%)       850,000 / 1,000,000  (85.0%)       900,000 / 1,000,000  (90.0%)       950,000 / 1,000,000  (95.0%)     1,000,000 / 1,000,000  (100.0%)
+      1    0.586     1706  0.1340  0.2570
+      2    1.002      998  0.1670  0.3730
+      4    1.032      969  0.1910  0.4550
+      8    1.171      854  0.2110  0.5260
+     16    1.305      766  0.2180  0.5770
+     32    2.451      408  0.2180  0.5910
+     64    3.954      253  0.2190  0.5960
+    128    7.505      133  0.2190  0.5960
+    256   12.298       81  0.2190  0.5960
+    512   22.499       44  0.2190  0.5960
+IndexSuCo::read_index: loaded from '/home/dhm/indices//gist1m.idx'  (ntotal=1000000  d=960  nsubspaces=40)
+IndexSuCo::write_index: saved to '/tmp/tmp2ecjyeum.idx'
+(done in 393s)
+
+>>> python /home/dhm/SuCo/benchs/bench_suco_gist1m.py --data-dir /home/dhm/data/ --index-path /home/dhm/indices//gist1m.idx --opqpq-sweep
+
+======================================================================
+  Loading GIST1M dataset  (d=960, nb=1 000 000)
+======================================================================
+  data_dir  : /home/dhm/data/
+  d         : 960
+  nb (base) : 1,000,000
+  maxtrain  : 100,000
+  OMP threads: 8
+  Loading base … shape=(1000000, 960)
+  Loading queries … shape=(1000, 960)
+  Loading train … shape=(100000, 960)
+  Loading ground truth … shape=(1000, 100)
+  Note: actual nq=1,000 (DatasetGIST1M.nq=10,000 — file has 1,000 queries)
+
+======================================================================
+  IndexSuCo benchmark  (GIST1M, d=960)
+======================================================================
+  nsubspaces      = 40  (half_dim=12)
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /home/dhm/indices//gist1m.idx …
+  Loaded in 7.04s
+  Searching 1,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    nsubspaces      = 40  (half_dim=12)
+    OMP threads     = 8
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 3968.2 MiB
+    search time     = 44075.7ms total
+    ms / query      = 44.076
+    QPS             = 23
+    Recall@1        = 0.9750
+    Recall@10       = 0.9790
+    10-Recall@10    = 0.9462
+    Dist ratio      = 1.0007
+
+======================================================================
+  OPQ+IVFPQ nprobe sweep  (nlist=1024, m=48, nbits=8, GIST1M, d=960)
+======================================================================
+ nprobe     ms/q      QPS     R@1    R@10
+-----------------------------------------
+  Training OPQ+IVFPQ (nlist=1024, m=48, nbits=8, opq_niter=25) on 100,000 vectors …
+  Adding 1,000,000 vectors …
+        50,000 / 1,000,000  (5.0%)       100,000 / 1,000,000  (10.0%)       150,000 / 1,000,000  (15.0%)       200,000 / 1,000,000  (20.0%)       250,000 / 1,000,000  (25.0%)       300,000 / 1,000,000  (30.0%)       350,000 / 1,000,000  (35.0%)       400,000 / 1,000,000  (40.0%)       450,000 / 1,000,000  (45.0%)       500,000 / 1,000,000  (50.0%)       550,000 / 1,000,000  (55.0%)       600,000 / 1,000,000  (60.0%)       650,000 / 1,000,000  (65.0%)       700,000 / 1,000,000  (70.0%)       750,000 / 1,000,000  (75.0%)       800,000 / 1,000,000  (80.0%)       850,000 / 1,000,000  (85.0%)       900,000 / 1,000,000  (90.0%)       950,000 / 1,000,000  (95.0%)     1,000,000 / 1,000,000  (100.0%)
+      1    0.933     1072  0.1930  0.2750
+      2    0.673     1486  0.2650  0.4120
+      4    0.734     1362  0.3180  0.5490
+      8    1.244      804  0.3780  0.6760
+     16    2.125      471  0.4100  0.7950
+     32    2.313      432  0.4270  0.8390
+     64    4.395      228  0.4340  0.8750
+    128    7.743      129  0.4370  0.8850
+    256   13.307       75  0.4370  0.8880
+    512   22.613       44  0.4380  0.8890
+IndexSuCo::read_index: loaded from '/home/dhm/indices//gist1m.idx'  (ntotal=1000000  d=960  nsubspaces=40)
+IndexSuCo::write_index: saved to '/tmp/tmpsaztqcis.idx'
+(done in 1101s)
+
+##########################################################################
+##  All benchmarks finished  —  Tue 10 Mar 2026 10:27:34 PM EET
+##########################################################################

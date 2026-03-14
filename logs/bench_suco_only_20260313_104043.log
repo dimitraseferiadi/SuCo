@@ -1,0 +1,52 @@
+Log: /Users/dhm/Documents/SuCo/logs//bench_suco_only_20260313_104043.log
+
+##########################################################################
+##  SuCo-only Sweep Runner  —  Fri Mar 13 10:40:43 EET 2026
+##########################################################################
+  data-dir     : /Users/dhm/Documents/data/
+  index-dir    : /Users/dhm/Documents/indices/
+  deep-nb      : 10000000
+  sift10m-mat  : /Users/dhm/Documents/data/SIFT10M/SIFT10Mfeatures.mat
+  spacev10m-dir: /Users/dhm/Documents/data/spacev10m/
+
+##########################################################################
+##  SIFT1M SuCo sweep
+##########################################################################
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_sift1m.py --data-dir /Users/dhm/Documents/data/ --index-path /Users/dhm/Documents/indices//sift1m.idx --sweep
+
+======================================================================
+  Loading SIFT1M dataset  (d=128, nb=1 000 000, nq=10 000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  d         : 128
+  nb (base) : 1,000,000
+  nq        : 10,000
+  maxtrain  : 100,000
+  OMP threads: 10
+  Loading base … shape=(1000000, 128)
+  Loading queries … shape=(10000, 128)
+  Loading train … shape=(100000, 128)
+  Loading ground truth … shape=(10000, 100)
+
+======================================================================
+  IndexSuCo benchmark  (SIFT1M, d=128)
+======================================================================
+  nsubspaces      = 8  (half_dim=8)
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//sift1m.idx …
+Traceback (most recent call last):
+  File "/Users/dhm/Documents/SuCo/benchs/bench_suco_sift1m.py", line 1353, in <module>
+    main()
+  File "/Users/dhm/Documents/SuCo/benchs/bench_suco_sift1m.py", line 1200, in main
+    run_benchmark(
+  File "/Users/dhm/Documents/SuCo/benchs/bench_suco_sift1m.py", line 217, in run_benchmark
+    index.read_index(index_path)
+  File "/Users/dhm/Documents/SuCo/.venv/lib/python3.12/site-packages/faiss/swigfaiss.py", line 12875, in read_index
+    return _swigfaiss.IndexSuCo_read_index(self, fname)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Error in void faiss::IndexSuCo::read_index(const char *) at /Users/dhm/Documents/SuCo/faiss/IndexSuCo.cpp:871: Error: '!(version == 3)' failed: IndexSuCo::read_index: unsupported version (expected 3; please rebuild the index)

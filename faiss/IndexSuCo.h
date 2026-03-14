@@ -38,6 +38,14 @@
  *                    pool (default 0.005).
  *   niter            Number of K-means iterations (default 10).
  *   verbose          Print progress during train/search.
+ *
+ * Persistence:
+ *   write_index(IOWriter*) / read_index(IOReader*) are the canonical
+ *   serialisation methods and work with any FAISS IO backend (file, memory,
+ *   etc.).  File-path convenience wrappers are also provided.
+ *
+ *   NOTE: This index is wired into FAISS global I/O dispatch, so both
+ *   member methods and faiss::write_index() / faiss::read_index() work.
  */
 
 #pragma once
@@ -46,6 +54,7 @@
 #include <vector>
 
 #include <faiss/Index.h>
+#include <faiss/impl/io.h>
 #include <faiss/impl/platform_macros.h>
 
 namespace faiss {
@@ -167,6 +176,13 @@ struct IndexSuCo : Index {
 
     /**
      * Train the index: run K-means on each half of each subspace.
+     *
+     * Re-training is explicitly supported.  When called on an already-trained
+     * (or even indexed) instance, all existing centroids, IMI buckets, and
+     * stored vectors are discarded before the new training run begins.  This
+     * matches the behaviour of faiss::IndexIVF and other re-trainable FAISS
+     * indices.
+     *
      * @param n   Number of training vectors.
      * @param x   Training vectors, shape [n, d], row-major float32.
      */
@@ -184,18 +200,25 @@ struct IndexSuCo : Index {
 
     /**
      * Approximate k-NN search using the Subspace Collision framework.
+     *
+     * Batch queries are distributed across available OpenMP threads (one
+     * thread per query).  search_one() itself is single-threaded, so there
+     * are no nested parallel regions and no contention between threads.
+     *
      * @param n        Number of query vectors.
      * @param x        Query vectors, shape [n, d], row-major float32.
      * @param k        Number of nearest neighbors to return.
      * @param distances Output distances,  shape [n, k].
      * @param labels    Output global IDs,  shape [n, k].
+     * @param params    Optional SearchParametersSuCo for per-call ratio
+     *                  overrides; nullptr → use index defaults.
      */
     void search(
-            idx_t                  n,
-            const float*           x,
-            idx_t                  k,
-            float*                 distances,
-            idx_t*                 labels,
+            idx_t                   n,
+            const float*            x,
+            idx_t                   k,
+            float*                  distances,
+            idx_t*                  labels,
             const SearchParameters* params = nullptr) const override;
 
     /**
@@ -204,13 +227,95 @@ struct IndexSuCo : Index {
     void reset() override;
 
     // -----------------------------------------------------------------------
-    // Persistence helpers
+    // Extra search modes
     // -----------------------------------------------------------------------
 
-    /** Write the index (centroids + IMI) to a binary file. */
+    /**
+     * Index-free (SC-Linear) search: Algorithm 1 from the paper.
+     *
+     * For each subspace, computes exact distances to all database points to
+     * determine collisions.  Has the same asymptotic cost as a linear scan
+     * (O(n·d·Ns) per query) but delivers very high recall.  Intended as a
+     * correctness / accuracy baseline against which the indexed SuCo can be
+     * compared (cf. Table 2 and Table 4 in the paper).
+     *
+     * Like search(), batch queries are parallelised across OpenMP threads.
+     *
+     * @param cr_override  collision_ratio override; <= 0 → use index default.
+     * @param cdr_override candidate_ratio override; <= 0 → use index default.
+     */
+    void search_linear(
+            idx_t        n,
+            const float* x,
+            idx_t        k,
+            float*       distances,
+            idx_t*       labels,
+            float        cr_override  = -1.0f,
+            float        cdr_override = -1.0f) const;
+
+    /**
+     * Compute SC-scores for a single query without final reranking.
+     * Runs Dynamic Activation across all subspaces and returns the raw
+     * per-point SC-score (number of subspaces where the point appeared in
+     * the activated cells).  Useful for analysing the Pareto property.
+     *
+     * @param xq         Query vector, length d.
+     * @param cr         collision_ratio override; <= 0 → use index default.
+     * @param out_scores Output buffer of length ntotal (int32_t).
+     *                   out_scores[i] = SC-score of database point i.
+     */
+    void get_sc_scores(
+            const float* xq,
+            float        cr,
+            int32_t*     out_scores) const;
+
+    /**
+     * Like search() but uses the classical Multi-sequence IMI traversal
+     * (heap with visited-pair set) instead of Dynamic Activation.
+     * The two algorithms produce identical results but with different
+     * computational profiles; useful for Figure 6 efficiency comparison.
+     *
+     * Batch queries are parallelised across OpenMP threads identically to
+     * search().
+     *
+     * @param cr_override  collision_ratio override; <= 0 → use index default.
+     * @param cdr_override candidate_ratio override; <= 0 → use index default.
+     */
+    void search_multisequence(
+            idx_t        n,
+            const float* x,
+            idx_t        k,
+            float*       distances,
+            idx_t*       labels,
+            float        cr_override  = -1.0f,
+            float        cdr_override = -1.0f) const;
+
+    // -----------------------------------------------------------------------
+    // Persistence
+    // -----------------------------------------------------------------------
+
+    /**
+     * Serialise the index to an IOWriter (any FAISS IO backend: file, memory,
+     * etc.).  This is the canonical persistence entry point.
+     *
+     * The binary format is tagged with a 'SuCo' magic word and version number
+     * so that read_index() can validate the stream.
+     *
+        * This method interoperates with FAISS global I/O dispatch:
+        * faiss::write_index() / faiss::read_index() also recognise IndexSuCo.
+     */
+    void write_index(IOWriter* f) const;
+
+    /**
+     * Deserialise an index from an IOReader.  Any state currently held by
+     * this object is overwritten.
+     */
+    void read_index(IOReader* f);
+
+    /** Convenience wrapper: write to a file at the given path. */
     void write_index(const char* fname) const;
 
-    /** Read the index from a binary file produced by write_index(). */
+    /** Convenience wrapper: read from a file at the given path. */
     void read_index(const char* fname);
 
 private:
@@ -237,17 +342,11 @@ private:
      * inv_lists[subspace_idx] until at least `collision_num` data points have
      * been collected, and directly increments sc_scores for each point.
      *
-     * @param subspace_idx   Which subspace's inv_lists to query.
-     * @param dists1         Distances from query to each first-half centroid.
-     * @param idx1           Argsort of dists1 ascending.
-     * @param dists2         Distances from query to each second-half centroid.
-     * @param idx2           Argsort of dists2 ascending.
-     * @param collision_num  Stop after this many points have been collected.
-     * @param sc_scores      SC-score accumulator (length ntotal); incremented
-     *                       in-place for every collected point.
+     * Fully single-threaded; called from search_one() which is itself invoked
+     * inside an outer OpenMP parallel-for loop in search().
      */
     void dynamic_activate(
-            int          subspace_idx,
+            int            subspace_idx,
             const float*   dists1,
             const int32_t* idx1,
             const float*   dists2,
@@ -256,18 +355,73 @@ private:
             uint8_t*       sc_scores) const;
 
     /**
-     * Search a single query vector.
+     * Multi-sequence IMI traversal (Babenko & Lempitsky 2012).
+     * Uses a min-heap of (combined_dist, i, j) with a visited bitset,
+     * yielding cells in globally optimal (d1+d2)-ascending order.
+     * Produces identical SC-score increments to dynamic_activate but with
+     * strictly more heap operations for the same retrieved count.
+     */
+    void dynamic_activate_multisequence(
+            int            subspace_idx,
+            const float*   dists1,
+            const int32_t* idx1,
+            const float*   dists2,
+            const int32_t* idx2,
+            idx_t          collision_num,
+            uint8_t*       sc_scores) const;
+
+    /**
+     * Shared SC-score selection, candidate gathering, and exact L2 re-ranking
+     * used by both search_one() and search_one_multisequence() after collision
+     * counting is complete.
+     *
+     * Selects *exactly* min(candidate_num, ntotal) candidates: all points
+     * whose SC-score exceeds the threshold are included unconditionally, and
+     * points at the threshold score fill the remainder of the budget in index
+     * order (no overshoot).  The top-k nearest candidates are then returned.
+     *
+     * @param xq            Query vector, length d.
+     * @param k             Number of NNs to return.
+     * @param candidate_num Desired candidate pool size (beta * ntotal).
+     * @param sc_scores     Per-point SC-scores, length ntotal (uint8_t).
+     * @param out_dist      Output distances, length k.
+     * @param out_labels    Output global IDs, length k.
+     */
+    void rerank(
+            const float*   xq,
+            idx_t          k,
+            idx_t          candidate_num,
+            const uint8_t* sc_scores,
+            float*         out_dist,
+            idx_t*         out_labels) const;
+
+    /**
+     * Single-query search using Dynamic Activation.
+     *
+     * Fully single-threaded.  Batch-level parallelism (one query per thread)
+     * is handled by the calling search() method.  The caller must supply a
+     * pre-allocated scratch_buf of length >= ntotal; it is zeroed at the start
+     * of each call, eliminating a per-query heap allocation.
+     *
      * @param xq          Query vector, length d.
      * @param k           Number of NNs to return.
      * @param out_dist    Output distances, length k.
      * @param out_labels  Output global IDs, length k.
-     * @param scratch_buf Pre-allocated uint8_t buffer of length >= ntotal.
-     *                    Will be zeroed at the start of each call.  Passing
-     *                    a per-thread buffer avoids a per-query heap allocation.
-     * @param cr          collision_ratio to use (overrides the member value).
-     * @param cdr         candidate_ratio to use (overrides the member value).
+     * @param scratch_buf Per-thread uint8_t buffer of length >= ntotal.
+     * @param cr          collision_ratio to use.
+     * @param cdr         candidate_ratio to use.
      */
     void search_one(
+            const float* xq,
+            idx_t        k,
+            float*       out_dist,
+            idx_t*       out_labels,
+            uint8_t*     scratch_buf,
+            float        cr,
+            float        cdr) const;
+
+    /** Single-query wrapper that uses Multi-sequence traversal. */
+    void search_one_multisequence(
             const float* xq,
             idx_t        k,
             float*       out_dist,
