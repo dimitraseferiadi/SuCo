@@ -75,14 +75,16 @@ import numpy as np
 # ──────────────────────────────────────────────────────────────────────────────
 
 def _fvecs_read(path: str, n: int | None = None) -> np.ndarray:
-    with open(path, "rb") as f:
-        d = np.frombuffer(f.read(4), dtype=np.int32)[0]
-        f.seek(0)
-        if n is None:
-            data = np.fromfile(f, dtype=np.float32)
-        else:
-            data = np.frombuffer(f.read(n * (4 + d * 4)), dtype=np.float32)
-    return data.reshape(-1, d + 1)[:, 1:].copy()
+    from faiss.contrib.vecs_io import fvecs_mmap
+
+    x = fvecs_mmap(path)
+    if n is None:
+        return np.ascontiguousarray(x.astype("float32", copy=False))
+    if n > x.shape[0]:
+        raise ValueError(
+            f"Requested {n} vectors from {path}, but file contains only {x.shape[0]}"
+        )
+    return np.ascontiguousarray(x[:n].astype("float32", copy=False))
 
 
 def _load_sift10m_mat(mat_path: str, nb: int, nq_cap: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -153,6 +155,36 @@ def _ivecs_read(path: str, n: int | None = None) -> np.ndarray:
     return data.reshape(-1, d + 1)[:, 1:].copy()
 
 
+def _auto_discover_gt_path(args, ds: str, data_dir: str, index_path: str) -> str:
+    candidates = []
+
+    if ds == "deep10m":
+        candidates.extend([
+            os.path.join(data_dir, "deep1b", "deep10M_groundtruth.ivecs"),
+            os.path.join(data_dir, "deep1b", "deep10M_groundtruth.npy"),
+            os.path.join(os.path.dirname(index_path), "deep10m_gt.npy") if index_path else "",
+            os.path.join(os.path.dirname(index_path), "deep_gt.npy") if index_path else "",
+        ])
+    elif ds == "sift10m":
+        candidates.extend([
+            os.path.join(os.path.dirname(index_path), "sift10m_gt.npy") if index_path else "",
+            os.path.join(data_dir, "sift10m_gt.npy"),
+            os.path.join(data_dir, "SIFT10M", "sift10m_gt.npy"),
+        ])
+    elif ds == "sift1m":
+        for cand in ("sift1M", "sift1m", "sift"):
+            p = os.path.join(data_dir, cand)
+            candidates.extend([
+                os.path.join(p, "sift_groundtruth.ivecs"),
+                os.path.join(p, "groundtruth.ivecs"),
+            ])
+
+    for p in candidates:
+        if p and os.path.exists(p):
+            return p
+    return ""
+
+
 def load_dataset(args) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Return xb, xt (train), xq, gt."""
     ds = args.dataset
@@ -178,35 +210,30 @@ def load_dataset(args) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         xb = _fvecs_read(os.path.join(sift_dir, "sift_base.fvecs"))
         xq = _fvecs_read(os.path.join(sift_dir, "sift_query.fvecs"))
         xt = _fvecs_read(os.path.join(sift_dir, "sift_learn.fvecs"))
-    elif ds == "deep1m":
+    elif ds == "deep10m":
         from scipy.io import loadmat
         d96  = 96
         base = os.path.join(args.data_dir, "deep1b", "base.fvecs")
-        qry  = os.path.join(args.data_dir, "deep1b", "query.fvecs")
-        xb   = _fvecs_read(base, 1_000_000)
+        qry  = os.path.join(args.data_dir, "deep1b", "deep1B_queries.fvecs")
+        xb   = _fvecs_read(base, 10_000_000)
         xq   = _fvecs_read(qry,  nq_cap)
-        xt   = xb[:500_000]
+        xt   = xb[:1_000_000]
     else:
         sys.exit(f"Dataset '{ds}' not yet supported in this script for this mode. "
-                 f"Use sift10m, sift1m, or deep1m.")
+                 f"Use sift10m, sift1m, or deep10m.")
 
     gt = None
-    if args.gt_path and os.path.exists(args.gt_path):
+    gt_path = args.gt_path if (args.gt_path and os.path.exists(args.gt_path)) else ""
+    if not gt_path:
+        gt_path = _auto_discover_gt_path(args, ds, args.data_dir, args.index_path)
+
+    if gt_path:
         # Accept both .npy and raw ivecs files.
-        if args.gt_path.endswith(".npy"):
-            gt = np.load(args.gt_path)
+        if gt_path.endswith(".npy"):
+            gt = np.load(gt_path)
         else:
-            gt = _ivecs_read(args.gt_path)
-    elif ds == "sift1m":
-        # Auto-discover standard ANN_SIFT1M ground truth when --gt-path is omitted.
-        gt_candidates = [
-            os.path.join(sift_dir, "sift_groundtruth.ivecs"),
-            os.path.join(sift_dir, "groundtruth.ivecs"),
-        ]
-        for gtp in gt_candidates:
-            if os.path.exists(gtp):
-                gt = _ivecs_read(gtp)
-                break
+            gt = _ivecs_read(gt_path)
+        print(f"  Loaded ground truth: {gt_path}")
 
     return xb, xt, xq[:nq_cap], gt
 
@@ -457,14 +484,29 @@ def _valid_ns(d: int) -> list[int]:
     return [n for n in range(1, d+1) if d % n == 0 and (d // n) % 2 == 0]
 
 
+def _is_valid_suco_ns(d: int, ns: int) -> bool:
+    return ns > 0 and d % ns == 0 and (d // ns) % 2 == 0
+
+
 def run_fig7(args, xb, xt, xq, gt, writer):
     """Figure 7: Effect of K and Ns on QPS/R@1."""
     d  = xb.shape[1]
     nq = xq.shape[0]
     k  = 10
 
-    valid = sorted(set(FIG7_NS_SIFT + [x for x in _valid_ns(d)]))
-    ns_vals = [n for n in valid if n <= 32] or [2,4,8]
+    valid_all = _valid_ns(d)
+    if d == 96:
+        preferred_ns = FIG7_NS_DEEP
+    elif d == 128:
+        preferred_ns = FIG7_NS_SIFT
+    else:
+        preferred_ns = [n for n in valid_all if n <= 32]
+
+    ns_vals = [n for n in preferred_ns if _is_valid_suco_ns(d, n)]
+    if not ns_vals:
+        ns_vals = [n for n in valid_all if n <= 32][:6] or valid_all[:6]
+
+    print(f"  Ns sweep candidates: {ns_vals}")
 
     writer.writerow(("sweep_var", "x_val", "Ns", "nc", "K",
                      "alpha", "beta", "QPS", "R@1", "R@10",
@@ -474,6 +516,9 @@ def run_fig7(args, xb, xt, xq, gt, writer):
     print("\n  Figure 7a: Vary Ns  (nc=50 fixed, α=0.05, β=0.005)")
     built_ns: dict[int, faiss.IndexSuCo] = {}
     for ns in ns_vals:
+        if not _is_valid_suco_ns(d, ns):
+            print(f"    Skipping invalid Ns={ns} for d={d}")
+            continue
         if ns not in built_ns:
             print(f"    Building Ns={ns} …", flush=True)
             t0 = time.perf_counter()
@@ -592,7 +637,7 @@ def parse_args():
                    choices=["table2", "fig6", "fig7", "fig8"],
                    help="Which paper figure/table to generate data for.")
     p.add_argument("--dataset", required=True,
-                   choices=["sift10m", "sift1m", "deep1m"],
+                   choices=["sift10m", "sift1m", "deep10m"],
                    help="Dataset identifier.")
     p.add_argument("--nb", type=int, default=10_000_000)
     p.add_argument("--index-path", default="",
@@ -618,6 +663,9 @@ def main():
 
     xb, xt, xq, gt = load_dataset(args)
     print(f"  d={xb.shape[1]}  nb={len(xb):,}  nq={len(xq):,}")
+    if gt is None:
+        print("  Warning: no ground truth loaded; recall metrics (R@k) will be NaN.")
+        print("           Pass --gt-path or place dataset GT where auto-discovery can find it.")
 
     out = args.out or os.path.join(
         os.path.dirname(__file__),

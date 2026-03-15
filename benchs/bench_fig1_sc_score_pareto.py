@@ -123,14 +123,17 @@ def _load_sift10m(mat_path: str, nb: int, nq: int):
 def _load_deep(data_dir: str, nb: int, nq: int):
     """Load Deep1B subset."""
     base_path = os.path.join(data_dir, "deep1b", "base.fvecs")
-    qpath     = os.path.join(data_dir, "deep1b", "query.fvecs")
+    qpath     = os.path.join(data_dir, "deep1b", "deep1B_queries.fvecs")
     def _fvecs(path, n):
-        with open(path, "rb") as f:
-            d = np.frombuffer(f.read(4), dtype=np.int32)[0]
-            f.seek(0)
-            buf = np.frombuffer(f.read(n * (4 + d * 4)), dtype=np.uint8)
-        buf = buf.reshape(n, 4 + d * 4)[:, 4:].view(np.float32)
-        return np.ascontiguousarray(buf)
+        from faiss.contrib.vecs_io import fvecs_mmap
+
+        x = fvecs_mmap(path)
+        if n > x.shape[0]:
+            raise ValueError(
+                f"Requested {n} vectors from {path}, but file contains only {x.shape[0]}"
+            )
+        # Keep a contiguous float32 array for downstream FAISS operations.
+        return np.ascontiguousarray(x[:n].astype("float32", copy=False))
     print(f"  Loading Deep vectors (nb={nb:,}) …")
     xb = _fvecs(base_path, nb)
     xq = _fvecs(qpath, nq)

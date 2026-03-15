@@ -993,6 +993,169 @@ def run_opqpq_nprobe_sweep(
         print(f"{nprobe:>7}  {t_s/nq*1000:>7.3f}  {nq/t_s:>7.0f}  "
               f"{r1:>6.4f}  {r10:>6.4f}")
 
+# ---------------------------------------------------------------------------
+# IndexLSH benchmark
+# ---------------------------------------------------------------------------
+# FAISS IndexLSH: random-hyperplane LSH.  Each vector is projected onto
+# `nbits` random unit vectors; its binary code (sign of projections) is
+# stored packed.  Search exhaustively compares Hamming distances.
+# The *only* quality/speed knob is `nbits`; the sweep below covers the
+# relevant range.  Returned distances are Hamming-based, NOT L2, so
+# approx_ratio is not reported.  This is the FAISS counterpart of the
+# DET-LSH / DB-LSH / PM-LSH family evaluated in the SuCo paper.
+# ---------------------------------------------------------------------------
+
+# *** REPLACE this list with the dataset-specific values shown below ***
+LSH_NBITS_SWEEP = [128, 256, 512, 1024, 2048]   # sift1m default
+
+
+def run_lsh_benchmark(
+    xb: np.ndarray,
+    xq: np.ndarray,
+    xt: np.ndarray,
+    gt: np.ndarray,
+    *,
+    nbits: int      = 256,
+    k: int          = 10,
+    index_path: str = "",
+    verbose: bool   = True,
+) -> dict:
+    """Build IndexLSH (or load), search xq, return metrics dict."""
+    nb, d = xb.shape
+    nq    = xq.shape[0]
+
+    lsh_path = (
+        index_path.replace(".idx", "") + f"_lsh_nbits{nbits}.idx"
+        if index_path else ""
+    )
+
+    if lsh_path and os.path.exists(lsh_path):
+        if verbose:
+            print(f"  Loading LSH index from {lsh_path} …")
+        t0 = time.perf_counter()
+        index = faiss.read_index(lsh_path)
+        t_load = time.perf_counter() - t0
+        t_train = t_add = 0.0
+        if verbose:
+            print(f"  Loaded in {fmt_time(t_load)}")
+    else:
+        index = faiss.IndexLSH(d, nbits)
+        # train() is a no-op for rotate_data=False (default) but kept for
+        # API consistency; pass xt in case you later enable rotate_data=True.
+        if verbose:
+            print(f"  Training LSH (nbits={nbits}) …")
+        t0 = time.perf_counter()
+        index.train(xt)
+        t_train = time.perf_counter() - t0
+        if verbose:
+            print(f"  Training done in {fmt_time(t_train)}")
+
+        if verbose:
+            print(f"  Adding {nb:,} vectors …")
+        t_add = add_batched(index, xb, verbose=verbose)
+        if verbose:
+            print(f"  Add done in {fmt_time(t_add)}")
+
+        if lsh_path:
+            if verbose:
+                print(f"  Saving LSH index to {lsh_path} …")
+            faiss.write_index(index, lsh_path)
+
+    size_mb = _index_size_mb(index)
+
+    # Warm-up
+    for _ in range(3):
+        index.search(xq[:min(5, nq)], k)
+
+    if verbose:
+        print(f"  Searching {nq:,} queries (k={k}) …")
+    t0 = time.perf_counter()
+    _D, I = index.search(xq, k)
+    t_search = time.perf_counter() - t0
+    ms_per_q = t_search / nq * 1000.0
+    qps      = nq / t_search
+
+    r1  = recall_at_k(I, gt, 1)
+    r10 = recall_at_k(I, gt, min(10, k, gt.shape[1]))
+
+    if verbose:
+        print(f"\n  Results:")
+        print(f"    ntotal          = {index.ntotal:,}")
+        print(f"    nbits           = {nbits}")
+        print(f"    OMP threads     = {faiss.omp_get_max_threads()}")
+        print(f"    train time      = {fmt_time(t_train)}")
+        print(f"    add time        = {fmt_time(t_add)}")
+        print(f"    build time      = {fmt_time(t_train + t_add)}")
+        print(f"    index size      = {size_mb:.1f} MiB")
+        print(f"    search time     = {t_search*1000:.1f}ms total")
+        print(f"    ms / query      = {ms_per_q:.3f}")
+        print(f"    QPS             = {qps:.0f}")
+        print(f"    Recall@1        = {r1:.4f}")
+        print(f"    Recall@10       = {r10:.4f}")
+        print(f"    (dist_ratio N/A: search() returns Hamming distances, not L2)")
+
+    return dict(
+        nbits=nbits,
+        t_train=t_train, t_add=t_add, t_build=t_train + t_add,
+        index_size_mb=size_mb, t_search_ms=t_search * 1000,
+        ms_per_query=ms_per_q, qps=qps,
+        recall_at_1=r1, recall_at_10=r10,
+    )
+
+
+def run_lsh_nbits_sweep(
+    xb: np.ndarray,
+    xq: np.ndarray,
+    xt: np.ndarray,
+    gt: np.ndarray,
+    *,
+    k: int           = 10,
+    index_path: str  = "",
+    dataset_tag: str = "",
+) -> None:
+    """Build one IndexLSH per nbits value, sweeping for recall/QPS trade-off."""
+    tag = f", {dataset_tag}" if dataset_tag else ""
+    print_header(f"IndexLSH nbits sweep{tag}")
+    header = (
+        f"{'nbits':>6}  {'size(MiB)':>10}  {'build(s)':>9}  "
+        f"{'ms/q':>7}  {'QPS':>7}  {'R@1':>6}  {'R@10':>6}"
+    )
+    print(header)
+    print("-" * len(header))
+
+    nq = xq.shape[0]
+    for nbits in LSH_NBITS_SWEEP:
+        lsh_path = (
+            index_path.replace(".idx", "") + f"_lsh_nbits{nbits}.idx"
+            if index_path else ""
+        )
+        if lsh_path and os.path.exists(lsh_path):
+            index   = faiss.read_index(lsh_path)
+            t_build = 0.0
+        else:
+            _nb, d = xb.shape
+            index   = faiss.IndexLSH(d, nbits)
+            index.train(xt)
+            t0      = time.perf_counter()
+            add_batched(index, xb)
+            t_build = time.perf_counter() - t0
+            if lsh_path:
+                faiss.write_index(index, lsh_path)
+
+        size_mb = _index_size_mb(index)
+
+        for _ in range(3):
+            index.search(xq[:min(5, nq)], k)
+        t0 = time.perf_counter()
+        _, I = index.search(xq, k)
+        t_s = time.perf_counter() - t0
+        r1  = recall_at_k(I, gt, 1)
+        r10 = recall_at_k(I, gt, min(10, k, gt.shape[1]))
+        print(
+            f"{nbits:>6}  {size_mb:>10.1f}  {t_build:>9.2f}  "
+            f"{t_s/nq*1000:>7.3f}  {nq/t_s:>7.0f}  "
+            f"{r1:>6.4f}  {r10:>6.4f}"
+        )
 
 # ---------------------------------------------------------------------------
 # Flat baseline
@@ -1113,6 +1276,22 @@ def parse_args():
     p.add_argument(
         "--opq-niter", type=int, default=25,
         help="Number of OPQMatrix training iterations.",
+    )
+    # ---- IndexLSH options ----
+    p.add_argument(
+        "--lsh", action="store_true",
+        help="Run a single IndexLSH (random-hyperplane LSH) configuration.",
+    )
+    p.add_argument(
+        "--lsh-sweep", action="store_true",
+        help=(
+            "Build IndexLSH for each value in LSH_NBITS_SWEEP to show the "
+            "recall/QPS trade-off curve (one index built per nbits value)."
+        ),
+    )
+    p.add_argument(
+        "--lsh-nbits", type=int, default=256,   
+        help="Number of LSH hash bits for a single --lsh run.",
     )
     # ---- shared IVF parameters ----
     p.add_argument(
@@ -1348,6 +1527,31 @@ def main():
             dataset_tag="SIFT1M, d=128",
         )
 
+    # ------------------------------------------------------------------
+    # IndexLSH single-configuration benchmark
+    # ------------------------------------------------------------------
+    if args.lsh:
+        print_header("IndexLSH benchmark (SIFT1M, d=128)")   
+        print(f"  nbits           = {args.lsh_nbits}")
+        print(f"  k               = {args.k}")
+        run_lsh_benchmark(
+            xb, xq, xt, gt,
+            nbits=args.lsh_nbits,
+            k=args.k,
+            index_path=args.index_path,
+            verbose=True,
+        )
+
+    # ------------------------------------------------------------------
+    # IndexLSH nbits sweep  (recall vs QPS trade-off curve)
+    # ------------------------------------------------------------------
+    if args.lsh_sweep:
+        run_lsh_nbits_sweep(
+            xb, xq, xt, gt,
+            k=args.k,
+            index_path=args.index_path,
+            dataset_tag="SIFT1M, d=128",  
+        )
 
 if __name__ == "__main__":
     main()

@@ -1,0 +1,78 @@
+Log: /Users/dhm/Documents/SuCo/logs//bench_all_20260315_155134.log
+
+##########################################################################
+##  SuCo Full Benchmark Suite  —  Sun Mar 15 15:51:34 EET 2026
+##########################################################################
+  data-dir     : /Users/dhm/Documents/data/
+  index-dir    : /Users/dhm/Documents/indices/
+  deep-nb      : 1000000
+  sift10m-mat  : /Users/dhm/Documents/SuCo/data/SIFT10M/SIFT10Mfeatures.mat
+  spacev10m-dir: /Users/dhm/Documents/SuCo/data/spacev10m/
+  make-figures : 0
+
+##########################################################################
+##  Deep1M  (d=96, nb=1000000)
+##########################################################################
+
+>>> python /Users/dhm/Documents/SuCo/benchs/bench_suco_deep1b.py --data-dir /Users/dhm/Documents/data/ --nb 1000000 --index-path /Users/dhm/Documents/indices//deep_nb1000000.idx --lsh-sweep
+
+======================================================================
+  Loading Deep1M dataset  (nb=1,000,000)
+======================================================================
+  data_dir  : /Users/dhm/Documents/data/
+  dataset   : Deep1M
+  d         : 96
+  nb (base) : 1,000,000
+  nq        : 10,000
+  maxtrain  : 500,000
+  OMP threads: 10
+  Loading queries … shape=(10000, 96)
+  Loading base into RAM … shape=(1000000, 96)  dtype=float32  (loaded into RAM)
+  Loading train … shape=(500000, 96)
+  Loading ground truth … shape=(10000, 100)
+
+======================================================================
+  IndexSuCo benchmark  (Deep1M, d=96)
+======================================================================
+  nsubspaces      = 8
+  ncentroids_half = 50
+  collision_ratio = 0.05
+  candidate_ratio = 0.005
+  niter           = 10
+  k               = 10
+  Loading index from /Users/dhm/Documents/indices//deep_nb1000000.idx …
+  Loaded in 0.15s
+  Searching 10,000 queries (k=10) …
+
+  Results:
+    ntotal          = 1,000,000
+    OMP threads     = 10
+    train time      = 0.00s
+    add time        = 0.00s
+    build time      = 0.00s
+    index size      = 427.4 MiB
+    search time     = 19289.6ms total
+    ms / query      = 1.929
+    QPS             = 518
+    Recall@1        = 0.9961
+    Recall@10       = 0.9963
+    10-Recall@10    = 0.9873
+    Dist ratio      = 1.0003
+
+======================================================================
+  IndexLSH nbits sweep, Deep1B subset, d=96
+======================================================================
+ nbits   size(MiB)   build(s)     ms/q      QPS     R@1    R@10
+---------------------------------------------------------------
+    96        11.5       0.07    0.421     2373  0.0946  0.3106
+   192        23.0       0.12    0.384     2602  0.1864  0.5427
+   384        45.9       0.25    0.477     2098  0.2950  0.7406
+   768        91.8       0.51    0.542     1843  0.4294  0.8958
+  1536       183.7       1.15    0.948     1055  0.5599  0.9641
+IndexSuCo::read_index: loaded from '/Users/dhm/Documents/indices//deep_nb1000000.idx'  (ntotal=1000000  d=96  nsubspaces=8)
+IndexSuCo::write_index: saved to '/var/folders/4z/kjhfnvmx2ylfdlxg9xlfy_8r0000gn/T/tmp3t0dcymy.idx'
+(done in 50s)
+
+##########################################################################
+##  All benchmarks finished  —  Sun Mar 15 15:52:24 EET 2026
+##########################################################################
