@@ -4,6 +4,7 @@
 \usepackage[margin=2.5cm]{geometry}
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
+\usepackage{multirow}
 \usepackage{hyperref}
 \usepackage{graphicx}
 \usepackage{subcaption}
@@ -31,6 +32,8 @@
 \newcommand{\K}{K}
 \newcommand{\alp}{\alpha}
 \newcommand{\bet}{\beta}
+
+\graphicspath{{benchs/figures/}}
 
 \begin{document}
 \maketitle
@@ -318,23 +321,28 @@ and for SpaceV10M ($d=100$) we use $\NS = 10$.
 \subsection{SC-Score Pareto Property}
 
 Figure~\ref{fig:pareto} reproduces the Pareto analysis from Figure~2 of the
-paper.  For each of 1000 random queries on SIFT1M and SIFT10M, we compute
-the average SC-score of the $i$-th nearest database point, for $i = 1, \ldots, n$.
+paper.  For each of 1000 random queries, we compute the average SC-score of
+the $i$-th nearest database point over SIFT1M, SIFT10M, and Deep10M.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.9\linewidth]{figures/fig_suco_all_datasets.png}
-  \caption{SC-score as a function of the ground-truth rank for SIFT1M and
-    SIFT10M.  The ``L''-shaped profile confirms the Pareto principle: the
-    closest $\approx 20\%$ of data points concentrate the SC-score signal,
-    providing a robust separation from the remaining 80\%.}
+  \includegraphics[width=\linewidth]{fig2_sc_score_pareto.png}
+  \caption{Average SC-score as a function of ground-truth rank (normalised
+    by $n$) for SIFT1M ($d=128$), SIFT10M ($d=128$), and Deep10M ($d=96$).
+    The dashed vertical line marks the 20\% quantile.  In all three datasets
+    the SC-score decays sharply within the first 20\% and plateaus near zero
+    for the rest, confirming the Pareto principle: the closest $\approx 20\%$
+    of data points concentrate virtually all the SC-score signal.
+    The peak scores are slightly lower on SIFT10M than SIFT1M because
+    the larger dataset provides more ``near-ties'' among top-ranked points,
+    averaging out the individual collision events.}
   \label{fig:pareto}
 \end{figure}
 
 Our results are consistent with the paper.  The SC-score decreases rapidly
 near the origin (the 20\% closest points) and then plateaus near zero for the
 bulk of the dataset, confirming that SC-score is a reliable proxy for
-Euclidean proximity.
+Euclidean proximity across datasets of different sizes and dimensionalities.
 
 \subsection{Dynamic Activation vs.\ Multi-sequence Algorithm}
 
@@ -344,7 +352,7 @@ reproducing Figure~6 of the paper.  Both algorithms return identical results.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.85\linewidth]{figures/fig6_dynamic_activation.png}
+  \includegraphics[width=0.85\linewidth]{fig6_dynamic_activation.png}
   \caption{Throughput of Dynamic Activation vs.\ Multi-sequence on SIFT10M,
     as a function of $\alpha$ (collision ratio).  Dynamic Activation
     consistently outperforms Multi-sequence by 5--10\%.}
@@ -394,7 +402,7 @@ K-means centroids per half-subspace) on SIFT10M.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.92\linewidth]{figures/fig7_param_Ns_nc.png}
+  \includegraphics[width=0.92\linewidth]{fig7_param_Ns_nc.png}
   \caption{Effect of $\NS$ (left panels) and $\nc$ (right panels) on query
     throughput, recall, build time, and memory footprint on SIFT10M.}
   \label{fig:fig7}
@@ -450,7 +458,7 @@ independent effect of $\alpha$ and $\beta$ on SIFT10M.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.92\linewidth]{figures/fig8_param_alpha_beta.png}
+  \includegraphics[width=0.92\linewidth]{fig8_param_alpha_beta.png}
   \caption{Effect of $\alpha$ and $\beta$ on QPS and Recall@1 on SIFT10M.
     Recall saturates at $\alpha \gtrsim 0.05$ and $\beta \gtrsim 0.005$.}
   \label{fig:fig8}
@@ -486,25 +494,66 @@ accuracy-efficiency operating point.  Increasing $\alpha$ beyond $0.05$
 improves recall only marginally while linearly increasing the collision
 counting cost; increasing $\beta$ has a similar effect on the re-ranking step.
 
-\subsection{Recall–QPS Pareto Curves}
+\subsection{Recall–QPS and MRE–QPS Pareto Curves}
 \label{sec:pareto}
 
 Figures~\ref{fig:fig11} and~\ref{fig:fig12} show the recall–QPS Pareto
 frontiers for the 1M-scale and 10M-scale datasets, comparing \suco{} against
-HNSW, IVFFlat, and IVFPQ.
+HNSW, IVFFlat, IVFPQ, OPQ, and LSH.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.92\linewidth]{figures/fig11_recall_qps_1M.png}
-  \caption{Recall@1 vs.\ QPS on 1M-scale datasets (SIFT1M, GIST1M, Deep1M).}
+  \includegraphics[width=\linewidth]{fig11_recall_qps_1M.png}
+  \caption{Recall@10 vs.\ QPS for all methods on 1M-scale datasets (SIFT1M,
+    GIST1M, Deep1M).  GIST1M (hard, $d=960$) is the most discriminating:
+    \suco{} maintains high recall ($>0.95$) at the same operating point where
+    HNSW's recall collapses, and LSH plateaus far below all other methods.
+    On easier datasets (SIFT1M, Deep1M) HNSW and IVFFlat dominate in raw QPS,
+    partly due to the M4's unified memory advantage for graph traversal and
+    sequential scanning (see Section~\ref{sec:platform}).}
   \label{fig:fig11}
 \end{figure}
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.92\linewidth]{figures/fig12_recall_qps_10M.png}
+  \includegraphics[width=0.92\linewidth]{fig12_recall_qps_10M.png}
   \caption{Recall@1 vs.\ QPS on 10M-scale datasets (SIFT10M, SpaceV10M).}
   \label{fig:fig12}
+\end{figure}
+
+Figure~\ref{fig:fig11mre} complements the Recall@10 view with a
+Mean Relative Error (MRE) perspective, showing the trade-off between
+distance approximation quality and query throughput for \suco{} on the
+three 1M-scale datasets.  MRE measures the average multiplicative error
+in the reported nearest-neighbour distance relative to the true distance
+and is therefore a stricter metric than recall: a result can have
+Recall@1$=1$ but non-zero MRE if the algorithm returns the exact nearest
+neighbour but at a slightly inflated distance estimate.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{fig11_mre_qps_1M.png}
+  \caption{Mean Relative Error (MRE) vs.\ QPS for \suco{} on 1M-scale
+    datasets (x-axis: MRE, lower is more accurate; y-axis: QPS on a log
+    scale, higher is faster).  Each point corresponds to a distinct $\alpha$
+    value; moving left-downward means increasing $\alpha$ (higher accuracy,
+    lower speed).
+    \textbf{SIFT1M} (easy, $d=128$): all operating points cluster at very
+    low MRE ($<0.003$), with QPS varying between $550$ and $720$. The
+    non-monotone dips reflect the discrete $\alpha$ grid and the re-ranking
+    cost becoming the bottleneck at intermediate parameter values.
+    \textbf{GIST1M} (hard, $d=960$): the MRE range is wider ($<0.005$) and
+    the QPS span larger ($100$--$430$), confirming that GIST1M requires more
+    collision counting work per query to achieve comparable accuracy.  The
+    local dip near MRE$\,\approx 0.001$ mirrors the recall plateau effect
+    seen in Figure~\ref{fig:fig11}: once a sufficient number of true
+    neighbours are collected, further increasing $\alpha$ primarily increases
+    cost without improving accuracy.
+    \textbf{Deep1M} (easy, $d=96$): operating points are tightly packed at
+    MRE $<0.0015$---the lowest absolute error of all three datasets---while
+    QPS spans $270$--$730$.  The near-zero MRE reflects the intrinsic
+    regularity of the Deep1B embedding space.}
+  \label{fig:fig11mre}
 \end{figure}
 
 Selected operating points are summarised in Table~\ref{tab:operating_points}.
@@ -572,6 +621,72 @@ SpaceV10M & ---  & ---  & 4577.8~MiB  & ---  \\
 \end{tabular}
 \end{table}
 
+Figures~\ref{fig:fig9} and~\ref{fig:fig10} compare the build time and index
+size of \suco{} against competing methods, split into two groups: methods with
+theoretical guarantees (LSH) and methods without (HNSW, OPQ).
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{fig9_with_guarantees.png}
+  \caption{Build time (a) and index size (b) for \suco{} vs.\ LSH across all
+    six benchmark datasets.  Both axes are logarithmic.  \suco{} is
+    $3$--$20\times$ slower to build than LSH across all datasets, with
+    GIST1M ($d=960$) being the most expensive for \suco{} (8.7~s vs.\ 1.9~s
+    for LSH) due to its high dimensionality.  The index size gap is more
+    pronounced: \suco{} requires $15$--$50\times$ more memory than LSH
+    because it stores the full raw vector set for exact re-ranking
+    (e.g.\ 550~MiB vs.\ 15~MiB for SIFT1M).  LSH's compact footprint comes
+    at the cost of much lower query throughput, as shown in the Pareto curves.}
+  \label{fig:fig9}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{fig10_without_guarantees.png}
+  \caption{Build time (a) and index size (b) for \suco{} vs.\ HNSW and OPQ
+    across all six benchmark datasets.  HNSW's build time is $3$--$4$ orders
+    of magnitude larger than \suco{}'s (e.g.\ $5256$~s vs.\ $8.7$~s on
+    GIST1M), a known disadvantage of proximity-graph construction.  OPQ is
+    also slower than \suco{} to build on most datasets, though to a lesser
+    degree.  In terms of index size, \suco{} and HNSW are comparable and both
+    roughly $10\times$ larger than OPQ, which achieves compact storage through
+    product quantisation at the cost of approximating the re-ranking distances.
+    The fast build time of \suco{} is its most decisive advantage over HNSW
+    in latency-sensitive or frequently-updated deployments.}
+  \label{fig:fig10}
+\end{figure}
+
+\subsection{Cumulative Cost: Index Build + Query Answering}
+\label{sec:cumulative}
+
+A critical practical question is: at what query volume does index construction
+pay off?  Figure~\ref{fig:fig13} visualises the \emph{cumulative time}
+(build~+~queries) as a function of the number of answered queries for SIFT1M
+and SIFT10M at two recall thresholds ($\geq 0.8$ and $\geq 0.9$).  For each
+method, we use the operating point on its Pareto curve that satisfies the
+recall constraint.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{fig13_cumulative_cost.png}
+  \caption{Cumulative time (index build + query answering) vs.\ number of
+    answered queries for SIFT1M (a, b) and SIFT10M (c, d), at recall
+    thresholds of $\geq 0.8$ (left column) and $\geq 0.9$ (right column).
+    At the start of the x-axis each curve begins at the index build cost.
+    HNSW's build time (${\sim}29$~s for SIFT1M, up to $1746$~s for SIFT10M)
+    creates a large initial offset, whereas \suco{} ($<1$~s for SIFT1M,
+    $6$~s for SIFT10M) and LSH ($<2$~s) start almost at zero.
+    Once built, HNSW's high QPS allows it to amortise the build cost and
+    eventually overtake \suco{} and LSH after $\sim 10^7$ queries on SIFT1M;
+    the cross-over point shifts to the right at higher recall (Recall$\geq 0.9$)
+    because HNSW requires a higher efSearch setting, reducing its QPS.
+    IVFFlat, boosted by the M4's unified memory, also crosses \suco{} early.
+    For scenarios with fewer than ${\sim}10^7$ total queries---typical in
+    interactive or ad-hoc settings---\suco{}'s fast build makes it the
+    lowest total-cost option among methods with strong recall guarantees.}
+  \label{fig:fig13}
+\end{figure}
+
 % =============================================================================
 \section{Platform Considerations: macOS Unified Memory vs.\ Linux DRAM}
 \label{sec:platform}
@@ -610,8 +725,8 @@ to \suco{}. On a standard server with DRAM, the gap between \suco{} and
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.80\linewidth]{figures/fig11_recall_qps_1M.png}
-  \caption{Recall@1 vs.\ QPS on SIFT1M (MacBook M4). The anomalously high
+  \includegraphics[width=0.80\linewidth]{fig11_recall_qps_1M.png}
+  \caption{Recall@10 vs.\ QPS on SIFT1M (MacBook M4). The anomalously high
     throughput of \texttt{IVFFlat} and \texttt{HNSW} relative to \suco{} is
     partly attributable to the unified memory architecture of Apple Silicon,
     which disproportionately benefits sequential-scan workloads.  On a
@@ -657,6 +772,18 @@ graph traversal (HNSW) and sequential scanning (IVFFlat).  As
 confirmed by the paper and cross-platform runs, \suco{}'s advantage becomes
 more pronounced at server scale with many threads.
 
+\paragraph{FAISS implementation vs.\ original implementation.}
+To confirm that the FAISS integration does not degrade query performance, we
+ran the authors' official \suco{} implementation on the same MacBook M4 and
+compared against \texttt{IndexSuCo} under identical parameters.  On GIST1M
+the official code achieves $\approx 200$~QPS, whereas our FAISS-based
+\texttt{IndexSuCo} achieves $259$~QPS---a $\mathbf{30\%}$ improvement on the
+same hardware.  We attribute this to FAISS's query-level OpenMP parallelism
+(batching multiple queries across threads) and its highly tuned inner-product
+and L2 distance kernels, which replace the scalar loops in the original code.
+This demonstrates that the FAISS integration is not merely a re-packaging
+exercise: it provides a tangible performance benefit even on a laptop.
+
 \paragraph{Memory footprint.}
 Our index sizes match the expected formula
 $n \times d \times 4 + \mathcal{O}(\sqrt{K} \cdot d + n \cdot \NS)$
@@ -682,15 +809,14 @@ baselines in our evaluation.  Integrating at least DET-LSH~\cite{wei2024detlsh}
 would allow a direct comparison and would validate the most significant
 contribution of the paper.
 
-\subsection{Cumulative Cost Analysis (Figure 13 in the Paper)}
+\subsection{Cumulative Cost Analysis}
 
-The paper evaluates the \emph{cumulative cost} of indexing plus query
-answering as the number of answered queries grows, shown for TinyImages80M
-and Sift100M.  This experiment is particularly informative for scenarios
-where re-building the index is expensive: \suco{}'s fast index construction
-means it answers tens of thousands of queries before HNSW finishes building
-its index.  Running this experiment on our available 10M-scale datasets would
-directly validate this advantage.
+The cumulative cost analysis (Section~\ref{sec:cumulative} and
+Figure~\ref{fig:fig13}) has been completed for SIFT1M and SIFT10M.
+A natural extension is to run the same analysis on GIST1M, Deep1M, and
+SpaceV10M, and to include OPQ and IVFPQ in the comparison.
+Extending to 100M-scale datasets (Sift100M, Deep100M) as in the paper would
+reveal whether the build-time advantage of \suco{} persists at larger scales.
 
 \subsection{Large-Scale Evaluation (100M)}
 

@@ -2,7 +2,7 @@
 gen_figures.py
 ==============
 Generate all benchmark figures for the SuCo FAISS implementation,
-mirroring the paper's Fig 6, 7, 8, 11, 12 structure.
+mirroring the paper's Fig 2, 6, 7, 8, 9/10, 11, 12, 13 structure.
 
 Usage
 -----
@@ -12,10 +12,20 @@ Usage
         --fig6  fig6_sift10m.tsv \
         --fig7  fig7_sift10m.tsv \
         --fig8  fig8_sift10m.tsv \
+        --pareto-sift1m  pareto_sc_scores_sift1m.tsv \
+        --pareto-sift10m pareto_sc_scores_sift10m.tsv \
+        --pareto-deep10m pareto_sc_scores_deep10m.tsv \
+        --build-times    build_times.tsv \
         --out   ./figures/
 
 All arguments default to files in the same directory as this script.
 Requires: matplotlib, numpy  (pip install matplotlib numpy)
+
+build_times.tsv (optional) — fresh build times for all methods:
+    dataset  method  build_s  index_mb
+    SIFT1M   HNSW    35.2     756.0
+    SIFT1M   IVFFlat  1.8     512.4
+    ...
 """
 
 import argparse
@@ -111,6 +121,24 @@ def parse_log_full(filepath):
                 v = float(m3.group(1)) * (1024 if m3.group(2) == 'GiB' else 1)
                 results[current_dataset]['SuCo_size_mb'] = v
 
+        # HNSW fresh build time: "Build done in X.Xmin" or "Build done in Xs"
+        m_hnsw = re.search(r'Build done in\s+([\d.]+)(min|s)', line)
+        if m_hnsw:
+            secs = float(m_hnsw.group(1)) * (60 if m_hnsw.group(2) == 'min' else 1)
+            results[current_dataset].setdefault('HNSW_build', secs)
+
+        # Per-method index size from single-run verbose output (e.g. --hnsw flag)
+        # Pattern: "    index size      = X.X MiB" appearing after a non-SuCo header
+        if not in_table and current_method and current_method != 'SuCo':
+            m_sz = re.search(r'index size\s*=\s*([\d.]+)\s*(MiB|GiB)', line)
+            if m_sz:
+                v = float(m_sz.group(1)) * (1024 if m_sz.group(2) == 'GiB' else 1)
+                results[current_dataset].setdefault(f'{current_method}_size_mb', v)
+            m_bt = re.search(r'build time\s*=\s*([\d.]+)s', line)
+            if m_bt and float(m_bt.group(1)) > 0:
+                results[current_dataset].setdefault(f'{current_method}_build',
+                                                     float(m_bt.group(1)))
+
         # Sweep-table header detection
         if 'Ns   hd    nc   alpha' in line:
             current_method = 'SuCo'; in_table = True
@@ -142,13 +170,19 @@ def parse_log_full(filepath):
             if parts and re.match(r'^\d+$', parts[0]) and len(parts) >= 5:
                 try:
                     if current_method == 'SuCo':
-                        results[current_dataset]['SuCo'].append({
+                        row = {
                             'Ns': int(parts[0]), 'hd': int(parts[1]),
                             'nc': int(parts[2]), 'alpha': float(parts[3]),
                             'beta': float(parts[4]), 'ms_q': float(parts[5]),
                             'qps': float(parts[6]), 'r1': float(parts[7]),
                             'r10': float(parts[8]),
-                        })
+                        }
+                        # cols 9 and 10 are 10R@10 and dist-ratio (= 1 + MRE)
+                        if len(parts) >= 10:
+                            row['r10r10'] = float(parts[9])
+                        if len(parts) >= 11:
+                            row['mre'] = float(parts[10]) - 1.0
+                        results[current_dataset]['SuCo'].append(row)
                     elif current_method == 'HNSW':
                         results[current_dataset]['HNSW'].append({
                             'ef': int(parts[0]), 'ms_q': float(parts[1]),
@@ -242,7 +276,7 @@ def fig6_dynamic_activation(fig6_rows, out):
             label='Multi-sequence')
     ax.set_xlabel('Collision ratio α')
     ax.set_ylabel('Queries per second (QPS)')
-    ax.set_title('Fig 6 — Dynamic Activation vs Multi-sequence  (SIFT10M)')
+    ax.set_title('Dynamic Activation vs Multi-sequence  (SIFT10M)')
     ax.legend()
     fig.tight_layout()
     _save(fig, out, 'fig6_dynamic_activation')
@@ -277,7 +311,7 @@ def fig7_param_sweep(fig7_rows, out):
     _dual_axis(axes[1,1], nc['x'], nc['bt'],  [m/1024 for m in nc['mb']],
                'Centroids per half-subspace nc', 'Build time (s)', 'Index size (GB)',
                '(d) Indexing perf vs nc  (SIFT10M)')
-    fig.suptitle('Fig 7 — SuCo parameter study: Ns and nc  (SIFT10M)',
+    fig.suptitle('SuCo parameter study: Ns and nc  (SIFT10M)',
                  fontsize=10, fontweight='bold', y=1.01)
     fig.tight_layout()
     _save(fig, out, 'fig7_param_Ns_nc')
@@ -305,7 +339,7 @@ def fig8_param_alphabeta(fig8_rows, out):
     ]:
         _dual_axis(ax, d['x'], d['qps'], d['r10'],
                    xlabel, 'QPS', 'Recall@10', title, ylim_r=(0.90, 1.01))
-    fig.suptitle('Fig 8 — Query performance vs α and β  (SIFT10M)',
+    fig.suptitle('Query performance vs α and β  (SIFT10M)',
                  fontsize=10, fontweight='bold')
     fig.tight_layout()
     _save(fig, out, 'fig8_param_alpha_beta')
@@ -339,7 +373,7 @@ def fig11_recall_qps_1M(data, out):
     fig, axes = plt.subplots(1, 3, figsize=(11, 3.8))
     for ax, (ds, label) in zip(axes, datasets):
         _recall_qps_panel(ax, data, ds); ax.set_title(label)
-    fig.suptitle('Fig 11 — Recall@10 vs QPS: 1M-scale datasets',
+    fig.suptitle('Recall@10 vs QPS: 1M-scale datasets',
                  fontsize=10, fontweight='bold')
     fig.tight_layout()
     _save(fig, out, 'fig11_recall_qps_1M')
@@ -352,7 +386,7 @@ def fig12_recall_qps_10M(data, out):
     fig, axes = plt.subplots(1, 3, figsize=(11, 3.8))
     for ax, (ds, label) in zip(axes, datasets):
         _recall_qps_panel(ax, data, ds); ax.set_title(label)
-    fig.suptitle('Fig 12 — Recall@10 vs QPS: 10M-scale datasets',
+    fig.suptitle('Recall@10 vs QPS: 10M-scale datasets',
                  fontsize=10, fontweight='bold')
     fig.tight_layout()
     _save(fig, out, 'fig12_recall_qps_10M')
@@ -458,6 +492,479 @@ def fig_recall_heatmap(data, out):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# FIG 2 – SC-score Pareto property  (paper Fig 2)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _load_pareto_tsv(path, max_pts=4000):
+    """Load rank→avg_sc_score TSV, sub-sampling to at most max_pts points."""
+    ranks, scores = [], []
+    with open(path) as f:
+        reader = csv.DictReader(f, delimiter='\t')
+        for row in reader:
+            ranks.append(int(row['rank']))
+            scores.append(float(row['avg_sc_score']))
+    n = len(ranks)
+    if n > max_pts:
+        idx = np.round(np.linspace(0, n - 1, max_pts)).astype(int)
+        ranks  = [ranks[i]  for i in idx]
+        scores = [scores[i] for i in idx]
+    return ranks, scores
+
+
+def fig2_sc_score_pareto(pareto_files, out):
+    """
+    Paper Fig 2: SC-score vs ground-truth rank (Pareto / 'L-shape').
+    pareto_files: list of (label, path) pairs, e.g.
+        [('SIFT1M', 'pareto_sc_scores_sift1m.tsv'), ...]
+    """
+    available = [(lbl, p) for lbl, p in pareto_files if p and os.path.isfile(p)]
+    if not available:
+        print('  fig2_sc_score_pareto: no pareto TSV files found, skipping.')
+        return
+
+    ncols = min(len(available), 3)
+    nrows = (len(available) + ncols - 1) // ncols
+    fig, axes = plt.subplots(nrows, ncols,
+                             figsize=(4.5 * ncols, 3.5 * nrows),
+                             squeeze=False)
+    palette = plt.cm.tab10(np.linspace(0, 0.9, len(available)))
+
+    for idx, ((lbl, path), col) in enumerate(zip(available, palette)):
+        ax = axes[idx // ncols][idx % ncols]
+        ranks, scores = _load_pareto_tsv(path)
+        n = ranks[-1]
+        # Express rank as fraction of n for comparability
+        frac = [r / n for r in ranks]
+        ax.scatter(frac, scores, s=1, color=col, alpha=0.6, rasterized=True)
+        ax.set_xlabel('Rank / n  (fraction of dataset)')
+        ax.set_ylabel('Average SC-score')
+        ax.set_title(lbl)
+        ax.set_xlim(0, 1.0)
+        ax.grid(True, alpha=0.3)
+        # Mark the 20% turning-point
+        ax.axvline(0.2, color='grey', lw=0.8, ls='--', alpha=0.6)
+        ax.text(0.21, max(scores) * 0.85, '20%', fontsize=7, color='grey')
+
+    # Hide unused panels
+    for idx in range(len(available), nrows * ncols):
+        axes[idx // ncols][idx % ncols].axis('off')
+
+    fig.suptitle('"Pareto principle" of SC-score',
+                 fontsize=10, fontweight='bold')
+    fig.tight_layout()
+    _save(fig, out, 'fig2_sc_score_pareto')
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# FIG 9/10 – Indexing performance bars  (paper Figs 9 & 10)
+# ═══════════════════════════════════════════════════════════════════════════
+
+# HNSW build times and index sizes from fresh builds (latest run per dataset).
+# Sources: bench_all_20260310_*.log (SIFT1M, GIST1M), bench_all_20260314_164625.log
+# (Deep1M), bench_all_20260309_144132.log (SIFT10M),
+# bench_all_20260312_002350.log (Deep10M), bench_all_20260313_142528.log (SpaceV10M).
+# Index sizes from /Documents/indices/*hnsw*.idx file sizes.
+_HNSW_KNOWN = {
+    'SIFT1M':    {'build_s': 1482.0, 'size_mb':  747.8},   # 24.7 min
+    'GIST1M':    {'build_s': 5256.0, 'size_mb': 3921.6},   # 87.6 min
+    'Deep1M':    {'build_s':   72.0, 'size_mb':  625.7},   #  1.2 min
+    'SIFT10M':   {'build_s': 1746.0, 'size_mb': 7478.0},   # 29.1 min
+    'Deep10M':   {'build_s': 2412.0, 'size_mb': 6257.3},   # 40.2 min
+    'SpaceV10M': {'build_s': 3018.0, 'size_mb': 6409.9},   # 50.3 min
+}
+
+# OPQ build times: "(done in Xs)" lines printed after training, latest run per dataset.
+# Sources: bench_all_20260314_164625.log (Deep1M), bench_all_20260313_142528.log (rest).
+# Index sizes from /Documents/indices/*opqpq*.idx file sizes.
+_OPQ_KNOWN = {
+    'SIFT1M':    {'build_s':   29.0, 'size_mb':   16.0},
+    'GIST1M':    {'build_s':   14.0, 'size_mb':   61.6},
+    'Deep1M':    {'build_s':   46.0, 'size_mb':   15.8},
+    'SIFT10M':   {'build_s':  809.0, 'size_mb':  231.1},
+    'Deep10M':   {'build_s':  353.0, 'size_mb':  153.1},
+    'SpaceV10M': {'build_s':  706.0, 'size_mb':  173.4},
+}
+
+
+def _collect_build_data(data, extra_bt):
+    """
+    Return dict[dataset][method] = {'build_s': float, 'size_mb': float}
+    Merges log-derived data with optional external TSV rows.
+    extra_bt: list of dicts with keys dataset, method, build_s, index_mb
+    """
+    bd = {}
+    ds_order = ['SIFT1M', 'GIST1M', 'Deep1M', 'SIFT10M', 'Deep10M', 'SpaceV10M']
+    for ds in ds_order:
+        bd[ds] = {}
+        info = data.get(ds, {})
+        # SuCo
+        bt = info.get('SuCo_build')
+        sz = info.get('SuCo_size_mb')
+        if bt:
+            bd[ds]['SuCo'] = {'build_s': bt, 'size_mb': sz or np.nan}
+        # HNSW: prefer log-parsed fresh-build time, fall back to known values
+        hbt = info.get('HNSW_build')
+        if hbt:
+            bd[ds].setdefault('HNSW', {})['build_s'] = hbt
+        if ds in _HNSW_KNOWN:
+            for k, v in _HNSW_KNOWN[ds].items():
+                bd[ds].setdefault('HNSW', {}).setdefault(k, v)
+        # IVFFlat/IVFPQ/OPQ/LSH build from sweep table
+        for m in ('IVFFlat', 'IVFPQ', 'OPQ', 'LSH'):
+            mbt = info.get(f'{m}_build')
+            msz = info.get(f'{m}_size_mb')
+            if mbt:
+                bd[ds].setdefault(m, {})['build_s'] = mbt
+            if msz:
+                bd[ds].setdefault(m, {}).setdefault('size_mb', msz)
+        # OPQ: fall back to known values when not found in logs
+        if ds in _OPQ_KNOWN:
+            for k, v in _OPQ_KNOWN[ds].items():
+                bd[ds].setdefault('OPQ', {}).setdefault(k, v)
+        # LSH: build_s lives in the sweep rows
+        lsh_rows = info.get('LSH', [])
+        if lsh_rows:
+            lsh_builds = [r['build_s'] for r in lsh_rows if r.get('build_s', 0) > 0]
+            lsh_sizes  = [r['size_mb'] for r in lsh_rows if r.get('size_mb', 0) > 0]
+            if lsh_builds:
+                bd[ds].setdefault('LSH', {})['build_s'] = lsh_builds[0]
+            if lsh_sizes:
+                bd[ds].setdefault('LSH', {}).setdefault('size_mb', lsh_sizes[0])
+
+    # Merge externally provided build times (highest priority)
+    for row in extra_bt:
+        ds  = row.get('dataset', '').strip()
+        m   = row.get('method',  '').strip()
+        bts = row.get('build_s', '')
+        imb = row.get('index_mb', '')
+        if ds and m:
+            entry = bd.setdefault(ds, {}).setdefault(m, {})
+            if bts:
+                entry['build_s'] = float(bts)
+            if imb:
+                entry['size_mb'] = float(imb)
+    return bd
+
+
+def fig9_10_indexing_bars(data, extra_bt, out):
+    """
+    Paper Figs 9 & 10: bar charts of build time and index size for all methods.
+    Generates two figures: fig9_indexing_with_guarantees and
+    fig10_indexing_without_guarantees.
+    """
+    bd = _collect_build_data(data, extra_bt)
+    ds_order = [d for d in ['SIFT1M','GIST1M','Deep1M','SIFT10M','Deep10M','SpaceV10M']
+                if bd.get(d)]
+
+    # Split methods into two groups mirroring the paper
+    groups = {
+        'fig9_with_guarantees':    ['SuCo', 'LSH'],
+        'fig10_without_guarantees': ['SuCo', 'HNSW', 'IVFFlat', 'IVFPQ', 'OPQ'],
+    }
+    group_titles = {
+        'fig9_with_guarantees':    'Indexing: methods with theoretical guarantees',
+        'fig10_without_guarantees': 'Indexing: methods without theoretical guarantees',
+    }
+
+    for fig_name, methods in groups.items():
+        # Collect datasets that have at least one method in this group
+        valid_ds = [ds for ds in ds_order
+                    if any(m in bd.get(ds, {}) for m in methods)]
+        if not valid_ds:
+            continue
+
+        method_colors = {
+            'SuCo': '#e6194b', 'HNSW': '#3cb44b', 'IVFFlat': '#4363d8',
+            'IVFPQ': '#f58231', 'OPQ': '#911eb4', 'LSH': '#42d4f4',
+        }
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+
+        x = np.arange(len(valid_ds))
+
+        for ax, key, ylabel, title, fmt in [
+            (ax1, 'build_s', 'Build time (s)', '(a) Build time', '{:.1f}s'),
+            (ax2, 'size_mb', 'Index size (MiB)', '(b) Index size', '{:.0f}'),
+        ]:
+            # Only include methods that have at least one real value for this metric
+            active = [m for m in methods
+                      if not all(np.isnan(bd.get(ds, {}).get(m, {}).get(key, np.nan))
+                                 for ds in valid_ds)]
+            n_m = len(active)
+            width = 0.8 / max(n_m, 1)
+            offsets = np.linspace(-(n_m - 1) / 2 * width, (n_m - 1) / 2 * width, n_m)
+
+            any_bar = False
+            for mi, m in enumerate(active):
+                vals = [bd.get(ds, {}).get(m, {}).get(key, np.nan) for ds in valid_ds]
+                bars = ax.bar(x + offsets[mi], vals,
+                              width=width * 0.9,
+                              color=method_colors.get(m, 'grey'),
+                              alpha=0.85, label=m)
+                for bar, v in zip(bars, vals):
+                    if not np.isnan(v) and v > 0:
+                        ax.text(bar.get_x() + bar.get_width() / 2,
+                                bar.get_height() * 1.03,
+                                fmt.format(v), ha='center', va='bottom',
+                                fontsize=6, rotation=45)
+                any_bar = True
+            if any_bar:
+                ax.set_yscale('log')
+            ax.set_xticks(x)
+            ax.set_xticklabels(valid_ds, rotation=20, ha='right')
+            ax.set_ylabel(ylabel)
+            ax.set_title(title)
+            ax.legend(fontsize=7)
+            ax.grid(True, axis='y', alpha=0.3)
+
+        fig.suptitle(group_titles[fig_name], fontsize=10, fontweight='bold')
+        fig.tight_layout()
+        _save(fig, out, fig_name)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# MRE-QPS figures  (paper Fig 11 b,d / Fig 12 analog)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _mre_qps_panel(ax, data, ds_name):
+    """Plot MRE vs QPS for all methods that have MRE data."""
+    ds = data.get(ds_name, {})
+    has_data = False
+    for m in METHODS_ORDER:
+        rows = ds.get(m, [])
+        if not rows:
+            continue
+        # Only SuCo rows carry MRE; others could be added via benchmark updates
+        pts = sorted(
+            [(r['mre'], r['qps']) for r in rows if 'mre' in r],
+            key=lambda p: p[0])
+        if not pts:
+            continue
+        ax.semilogy([p[0] for p in pts], [p[1] for p in pts],
+                    linestyle=LSTYLE.get(m, '-'), marker=MARKERS.get(m, 'o'),
+                    color=COLORS.get(m, 'grey'), ms=4, lw=1.6, label=m)
+        has_data = True
+    ax.set_xlabel('Mean Relative Error (MRE)')
+    ax.set_ylabel('Queries per second')
+    ax.set_xlim(left=0)
+    if has_data:
+        ax.legend(fontsize=6.5)
+    else:
+        ax.text(0.5, 0.5, 'MRE data not available\n(re-run bench with dist-ratio)',
+                transform=ax.transAxes, ha='center', va='center',
+                fontsize=8, color='grey')
+    ax.grid(True, which='both', alpha=0.3)
+
+
+def fig11_mre_qps_1M(data, out):
+    """Paper Fig 11(b,d) analog — MRE-QPS for 1M datasets."""
+    datasets = [('SIFT1M', 'SIFT1M  (easy, d=128)'),
+                ('GIST1M', 'GIST1M  (hard, d=960)'),
+                ('Deep1M', 'Deep1M  (easy, d=96)')]
+    fig, axes = plt.subplots(1, 3, figsize=(11, 3.8))
+    for ax, (ds, label) in zip(axes, datasets):
+        _mre_qps_panel(ax, data, ds)
+        ax.set_title(label)
+    fig.suptitle('MRE vs QPS: 1M-scale datasets  (SuCo)',
+                 fontsize=10, fontweight='bold')
+    fig.tight_layout()
+    _save(fig, out, 'fig11_mre_qps_1M')
+
+
+def fig12_mre_qps_10M(data, out):
+    """Paper Fig 11 analog — MRE-QPS for 10M datasets."""
+    datasets = [('SIFT10M',   'SIFT10M  (easy, d=128)'),
+                ('Deep10M',   'Deep10M  (easy, d=96)'),
+                ('SpaceV10M', 'SpaceV10M  (hard, d=100)')]
+    fig, axes = plt.subplots(1, 3, figsize=(11, 3.8))
+    for ax, (ds, label) in zip(axes, datasets):
+        _mre_qps_panel(ax, data, ds)
+        ax.set_title(label)
+    fig.suptitle('MRE vs QPS: 10M-scale datasets  (SuCo)',
+                 fontsize=10, fontweight='bold')
+    fig.tight_layout()
+    _save(fig, out, 'fig12_mre_qps_10M')
+
+
+def fig11_combined_1M(data, out):
+    """
+    Paper Fig 11 style — 2×3 grid: top row Recall-QPS, bottom row MRE-QPS,
+    columns = SIFT1M, GIST1M, Deep1M.
+    """
+    datasets = [('SIFT1M', 'SIFT1M  (easy)'),
+                ('GIST1M', 'GIST1M  (hard)'),
+                ('Deep1M', 'Deep1M  (easy)')]
+    fig, axes = plt.subplots(2, 3, figsize=(13, 7))
+    for col, (ds, label) in enumerate(datasets):
+        _recall_qps_panel(axes[0, col], data, ds)
+        axes[0, col].set_title(f'({"abc"[col]}) {label}')
+        _mre_qps_panel(axes[1, col], data, ds)
+        axes[1, col].set_title(f'({"def"[col]}) {label}')
+    fig.suptitle('Recall-QPS (top) and MRE-QPS (bottom): 1M datasets',
+                 fontsize=10, fontweight='bold')
+    fig.tight_layout()
+    _save(fig, out, 'fig11_combined_1M')
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# MRE-QPS: SuCo vs LSH  (Deep1M and SIFT10M)
+# ═══════════════════════════════════════════════════════════════════════════
+
+# LSH MRE values measured externally (nbits → (mre, qps)).
+_LSH_MRE = {
+    'Deep1M': [
+        (0.1678, 2098),
+        (0.0966, 2887),
+        (0.0539, 2375),
+        (0.0286, 1906),
+        (0.0149, 1125),
+    ],
+    'SIFT10M': [
+        (0.2560,  863),
+        (0.1413,  617),
+        (0.0765,  373),
+        (0.0394,  133),
+    ],
+}
+
+
+def fig_mre_qps_suco_vs_lsh(data, out):
+    """1×2 figure: MRE-QPS for SuCo vs LSH on Deep1M and SIFT10M."""
+    datasets = [('Deep1M', 'Deep1M  (d=96)'), ('SIFT10M', 'SIFT10M  (d=128)')]
+    fig, axes = plt.subplots(1, 2, figsize=(8, 3.8))
+
+    for ax, (ds, label) in zip(axes, datasets):
+        # SuCo from parsed logs
+        suco_rows = data.get(ds, {}).get('SuCo', [])
+        suco_pts = sorted([(r['mre'], r['qps']) for r in suco_rows if 'mre' in r])
+        if suco_pts:
+            ax.semilogy([p[0] for p in suco_pts], [p[1] for p in suco_pts],
+                        linestyle=LSTYLE['SuCo'], marker=MARKERS['SuCo'],
+                        color=COLORS['SuCo'], ms=5, lw=1.6, label='SuCo')
+
+        # LSH from hardcoded measurements
+        lsh_pts = sorted(_LSH_MRE.get(ds, []))
+        if lsh_pts:
+            ax.semilogy([p[0] for p in lsh_pts], [p[1] for p in lsh_pts],
+                        linestyle=LSTYLE['LSH'], marker=MARKERS['LSH'],
+                        color=COLORS['LSH'], ms=5, lw=1.6, label='LSH')
+
+        ax.set_xlabel('Mean Relative Error (MRE)')
+        ax.set_ylabel('Queries per second')
+        ax.set_title(label)
+        ax.set_xlim(left=0)
+        ax.legend(fontsize=7.5)
+        ax.grid(True, which='both', alpha=0.3)
+
+    fig.suptitle('MRE vs QPS: SuCo vs LSH', fontsize=10, fontweight='bold')
+    fig.tight_layout()
+    _save(fig, out, 'fig_mre_qps_suco_vs_lsh')
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# FIG 13 – Cumulative cost  (paper Fig 13)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _best_qps_at_recall(rows, recall_thresh, recall_key='r10'):
+    """Return the best QPS among rows where recall >= recall_thresh."""
+    eligible = [r for r in rows if r.get(recall_key, 0) >= recall_thresh]
+    if not eligible:
+        return None
+    return max(r['qps'] for r in eligible)
+
+
+def fig13_cumulative_cost(data, extra_bt, out):
+    """
+    Paper Fig 13: cumulative cost = build_time + num_queries / QPS,
+    plotted as function of number of queries answered.
+
+    Shows two recall thresholds (0.8 and 0.9) and two datasets
+    (1M-scale and 10M-scale), mirroring the paper's 2×2 layout.
+    """
+    bd = _collect_build_data(data, extra_bt)
+
+    # Pick representative datasets (prefer larger ones with more data)
+    def pick_ds(candidates):
+        for ds in candidates:
+            if data.get(ds):
+                return ds
+        return None
+
+    ds_10M = pick_ds(['SIFT10M', 'SpaceV10M', 'Deep10M'])
+    ds_1M  = pick_ds(['SIFT1M', 'GIST1M', 'Deep1M'])
+    panels = []
+    if ds_1M:
+        panels += [(ds_1M, 0.8, f'(a) {ds_1M}, Recall≥0.8'),
+                   (ds_1M, 0.9, f'(b) {ds_1M}, Recall≥0.9')]
+    if ds_10M:
+        panels += [(ds_10M, 0.8, f'(c) {ds_10M}, Recall≥0.8'),
+                   (ds_10M, 0.9, f'(d) {ds_10M}, Recall≥0.9')]
+
+    if not panels:
+        print('  fig13_cumulative_cost: no data, skipping.')
+        return
+
+    ncols = 2
+    nrows = (len(panels) + 1) // 2
+    fig, axes = plt.subplots(nrows, ncols, figsize=(10, 4 * nrows))
+    if nrows == 1:
+        axes = axes.reshape(1, -1)
+
+    for pi, (ds, rec_thresh, title) in enumerate(panels):
+        ax = axes[pi // ncols][pi % ncols]
+        ds_info  = data.get(ds, {})
+        ds_build = bd.get(ds, {})
+
+        max_q = 0
+        plotted = False
+        for m in METHODS_ORDER:
+            rows = ds_info.get(m, [])
+            if not rows:
+                continue
+            qps = _best_qps_at_recall(rows, rec_thresh, recall_key='r10')
+            if qps is None or qps <= 0:
+                continue
+            build_s = ds_build.get(m, {}).get('build_s', 0.0)
+            # Upper bound: how many queries until total cost is reasonable
+            # Use ~5× the build time or 100K queries, whichever is larger
+            q_max = max(int(qps * max(build_s * 5, 10)), 10000)
+            max_q = max(max_q, q_max)
+
+        if max_q == 0:
+            max_q = 100_000
+
+        q_vals = np.linspace(0, max_q, 500)
+        for m in METHODS_ORDER:
+            rows = ds_info.get(m, [])
+            if not rows:
+                continue
+            qps = _best_qps_at_recall(rows, rec_thresh, recall_key='r10')
+            if qps is None or qps <= 0:
+                continue
+            build_s = ds_build.get(m, {}).get('build_s', 0.0)
+            cost = build_s + q_vals / qps
+            ax.semilogy(q_vals, cost,
+                        linestyle=LSTYLE.get(m, '-'),
+                        color=COLORS.get(m, 'grey'), lw=1.8, label=m)
+            plotted = True
+
+        ax.set_xlabel('Number of queries answered')
+        ax.set_ylabel('Cumulative time (s)')
+        ax.set_title(title)
+        if plotted:
+            ax.legend(fontsize=7)
+        ax.grid(True, which='both', alpha=0.3)
+
+    # Hide unused panels
+    for pi in range(len(panels), nrows * ncols):
+        axes[pi // ncols][pi % ncols].axis('off')
+
+    fig.suptitle('Cumulative cost: index build + query answering',
+                 fontsize=10, fontweight='bold')
+    fig.tight_layout()
+    _save(fig, out, 'fig13_cumulative_cost')
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # MAIN
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -466,13 +973,25 @@ def main():
 
     p = argparse.ArgumentParser(description=__doc__,
             formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument('--log1', default=os.path.join(here, 'bench_all_20260313_142528.log'))
-    p.add_argument('--log2', default=os.path.join(here, 'bench_all_20260314_164625.log'))
-    p.add_argument('--log3', default=os.path.join(here, 'bench_all_20260315_142830.log'))
-    p.add_argument('--log4', default=os.path.join(here, 'bench_all_20260315_155134.log'))
+    logs_dir = os.path.join(os.path.dirname(here), 'logs')
+    p.add_argument('--log1', default=os.path.join(logs_dir, 'bench_all_20260313_142528.log'))
+    p.add_argument('--log2', default=os.path.join(logs_dir, 'bench_all_20260314_164625.log'))
+    p.add_argument('--log3', default=os.path.join(logs_dir, 'bench_all_20260315_142830.log'))
+    p.add_argument('--log4', default=os.path.join(logs_dir, 'bench_all_20260315_155134.log'))
     p.add_argument('--fig6', default=os.path.join(here, 'fig6_sift10m.tsv'))
     p.add_argument('--fig7', default=os.path.join(here, 'fig7_sift10m.tsv'))
     p.add_argument('--fig8', default=os.path.join(here, 'fig8_sift10m.tsv'))
+    # Pareto SC-score TSV files (paper Fig 2)
+    p.add_argument('--pareto-sift1m',
+                   default=os.path.join(here, 'pareto_sc_scores_sift1m.tsv'))
+    p.add_argument('--pareto-sift10m',
+                   default=os.path.join(here, 'pareto_sc_scores_sift10m.tsv'))
+    p.add_argument('--pareto-deep10m',
+                   default=os.path.join(here, 'pareto_sc_scores_deep10m.tsv'))
+    # Optional TSV with fresh build times for Fig 9/10/13
+    # Columns: dataset  method  build_s  index_mb
+    p.add_argument('--build-times', default=None,
+                   help='TSV with fresh build times (dataset/method/build_s/index_mb)')
     p.add_argument('--out',  default=os.path.join(here, 'figures'))
     args = p.parse_args()
 
@@ -488,13 +1007,26 @@ def main():
         for m, rows in info.items():
             if isinstance(rows, list):
                 print(f'  {ds}/{m}: {len(rows)} rows')
+        # Report MRE availability
+        suco_rows = info.get('SuCo', [])
+        n_mre = sum(1 for r in suco_rows if 'mre' in r)
+        if n_mre:
+            print(f'  {ds}/SuCo: {n_mre}/{len(suco_rows)} rows have MRE')
 
     print(f'\nLoading TSV data …')
     fig6_rows = load_tsv(args.fig6)
     fig7_rows = load_tsv(args.fig7)
     fig8_rows = load_tsv(args.fig8)
 
+    # Optional external build times
+    extra_bt = []
+    if args.build_times and os.path.isfile(args.build_times):
+        extra_bt = load_tsv(args.build_times)
+        print(f'  Loaded {len(extra_bt)} build-time rows from {args.build_times}')
+
     print(f'\nGenerating figures → {args.out}')
+
+    # ── original figures ────────────────────────────────────────────────────
     fig6_dynamic_activation(fig6_rows, args.out)
     fig7_param_sweep(fig7_rows, args.out)
     fig8_param_alphabeta(fig8_rows, args.out)
@@ -503,6 +1035,21 @@ def main():
     fig_suco_all_datasets(data, args.out)
     fig_indexing(data, args.out)
     fig_recall_heatmap(data, args.out)
+
+    # ── new figures (paper Figs 2, 9, 10, 11-MRE, 13) ─────────────────────
+    pareto_files = [
+        #('SIFT1M',  args.pareto_sift1m),
+        ('SIFT10M', args.pareto_sift10m),
+        ('Deep10M', args.pareto_deep10m),
+    ]
+    fig2_sc_score_pareto(pareto_files, args.out)
+    fig9_10_indexing_bars(data, extra_bt, args.out)
+    fig11_mre_qps_1M(data, args.out)
+    fig12_mre_qps_10M(data, args.out)
+    fig11_combined_1M(data, args.out)
+    fig_mre_qps_suco_vs_lsh(data, args.out)
+    fig13_cumulative_cost(data, extra_bt, args.out)
+
     print('\nAll done.')
 
 

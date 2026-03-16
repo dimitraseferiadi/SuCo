@@ -24,3 +24,4 @@ faiss/python/swigfaiss_sve.swig
 .venv/
 benchs/*.tsv
 venv/
+report.*
