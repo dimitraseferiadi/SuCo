@@ -27,6 +27,8 @@
 #include <faiss/IndexAdditiveQuantizerFastScan.h>
 #include <faiss/IndexFlat.h>
 #include <faiss/IndexHNSW.h>
+#include <faiss/IndexSHG.h>
+#include <faiss/IndexSHG_io.h>
 #include <faiss/IndexIVF.h>
 #include <faiss/IndexIVFAdditiveQuantizer.h>
 #include <faiss/IndexIVFAdditiveQuantizerFastScan.h>
@@ -849,7 +851,9 @@ void write_index(const Index* idx, IOWriter* f, int io_flags) {
         write_index(idxmap->index, f);
         WRITEVECTOR(idxmap->id_map);
     } else if (const IndexHNSW* idxhnsw = dynamic_cast<const IndexHNSW*>(idx)) {
-        uint32_t h = dynamic_cast<const IndexHNSWFlatPanorama*>(idx)
+        uint32_t h = dynamic_cast<const IndexSHG*>(idx)
+                ? fourcc("ISHG")
+                : dynamic_cast<const IndexHNSWFlatPanorama*>(idx)
                 ? fourcc("IHfP")
                 : dynamic_cast<const IndexHNSWFlat*>(idx)   ? fourcc("IHNf")
                 : dynamic_cast<const IndexHNSWPQ*>(idx)     ? fourcc("IHNp")
@@ -860,6 +864,10 @@ void write_index(const Index* idx, IOWriter* f, int io_flags) {
         FAISS_THROW_IF_NOT(h != 0);
         WRITE1(h);
         write_index_header(idxhnsw, f);
+        if (h == fourcc("ISHG")) {
+            auto idx_shg = dynamic_cast<const IndexSHG*>(idxhnsw);
+            write_index_shg_extra(idx_shg, f);
+        }
         if (h == fourcc("IHfP")) {
             auto idx_panorama =
                     dynamic_cast<const IndexHNSWFlatPanorama*>(idxhnsw);

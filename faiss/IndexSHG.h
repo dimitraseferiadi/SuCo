@@ -46,6 +46,7 @@
 #include <cmath>
 #include <cstdint>
 #include <map>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -197,8 +198,8 @@ struct IndexSHG : IndexHNSWFlat {
 
     /// Squared L2 distance between two compressed vectors of length dim.
     static float compressed_l2sqr(
-            const float* __restrict__ a,
-            const float* __restrict__ b,
+            const float* a,
+            const float* b,
             int dim);
 
     /// Get pointer to compressed data for a node at a given compression level.
@@ -234,10 +235,15 @@ struct IndexSHG : IndexHNSWFlat {
             bool use_shortcut,
             bool use_lb_pruning) const;
 
+    /// Sparse distance cache: key = node_id * (max_level+1) + level.
+    /// Only stores distances for nodes actually visited (O(log n) entries
+    /// during upper-level navigation), avoiding the O(ntotal) dense array.
+    using dis_cache_t = std::unordered_map<uint64_t, float>;
+
     storage_idx_t navigate_upper_levels(
             const std::vector<float>& query_rep,
             bool use_shortcut,
-            std::vector<float>& dis_cache,
+            dis_cache_t& dis_cache,
             int max_level_cache) const;
 
     void search_base_level(
@@ -248,7 +254,7 @@ struct IndexSHG : IndexHNSWFlat {
             idx_t* labels,
             const std::vector<float>& query_rep,
             bool use_lb_pruning,
-            std::vector<float>& dis_cache,
+            dis_cache_t& dis_cache,
             int max_level_cache) const;
 
     bool prune_by_lb(
@@ -261,7 +267,7 @@ struct IndexSHG : IndexHNSWFlat {
             float current_bound,
             int cur_level,
             idx_t candidate,
-            const std::vector<float>& dis_cache,
+            const dis_cache_t& dis_cache,
             int max_level_cache) const;
 };
 

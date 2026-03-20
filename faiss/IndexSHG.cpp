@@ -37,12 +37,14 @@
  */
 
 #include <faiss/IndexSHG.h>
+#include <faiss/IndexFlat.h>
 
 #include <faiss/impl/AuxIndexStructures.h>
 #include <faiss/impl/DistanceComputer.h>
 #include <faiss/impl/FaissAssert.h>
 #include <faiss/impl/HNSW.h>
 #include <faiss/impl/VisitedTable.h>
+#include <faiss/utils/distances.h>
 
 #include <algorithm>
 #include <cassert>
@@ -192,12 +194,8 @@ float IndexSHG::compressed_l2sqr(
         const float* __restrict__ a,
         const float* __restrict__ b,
         int dim) {
-    float s = 0.0f;
-    for (int i = 0; i < dim; ++i) {
-        float t = a[i] - b[i];
-        s += t * t;
-    }
-    return s;
+    // Delegate to FAISS's SIMD-optimized L2 squared distance.
+    return fvec_L2sqr(a, b, (size_t)dim);
 }
 
 // ---------------------------------------------------------------------------
@@ -223,11 +221,11 @@ float IndexSHG::get_dis_by_level(
         idx_t id2,
         int hnsw_level) const {
     if (hnsw_level == 0) {
-        // Full distance from flat storage
-        std::vector<float> v1(d), v2(d);
-        storage->reconstruct(id1, v1.data());
-        storage->reconstruct(id2, v2.data());
-        return compressed_l2sqr(v1.data(), v2.data(), d);
+        // Direct pointer access to flat storage (avoids reconstruct copy).
+        const auto* flat = dynamic_cast<const IndexFlat*>(storage);
+        const float* v1 = flat->get_xb() + (size_t)id1 * d;
+        const float* v2 = flat->get_xb() + (size_t)id2 * d;
+        return fvec_L2sqr(v1, v2, (size_t)d);
     }
     if (hnsw_level >= maxFixLevel_) {
         // Original: at maxFixLevel_ and above, only compare the first
@@ -252,11 +250,10 @@ float IndexSHG::get_dis_by_level_q(
         const std::vector<float>& query_rep,
         idx_t node_id,
         int hnsw_level) const {
-    if (hnsw_level == 0) {
-        std::vector<float> v(d);
-        storage->reconstruct(node_id, v.data());
-        return compressed_l2sqr(query_rep.data(), v.data(), d);
-    }
+    FAISS_THROW_IF_NOT_MSG(
+            hnsw_level > 0,
+            "get_dis_by_level_q: level 0 requires full query vector, "
+            "use DistanceComputer instead");
     if (hnsw_level >= maxFixLevel_) {
         // Original: at maxFixLevel_ and above, only compare first element
         const float* q = query_rep.data() + offset_at_level[maxFixLevel_];
@@ -293,12 +290,10 @@ void IndexSHG::compress_node(idx_t node_id) {
     std::vector<float> full_rep;
     full_rep.reserve(data_rep_size_ + d);
 
-    // Start with level-0 (full) data
-    std::vector<float> v0(d);
-    storage->reconstruct(node_id, v0.data());
-    for (int i = 0; i < d; ++i) {
-        full_rep.push_back(v0[i]);
-    }
+    // Start with level-0 (full) data — direct pointer access
+    const auto* flat = dynamic_cast<const IndexFlat*>(storage);
+    const float* v0 = flat->get_xb() + (size_t)node_id * d;
+    full_rep.insert(full_rep.end(), v0, v0 + d);
 
     int previous_level_pos = 0;
 
@@ -589,7 +584,7 @@ void IndexSHG::build_shortcut() {
 IndexSHG::storage_idx_t IndexSHG::navigate_upper_levels(
         const std::vector<float>& query_rep,
         bool use_shortcut_flag,
-        std::vector<float>& dis_cache,
+        dis_cache_t& dis_cache,
         int max_level_cache) const {
     const HNSW& hns = hnsw;
     int max_l = hns.max_level;
@@ -604,7 +599,9 @@ IndexSHG::storage_idx_t IndexSHG::navigate_upper_levels(
         // Compute compressed distance at this level
         float curdist = get_dis_by_level_q(query_rep, currObj, level);
         // Cache it
-        dis_cache[(size_t)currObj * (max_level_cache + 1) + level] = curdist;
+        uint64_t cache_key_curr =
+                (uint64_t)currObj * (max_level_cache + 1) + level;
+        dis_cache[cache_key_curr] = curdist;
 
         // Greedy search at this level
         bool changed = true;
@@ -621,10 +618,11 @@ IndexSHG::storage_idx_t IndexSHG::navigate_upper_levels(
                 // Check if any cached distance at a higher level can prune
                 bool pruned = false;
                 for (int cl = max_l; cl > level; --cl) {
-                    float cached = dis_cache[
-                            (size_t)cand * (max_level_cache + 1) + cl];
-                    if (cached >= 0.0f) {
-                        float infer = cached *
+                    uint64_t key =
+                            (uint64_t)cand * (max_level_cache + 1) + cl;
+                    auto it = dis_cache.find(key);
+                    if (it != dis_cache.end()) {
+                        float infer = it->second *
                                 std::pow((float)eta,
                                          (float)(cl - level + 1));
                         if (infer > curdist) {
@@ -637,8 +635,9 @@ IndexSHG::storage_idx_t IndexSHG::navigate_upper_levels(
 
                 float d_cand = get_dis_by_level_q(query_rep, cand, level);
                 // Cache the distance
-                dis_cache[(size_t)cand * (max_level_cache + 1) + level] =
-                        d_cand;
+                uint64_t cache_key_cand =
+                        (uint64_t)cand * (max_level_cache + 1) + level;
+                dis_cache[cache_key_cand] = d_cand;
 
                 if (d_cand < curdist) {
                     curdist = d_cand;
@@ -701,13 +700,13 @@ bool IndexSHG::prune_by_cache(
         float current_bound,
         int cur_level,
         idx_t candidate,
-        const std::vector<float>& dis_cache,
+        const dis_cache_t& dis_cache,
         int max_level_cache) const {
     for (int cl = max_level_cache; cl > cur_level; --cl) {
-        float cached = dis_cache[
-                (size_t)candidate * (max_level_cache + 1) + cl];
-        if (cached >= 0.0f) {
-            float infer = cached *
+        uint64_t key = (uint64_t)candidate * (max_level_cache + 1) + cl;
+        auto it = dis_cache.find(key);
+        if (it != dis_cache.end()) {
+            float infer = it->second *
                     std::pow((float)eta, (float)(cl - cur_level + 1));
             if (infer > current_bound) return true;
         }
@@ -727,7 +726,7 @@ void IndexSHG::search_base_level(
         idx_t* out_labels,
         const std::vector<float>& query_rep,
         bool use_lb_pruning,
-        std::vector<float>& dis_cache,
+        dis_cache_t& dis_cache,
         int max_level_cache) const {
     const HNSW& hns = hnsw;
 
@@ -746,8 +745,9 @@ void IndexSHG::search_base_level(
     results.push({d_ep, entry_point});
     visited.set(entry_point);
 
-    // Original uses query.k as ef (not efSearch)
-    int ef = (int)k;
+    // FAISS improvement: use max(efSearch, k) so users can trade speed for
+    // recall via the standard efSearch knob.  The original paper uses ef=k.
+    int ef = std::max((int)k, (int)hns.efSearch);
     int hops = 0;
 
     // Compression level for LB pruning (original uses level 2)
@@ -771,6 +771,9 @@ void IndexSHG::search_base_level(
             storage_idx_t u = hns.neighbors[nb];
             if (u < 0) break;
 
+            if (visited.get(u)) continue;
+            visited.set(u);
+
             // Cache-based pruning (pruneDisCompute at base level)
             if (use_lb_pruning &&
                     prune_by_cache(
@@ -780,7 +783,6 @@ void IndexSHG::search_base_level(
             }
 
             // LB pruning after initial hops (hops > 20)
-            // Original uses break, not continue
             if (use_lb_pruning && hops > 20 &&
                     results.size() >= (size_t)ef &&
                     lb_comp_level > 0) {
@@ -789,12 +791,9 @@ void IndexSHG::search_base_level(
                             lb_comp_level,
                             query_rep,
                             u)) {
-                    break;
+                    continue;
                 }
             }
-
-            if (visited.get(u)) continue;
-            visited.set(u);
 
             float d_u = (*qdis)(u);
 
@@ -873,10 +872,10 @@ void IndexSHG::search_one(
     // Copy compressed levels (skip level-0 data)
     std::copy(full_rep.begin() + d, full_rep.end(), query_rep.begin());
 
-    // Distance cache: per-node, per-level. Initialized to -1 (no cache).
-    // Matches original resultsProcessing array.
-    std::vector<float> dis_cache(
-            (size_t)ntotal * (max_l + 1), -1.0f);
+    // Sparse distance cache: only stores entries for nodes actually visited.
+    // The original uses a dense O(ntotal) array, but upper-level navigation
+    // visits O(log n) nodes, so a hash map is far more memory-efficient.
+    dis_cache_t dis_cache;
 
     // Navigate upper levels
     storage_idx_t ep = navigate_upper_levels(

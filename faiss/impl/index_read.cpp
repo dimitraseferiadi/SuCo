@@ -30,6 +30,8 @@
 #include <faiss/IndexAdditiveQuantizerFastScan.h>
 #include <faiss/IndexFlat.h>
 #include <faiss/IndexHNSW.h>
+#include <faiss/IndexSHG.h>
+#include <faiss/IndexSHG_io.h>
 #include <faiss/IndexIVF.h>
 #include <faiss/IndexIVFAdditiveQuantizer.h>
 #include <faiss/IndexIVFAdditiveQuantizerFastScan.h>
@@ -1416,8 +1418,11 @@ std::unique_ptr<Index> read_index_up(IOReader* f, int io_flags) {
     } else if (
             h == fourcc("IHNf") || h == fourcc("IHNp") || h == fourcc("IHNs") ||
             h == fourcc("IHN2") || h == fourcc("IHNc") || h == fourcc("IHc2") ||
-            h == fourcc("IHfP")) {
+            h == fourcc("IHfP") || h == fourcc("ISHG")) {
         std::unique_ptr<IndexHNSW> idxhnsw;
+        if (h == fourcc("ISHG")) {
+            idxhnsw = std::make_unique<IndexSHG>();
+        }
         if (h == fourcc("IHNf")) {
             idxhnsw = std::make_unique<IndexHNSWFlat>();
         }
@@ -1440,6 +1445,10 @@ std::unique_ptr<Index> read_index_up(IOReader* f, int io_flags) {
             idxhnsw = std::make_unique<IndexHNSWCagra>();
         }
         read_index_header(*idxhnsw, f);
+        if (h == fourcc("ISHG")) {
+            auto idx_shg = dynamic_cast<IndexSHG*>(idxhnsw.get());
+            read_index_shg_extra(idx_shg, f);
+        }
         if (h == fourcc("IHfP")) {
             auto idx_panorama =
                     dynamic_cast<IndexHNSWFlatPanorama*>(idxhnsw.get());

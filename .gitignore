@@ -25,3 +25,4 @@ faiss/python/swigfaiss_sve.swig
 benchs/*.tsv
 venv/
 report.*
+benchs/results/
