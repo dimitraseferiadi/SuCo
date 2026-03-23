@@ -1,0 +1,214 @@
+Data dir:   /Users/dhm/Documents/data
+Index dir:  /Users/dhm/Documents/indices
+Output dir: /Users/dhm/Documents/SuCo/benchs/results
+Datasets:   ['openai']
+Benchmarks: ['construction', 'recall_k20', 'recall_k50', 'robustness']
+
+######################################################################
+# Dataset: OPENAI
+######################################################################
+
+Loading dataset openai...
+  Loaded in 1.8s: xb=(990000, 1536), xq=(10000, 1536), gt=(10000, 100)
+  Loaded robustness queries from cache
+  All indices cached, freeing base vectors (6.1 GB)
+
+--- Loading SHG from /Users/dhm/Documents/indices/openai_shg.idx ---
+  SHG: loaded, memory=8104.56MB
+  SHG ef=  20: recall=0.8979, time=0.5440 ms/q
+  SHG ef=  32: recall=0.9362, time=0.1657 ms/q
+  SHG ef=  40: recall=0.9495, time=0.1848 ms/q
+  SHG ef=  50: recall=0.9603, time=0.2255 ms/q
+  SHG ef=  64: recall=0.9695, time=0.2696 ms/q
+  SHG ef=  80: recall=0.9754, time=0.3214 ms/q
+  SHG ef= 100: recall=0.9804, time=0.3583 ms/q
+  SHG ef= 128: recall=0.9846, time=0.4175 ms/q
+  SHG ef= 160: recall=0.9875, time=0.4904 ms/q
+  SHG ef= 200: recall=0.9898, time=0.6002 ms/q
+  SHG ef= 256: recall=0.9917, time=0.7131 ms/q
+  SHG ef= 320: recall=0.9932, time=0.8614 ms/q
+  SHG ef= 400: recall=0.9945, time=1.0565 ms/q
+  SHG ef= 500: recall=0.9954, time=1.2534 ms/q
+  SHG-no-shortcut ef=  20: recall=0.8989, time=0.1046 ms/q
+  SHG-no-shortcut ef=  32: recall=0.9359, time=0.1433 ms/q
+  SHG-no-shortcut ef=  40: recall=0.9482, time=0.1656 ms/q
+  SHG-no-shortcut ef=  50: recall=0.9589, time=0.1934 ms/q
+  SHG-no-shortcut ef=  64: recall=0.9680, time=0.2378 ms/q
+  SHG-no-shortcut ef=  80: recall=0.9749, time=0.2862 ms/q
+  SHG-no-shortcut ef= 100: recall=0.9799, time=0.3376 ms/q
+  SHG-no-shortcut ef= 128: recall=0.9845, time=0.4131 ms/q
+  SHG-no-shortcut ef= 160: recall=0.9873, time=0.4869 ms/q
+  SHG-no-shortcut ef= 200: recall=0.9895, time=0.5735 ms/q
+  SHG-no-shortcut ef= 256: recall=0.9915, time=0.7030 ms/q
+  SHG-no-shortcut ef= 320: recall=0.9931, time=0.8501 ms/q
+  SHG-no-shortcut ef= 400: recall=0.9944, time=1.0855 ms/q
+  SHG-no-shortcut ef= 500: recall=0.9954, time=1.3505 ms/q
+  SHG-no-lb ef=  20: recall=0.8979, time=0.1168 ms/q
+  SHG-no-lb ef=  32: recall=0.9362, time=0.1528 ms/q
+  SHG-no-lb ef=  40: recall=0.9495, time=0.1761 ms/q
+  SHG-no-lb ef=  50: recall=0.9603, time=0.2041 ms/q
+  SHG-no-lb ef=  64: recall=0.9695, time=0.2414 ms/q
+  SHG-no-lb ef=  80: recall=0.9754, time=0.2882 ms/q
+  SHG-no-lb ef= 100: recall=0.9804, time=0.3505 ms/q
+  SHG-no-lb ef= 128: recall=0.9846, time=0.4306 ms/q
+  SHG-no-lb ef= 160: recall=0.9875, time=0.5165 ms/q
+  SHG-no-lb ef= 200: recall=0.9898, time=0.5930 ms/q
+  SHG-no-lb ef= 256: recall=0.9917, time=0.7000 ms/q
+  SHG-no-lb ef= 320: recall=0.9932, time=0.8324 ms/q
+  SHG-no-lb ef= 400: recall=0.9945, time=1.0088 ms/q
+  SHG-no-lb ef= 500: recall=0.9954, time=1.2119 ms/q
+  SHG-no-both ef=  20: recall=0.8989, time=0.1011 ms/q
+  SHG-no-both ef=  32: recall=0.9359, time=0.1368 ms/q
+  SHG-no-both ef=  40: recall=0.9482, time=0.1600 ms/q
+  SHG-no-both ef=  50: recall=0.9589, time=0.1878 ms/q
+  SHG-no-both ef=  64: recall=0.9680, time=0.2254 ms/q
+  SHG-no-both ef=  80: recall=0.9749, time=0.2674 ms/q
+  SHG-no-both ef= 100: recall=0.9799, time=0.3185 ms/q
+  SHG-no-both ef= 128: recall=0.9845, time=0.3863 ms/q
+  SHG-no-both ef= 160: recall=0.9873, time=0.4628 ms/q
+  SHG-no-both ef= 200: recall=0.9895, time=0.5549 ms/q
+  SHG-no-both ef= 256: recall=0.9915, time=0.6826 ms/q
+  SHG-no-both ef= 320: recall=0.9931, time=0.8249 ms/q
+  SHG-no-both ef= 400: recall=0.9944, time=0.9937 ms/q
+  SHG-no-both ef= 500: recall=0.9954, time=1.2031 ms/q
+  SHG ef=  50: recall=0.9421, time=0.2096 ms/q
+  SHG ef=  64: recall=0.9561, time=0.2487 ms/q
+  SHG ef=  80: recall=0.9655, time=0.2925 ms/q
+  SHG ef= 100: recall=0.9733, time=0.3445 ms/q
+  SHG ef= 128: recall=0.9797, time=0.4310 ms/q
+  SHG ef= 160: recall=0.9841, time=0.5207 ms/q
+  SHG ef= 200: recall=0.9874, time=0.6177 ms/q
+  SHG ef= 256: recall=0.9903, time=0.7598 ms/q
+  SHG ef= 320: recall=0.9923, time=0.9094 ms/q
+  SHG ef= 400: recall=0.9939, time=1.0981 ms/q
+  SHG ef= 500: recall=0.9950, time=1.3235 ms/q
+
+--- Loading HNSW from /Users/dhm/Documents/indices/openai_hnsw.idx ---
+  HNSW: loaded, memory=6178.51MB
+  HNSW ef=  20: recall=0.8995, time=0.2408 ms/q
+  HNSW ef=  32: recall=0.9363, time=0.1500 ms/q
+  HNSW ef=  40: recall=0.9486, time=0.1899 ms/q
+  HNSW ef=  50: recall=0.9586, time=0.1995 ms/q
+  HNSW ef=  64: recall=0.9680, time=0.2511 ms/q
+  HNSW ef=  80: recall=0.9744, time=0.2773 ms/q
+  HNSW ef= 100: recall=0.9798, time=0.3352 ms/q
+  HNSW ef= 128: recall=0.9842, time=0.4111 ms/q
+  HNSW ef= 160: recall=0.9873, time=0.4883 ms/q
+  HNSW ef= 200: recall=0.9896, time=0.5807 ms/q
+  HNSW ef= 256: recall=0.9915, time=0.7189 ms/q
+  HNSW ef= 320: recall=0.9931, time=0.8765 ms/q
+  HNSW ef= 400: recall=0.9944, time=1.0665 ms/q
+  HNSW ef= 500: recall=0.9954, time=1.2978 ms/q
+  HNSW ef=  50: recall=0.9406, time=0.1913 ms/q
+  HNSW ef=  64: recall=0.9547, time=0.2311 ms/q
+  HNSW ef=  80: recall=0.9647, time=0.2764 ms/q
+  HNSW ef= 100: recall=0.9727, time=0.3295 ms/q
+  HNSW ef= 128: recall=0.9794, time=0.4036 ms/q
+  HNSW ef= 160: recall=0.9839, time=0.4850 ms/q
+  HNSW ef= 200: recall=0.9873, time=0.5886 ms/q
+  HNSW ef= 256: recall=0.9903, time=0.7234 ms/q
+  HNSW ef= 320: recall=0.9922, time=0.8895 ms/q
+  HNSW ef= 400: recall=0.9939, time=1.3416 ms/q
+  HNSW ef= 500: recall=0.9951, time=1.4249 ms/q
+
+--- Loading Panorama from /Users/dhm/Documents/indices/openai_panorama.idx ---
+  Panorama: loaded, memory=6186.07MB
+  Panorama ef=  20: recall=0.8995, time=0.2250 ms/q
+  Panorama ef=  32: recall=0.9365, time=0.1450 ms/q
+  Panorama ef=  40: recall=0.9493, time=0.1694 ms/q
+  Panorama ef=  50: recall=0.9592, time=0.2055 ms/q
+  Panorama ef=  64: recall=0.9683, time=0.2447 ms/q
+  Panorama ef=  80: recall=0.9745, time=0.2875 ms/q
+  Panorama ef= 100: recall=0.9800, time=0.3477 ms/q
+  Panorama ef= 128: recall=0.9842, time=0.4193 ms/q
+  Panorama ef= 160: recall=0.9872, time=0.5040 ms/q
+  Panorama ef= 200: recall=0.9895, time=0.6081 ms/q
+  Panorama ef= 256: recall=0.9915, time=0.7565 ms/q
+  Panorama ef= 320: recall=0.9931, time=0.9251 ms/q
+  Panorama ef= 400: recall=0.9944, time=1.1285 ms/q
+  Panorama ef= 500: recall=0.9954, time=1.3906 ms/q
+  Panorama ef=  50: recall=0.9412, time=0.2007 ms/q
+  Panorama ef=  64: recall=0.9551, time=0.2425 ms/q
+  Panorama ef=  80: recall=0.9649, time=0.2889 ms/q
+  Panorama ef= 100: recall=0.9731, time=0.3462 ms/q
+  Panorama ef= 128: recall=0.9794, time=0.4266 ms/q
+  Panorama ef= 160: recall=0.9838, time=0.5144 ms/q
+  Panorama ef= 200: recall=0.9872, time=0.6177 ms/q
+  Panorama ef= 256: recall=0.9902, time=0.7663 ms/q
+  Panorama ef= 320: recall=0.9922, time=0.9321 ms/q
+  Panorama ef= 400: recall=0.9938, time=1.2115 ms/q
+  Panorama ef= 500: recall=0.9950, time=1.4468 ms/q
+
+--- Loading IVFFlat from /Users/dhm/Documents/indices/openai_ivfflat.idx ---
+  IVFFlat: loaded, memory=5814.17MB
+  IVFFlat nprobe=   1: recall=0.5562, time=0.0920 ms/q
+  IVFFlat nprobe=   2: recall=0.6939, time=0.1319 ms/q
+  IVFFlat nprobe=   4: recall=0.7934, time=0.2899 ms/q
+  IVFFlat nprobe=   8: recall=0.8653, time=0.5436 ms/q
+  IVFFlat nprobe=  16: recall=0.9165, time=0.9755 ms/q
+  IVFFlat nprobe=  32: recall=0.9529, time=2.0858 ms/q
+  IVFFlat nprobe=  64: recall=0.9767, time=4.0366 ms/q
+  IVFFlat nprobe= 128: recall=0.9906, time=8.9568 ms/q
+  IVFFlat nprobe= 256: recall=0.9972, time=17.8504 ms/q
+  IVFFlat nprobe= 512: recall=0.9995, time=37.2302 ms/q
+  IVFFlat nprobe=   1: recall=0.5278, time=0.0835 ms/q
+  IVFFlat nprobe=   2: recall=0.6671, time=0.1591 ms/q
+  IVFFlat nprobe=   4: recall=0.7722, time=0.3383 ms/q
+  IVFFlat nprobe=   8: recall=0.8492, time=0.6446 ms/q
+  IVFFlat nprobe=  16: recall=0.9053, time=1.3554 ms/q
+  IVFFlat nprobe=  32: recall=0.9455, time=2.5113 ms/q
+  IVFFlat nprobe=  64: recall=0.9724, time=5.0404 ms/q
+  IVFFlat nprobe= 128: recall=0.9882, time=9.8335 ms/q
+  IVFFlat nprobe= 256: recall=0.9962, time=20.9721 ms/q
+  IVFFlat nprobe= 512: recall=0.9992, time=39.0555 ms/q
+
+--- Loading IVFPQ from /Users/dhm/Documents/indices/openai_ivfpq.idx ---
+  IVFPQ: loaded, memory=196.16MB
+  IVFPQ nprobe=   1: recall=0.4891, time=0.0666 ms/q
+  IVFPQ nprobe=   2: recall=0.5880, time=0.1097 ms/q
+  IVFPQ nprobe=   4: recall=0.6481, time=0.1929 ms/q
+  IVFPQ nprobe=   8: recall=0.6849, time=0.3453 ms/q
+  IVFPQ nprobe=  16: recall=0.7063, time=0.6510 ms/q
+  IVFPQ nprobe=  32: recall=0.7179, time=1.2382 ms/q
+  IVFPQ nprobe=  64: recall=0.7236, time=2.4719 ms/q
+  IVFPQ nprobe= 128: recall=0.7259, time=5.2676 ms/q
+  IVFPQ nprobe= 256: recall=0.7266, time=10.6490 ms/q
+  IVFPQ nprobe= 512: recall=0.7268, time=20.7914 ms/q
+  IVFPQ nprobe=   1: recall=0.4729, time=0.0666 ms/q
+  IVFPQ nprobe=   2: recall=0.5728, time=0.1185 ms/q
+  IVFPQ nprobe=   4: recall=0.6367, time=0.2072 ms/q
+  IVFPQ nprobe=   8: recall=0.6754, time=0.3704 ms/q
+  IVFPQ nprobe=  16: recall=0.6980, time=0.7145 ms/q
+  IVFPQ nprobe=  32: recall=0.7105, time=1.3456 ms/q
+  IVFPQ nprobe=  64: recall=0.7165, time=2.7006 ms/q
+  IVFPQ nprobe= 128: recall=0.7191, time=5.3180 ms/q
+  IVFPQ nprobe= 256: recall=0.7199, time=10.4742 ms/q
+  IVFPQ nprobe= 512: recall=0.7201, time=21.2407 ms/q
+
+======================================================================
+BENCHMARK: Construction - openai
+======================================================================
+  SHG: loaded from disk, memory=8104.56MB
+  HNSW: loaded from disk, memory=6178.51MB
+  Panorama: loaded from disk, memory=6186.07MB
+  IVFFlat: loaded from disk, memory=5814.17MB
+  IVFPQ: loaded from disk, memory=196.16MB
+
+======================================================================
+BENCHMARK: Recall vs Time (k=20) - openai
+======================================================================
+
+======================================================================
+BENCHMARK: Recall vs Time (k=50) - openai
+======================================================================
+
+======================================================================
+BENCHMARK: Robustness (unseen queries, k=20) - openai
+======================================================================
+  SHG: mean=0.9880, median=1.0000, min=0.7000, max=1.0000
+  HNSW: mean=0.9872, median=1.0000, min=0.7000, max=1.0000
+  Panorama: mean=0.9870, median=1.0000, min=0.7000, max=1.0000
+  IVFFlat: mean=0.9794, median=1.0000, min=0.4500, max=1.0000
+  IVFPQ: mean=0.7530, median=0.7500, min=0.3500, max=1.0000
+
+Results saved to /Users/dhm/Documents/SuCo/benchs/results/results_openai.json

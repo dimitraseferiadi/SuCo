@@ -1,0 +1,214 @@
+Data dir:   /Users/dhm/Documents/data
+Index dir:  /Users/dhm/Documents/indices
+Output dir: /Users/dhm/Documents/SuCo/benchs/results
+Datasets:   ['uqv']
+Benchmarks: ['construction', 'recall_k20', 'recall_k50', 'robustness']
+
+######################################################################
+# Dataset: UQV
+######################################################################
+
+Loading dataset uqv...
+  Loaded in 0.8s: xb=(1000000, 256), xq=(10000, 256), gt=(10000, 100)
+  Loaded robustness queries from cache
+  All indices cached, freeing base vectors (1.0 GB)
+
+--- Loading SHG from /Users/dhm/Documents/indices/uqv_shg.idx ---
+  SHG: loaded, memory=1678.55MB
+  SHG ef=  20: recall=0.8541, time=0.0280 ms/q
+  SHG ef=  32: recall=0.8400, time=0.0364 ms/q
+  SHG ef=  40: recall=0.8466, time=0.0420 ms/q
+  SHG ef=  50: recall=0.8530, time=0.0480 ms/q
+  SHG ef=  64: recall=0.8553, time=0.0557 ms/q
+  SHG ef=  80: recall=0.8565, time=0.0648 ms/q
+  SHG ef= 100: recall=0.8586, time=0.0750 ms/q
+  SHG ef= 128: recall=0.8614, time=0.0920 ms/q
+  SHG ef= 160: recall=0.8623, time=0.1107 ms/q
+  SHG ef= 200: recall=0.8634, time=0.1324 ms/q
+  SHG ef= 256: recall=0.8644, time=0.1628 ms/q
+  SHG ef= 320: recall=0.8647, time=0.1962 ms/q
+  SHG ef= 400: recall=0.8649, time=0.2438 ms/q
+  SHG ef= 500: recall=0.8651, time=0.2939 ms/q
+  SHG-no-shortcut ef=  20: recall=0.8452, time=0.0227 ms/q
+  SHG-no-shortcut ef=  32: recall=0.8321, time=0.0304 ms/q
+  SHG-no-shortcut ef=  40: recall=0.8377, time=0.0351 ms/q
+  SHG-no-shortcut ef=  50: recall=0.8434, time=0.0409 ms/q
+  SHG-no-shortcut ef=  64: recall=0.8469, time=0.0488 ms/q
+  SHG-no-shortcut ef=  80: recall=0.8494, time=0.0573 ms/q
+  SHG-no-shortcut ef= 100: recall=0.8529, time=0.0681 ms/q
+  SHG-no-shortcut ef= 128: recall=0.8554, time=0.0857 ms/q
+  SHG-no-shortcut ef= 160: recall=0.8612, time=0.1061 ms/q
+  SHG-no-shortcut ef= 200: recall=0.8629, time=0.1332 ms/q
+  SHG-no-shortcut ef= 256: recall=0.8635, time=0.1643 ms/q
+  SHG-no-shortcut ef= 320: recall=0.8639, time=0.2012 ms/q
+  SHG-no-shortcut ef= 400: recall=0.8647, time=0.2372 ms/q
+  SHG-no-shortcut ef= 500: recall=0.8649, time=0.2869 ms/q
+  SHG-no-lb ef=  20: recall=0.8551, time=0.0276 ms/q
+  SHG-no-lb ef=  32: recall=0.8418, time=0.0354 ms/q
+  SHG-no-lb ef=  40: recall=0.8485, time=0.0405 ms/q
+  SHG-no-lb ef=  50: recall=0.8548, time=0.0464 ms/q
+  SHG-no-lb ef=  64: recall=0.8575, time=0.0539 ms/q
+  SHG-no-lb ef=  80: recall=0.8587, time=0.0623 ms/q
+  SHG-no-lb ef= 100: recall=0.8600, time=0.0722 ms/q
+  SHG-no-lb ef= 128: recall=0.8617, time=0.0880 ms/q
+  SHG-no-lb ef= 160: recall=0.8626, time=0.1067 ms/q
+  SHG-no-lb ef= 200: recall=0.8636, time=0.1277 ms/q
+  SHG-no-lb ef= 256: recall=0.8645, time=0.1556 ms/q
+  SHG-no-lb ef= 320: recall=0.8648, time=0.1887 ms/q
+  SHG-no-lb ef= 400: recall=0.8650, time=0.2266 ms/q
+  SHG-no-lb ef= 500: recall=0.8651, time=0.2723 ms/q
+  SHG-no-both ef=  20: recall=0.8475, time=0.0206 ms/q
+  SHG-no-both ef=  32: recall=0.8343, time=0.0278 ms/q
+  SHG-no-both ef=  40: recall=0.8399, time=0.0323 ms/q
+  SHG-no-both ef=  50: recall=0.8454, time=0.0380 ms/q
+  SHG-no-both ef=  64: recall=0.8487, time=0.0452 ms/q
+  SHG-no-both ef=  80: recall=0.8509, time=0.0532 ms/q
+  SHG-no-both ef= 100: recall=0.8538, time=0.0639 ms/q
+  SHG-no-both ef= 128: recall=0.8565, time=0.0795 ms/q
+  SHG-no-both ef= 160: recall=0.8618, time=0.0979 ms/q
+  SHG-no-both ef= 200: recall=0.8635, time=0.1209 ms/q
+  SHG-no-both ef= 256: recall=0.8639, time=0.1486 ms/q
+  SHG-no-both ef= 320: recall=0.8642, time=0.1803 ms/q
+  SHG-no-both ef= 400: recall=0.8649, time=0.2195 ms/q
+  SHG-no-both ef= 500: recall=0.8650, time=0.2659 ms/q
+  SHG ef=  50: recall=0.9363, time=0.0497 ms/q
+  SHG ef=  64: recall=0.9373, time=0.0575 ms/q
+  SHG ef=  80: recall=0.9395, time=0.0661 ms/q
+  SHG ef= 100: recall=0.9429, time=0.0765 ms/q
+  SHG ef= 128: recall=0.9465, time=0.0945 ms/q
+  SHG ef= 160: recall=0.9475, time=0.1133 ms/q
+  SHG ef= 200: recall=0.9487, time=0.1357 ms/q
+  SHG ef= 256: recall=0.9497, time=0.1661 ms/q
+  SHG ef= 320: recall=0.9501, time=0.1999 ms/q
+  SHG ef= 400: recall=0.9505, time=0.2409 ms/q
+  SHG ef= 500: recall=0.9506, time=0.2888 ms/q
+
+--- Loading HNSW from /Users/dhm/Documents/indices/uqv_hnsw.idx ---
+  HNSW: loaded, memory=1358.11MB
+  HNSW ef=  20: recall=0.8542, time=0.0147 ms/q
+  HNSW ef=  32: recall=0.8669, time=0.0204 ms/q
+  HNSW ef=  40: recall=0.8683, time=0.0241 ms/q
+  HNSW ef=  50: recall=0.8713, time=0.0283 ms/q
+  HNSW ef=  64: recall=0.8739, time=0.0343 ms/q
+  HNSW ef=  80: recall=0.8749, time=0.0412 ms/q
+  HNSW ef= 100: recall=0.8771, time=0.0494 ms/q
+  HNSW ef= 128: recall=0.8799, time=0.0638 ms/q
+  HNSW ef= 160: recall=0.8850, time=0.0823 ms/q
+  HNSW ef= 200: recall=0.8862, time=0.1064 ms/q
+  HNSW ef= 256: recall=0.8866, time=0.1342 ms/q
+  HNSW ef= 320: recall=0.8870, time=0.1609 ms/q
+  HNSW ef= 400: recall=0.8872, time=0.1937 ms/q
+  HNSW ef= 500: recall=0.8873, time=0.2378 ms/q
+  HNSW ef=  50: recall=0.9335, time=0.0304 ms/q
+  HNSW ef=  64: recall=0.9372, time=0.0364 ms/q
+  HNSW ef=  80: recall=0.9393, time=0.0432 ms/q
+  HNSW ef= 100: recall=0.9412, time=0.0515 ms/q
+  HNSW ef= 128: recall=0.9442, time=0.0671 ms/q
+  HNSW ef= 160: recall=0.9489, time=0.0846 ms/q
+  HNSW ef= 200: recall=0.9503, time=0.1022 ms/q
+  HNSW ef= 256: recall=0.9506, time=0.1277 ms/q
+  HNSW ef= 320: recall=0.9510, time=0.1567 ms/q
+  HNSW ef= 400: recall=0.9513, time=0.1921 ms/q
+  HNSW ef= 500: recall=0.9514, time=0.2367 ms/q
+
+--- Loading Panorama from /Users/dhm/Documents/indices/uqv_panorama.idx ---
+  Panorama: loaded, memory=1365.74MB
+  Panorama ef=  20: recall=0.8523, time=0.0156 ms/q
+  Panorama ef=  32: recall=0.8659, time=0.0219 ms/q
+  Panorama ef=  40: recall=0.8689, time=0.0259 ms/q
+  Panorama ef=  50: recall=0.8702, time=0.0307 ms/q
+  Panorama ef=  64: recall=0.8730, time=0.0373 ms/q
+  Panorama ef=  80: recall=0.8744, time=0.0445 ms/q
+  Panorama ef= 100: recall=0.8762, time=0.0537 ms/q
+  Panorama ef= 128: recall=0.8789, time=0.0676 ms/q
+  Panorama ef= 160: recall=0.8841, time=0.0834 ms/q
+  Panorama ef= 200: recall=0.8859, time=0.1062 ms/q
+  Panorama ef= 256: recall=0.8864, time=0.1407 ms/q
+  Panorama ef= 320: recall=0.8866, time=0.1721 ms/q
+  Panorama ef= 400: recall=0.8868, time=0.2069 ms/q
+  Panorama ef= 500: recall=0.8870, time=0.2525 ms/q
+  Panorama ef=  50: recall=0.9336, time=0.0334 ms/q
+  Panorama ef=  64: recall=0.9371, time=0.0392 ms/q
+  Panorama ef=  80: recall=0.9394, time=0.0463 ms/q
+  Panorama ef= 100: recall=0.9417, time=0.0555 ms/q
+  Panorama ef= 128: recall=0.9444, time=0.0705 ms/q
+  Panorama ef= 160: recall=0.9495, time=0.0880 ms/q
+  Panorama ef= 200: recall=0.9512, time=0.1095 ms/q
+  Panorama ef= 256: recall=0.9518, time=0.1378 ms/q
+  Panorama ef= 320: recall=0.9521, time=0.1682 ms/q
+  Panorama ef= 400: recall=0.9524, time=0.2056 ms/q
+  Panorama ef= 500: recall=0.9525, time=0.2528 ms/q
+
+--- Loading IVFFlat from /Users/dhm/Documents/indices/uqv_ivfflat.idx ---
+  IVFFlat: loaded, memory=985.18MB
+  IVFFlat nprobe=   1: recall=0.5173, time=0.0108 ms/q
+  IVFFlat nprobe=   2: recall=0.6532, time=0.0211 ms/q
+  IVFFlat nprobe=   4: recall=0.7669, time=0.0426 ms/q
+  IVFFlat nprobe=   8: recall=0.8366, time=0.0869 ms/q
+  IVFFlat nprobe=  16: recall=0.8618, time=0.1767 ms/q
+  IVFFlat nprobe=  32: recall=0.8668, time=0.3544 ms/q
+  IVFFlat nprobe=  64: recall=0.8671, time=0.7066 ms/q
+  IVFFlat nprobe= 128: recall=0.8671, time=1.3783 ms/q
+  IVFFlat nprobe= 256: recall=0.8671, time=2.6500 ms/q
+  IVFFlat nprobe= 512: recall=0.8671, time=5.0057 ms/q
+  IVFFlat nprobe=   1: recall=0.5589, time=0.0118 ms/q
+  IVFFlat nprobe=   2: recall=0.7033, time=0.0220 ms/q
+  IVFFlat nprobe=   4: recall=0.8271, time=0.0440 ms/q
+  IVFFlat nprobe=   8: recall=0.9113, time=0.0881 ms/q
+  IVFFlat nprobe=  16: recall=0.9453, time=0.1784 ms/q
+  IVFFlat nprobe=  32: recall=0.9522, time=0.3566 ms/q
+  IVFFlat nprobe=  64: recall=0.9528, time=0.7105 ms/q
+  IVFFlat nprobe= 128: recall=0.9528, time=1.4256 ms/q
+  IVFFlat nprobe= 256: recall=0.9528, time=2.7730 ms/q
+  IVFFlat nprobe= 512: recall=0.9528, time=41.0250 ms/q
+
+--- Loading IVFPQ from /Users/dhm/Documents/indices/uqv_ivfpq.idx ---
+  IVFPQ: loaded, memory=39.38MB
+  IVFPQ nprobe=   1: recall=0.4446, time=0.0063 ms/q
+  IVFPQ nprobe=   2: recall=0.5275, time=0.0091 ms/q
+  IVFPQ nprobe=   4: recall=0.5797, time=0.0141 ms/q
+  IVFPQ nprobe=   8: recall=0.6020, time=0.0246 ms/q
+  IVFPQ nprobe=  16: recall=0.6083, time=0.0432 ms/q
+  IVFPQ nprobe=  32: recall=0.6092, time=0.0808 ms/q
+  IVFPQ nprobe=  64: recall=0.6093, time=0.1633 ms/q
+  IVFPQ nprobe= 128: recall=0.6093, time=0.3181 ms/q
+  IVFPQ nprobe= 256: recall=0.6093, time=0.6176 ms/q
+  IVFPQ nprobe= 512: recall=0.6093, time=1.2174 ms/q
+  IVFPQ nprobe=   1: recall=0.5004, time=0.0073 ms/q
+  IVFPQ nprobe=   2: recall=0.5975, time=0.0100 ms/q
+  IVFPQ nprobe=   4: recall=0.6613, time=0.0149 ms/q
+  IVFPQ nprobe=   8: recall=0.6927, time=0.0272 ms/q
+  IVFPQ nprobe=  16: recall=0.7018, time=0.0488 ms/q
+  IVFPQ nprobe=  32: recall=0.7030, time=0.0921 ms/q
+  IVFPQ nprobe=  64: recall=0.7031, time=0.1895 ms/q
+  IVFPQ nprobe= 128: recall=0.7031, time=0.3475 ms/q
+  IVFPQ nprobe= 256: recall=0.7031, time=0.6722 ms/q
+  IVFPQ nprobe= 512: recall=0.7031, time=1.2857 ms/q
+
+======================================================================
+BENCHMARK: Construction - uqv
+======================================================================
+  SHG: loaded from disk, memory=1678.55MB
+  HNSW: loaded from disk, memory=1358.11MB
+  Panorama: loaded from disk, memory=1365.74MB
+  IVFFlat: loaded from disk, memory=985.18MB
+  IVFPQ: loaded from disk, memory=39.38MB
+
+======================================================================
+BENCHMARK: Recall vs Time (k=20) - uqv
+======================================================================
+
+======================================================================
+BENCHMARK: Recall vs Time (k=50) - uqv
+======================================================================
+
+======================================================================
+BENCHMARK: Robustness (unseen queries, k=20) - uqv
+======================================================================
+  SHG: mean=0.9851, median=1.0000, min=0.0000, max=1.0000
+  HNSW: mean=0.9519, median=1.0000, min=0.0000, max=1.0000
+  Panorama: mean=0.9518, median=1.0000, min=0.0000, max=1.0000
+  IVFFlat: mean=1.0000, median=1.0000, min=1.0000, max=1.0000
+  IVFPQ: mean=0.6660, median=0.6500, min=0.0000, max=1.0000
+
+Results saved to /Users/dhm/Documents/SuCo/benchs/results/results_uqv.json

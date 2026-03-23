@@ -1,0 +1,890 @@
+{
+  "dataset": "msturing10m",
+  "n": 9062318,
+  "d": 100,
+  "nq": 10000,
+  "construction": {
+    "SHG": {
+      "build_time_s": -1,
+      "memory_mb": 8021.02
+    },
+    "HNSW": {
+      "build_time_s": -1,
+      "memory_mb": 6914.76
+    },
+    "Panorama": {
+      "build_time_s": -1,
+      "memory_mb": 6983.9
+    },
+    "IVFFlat": {
+      "build_time_s": -1,
+      "memory_mb": 3527.31
+    },
+    "IVFPQ": {
+      "build_time_s": -1,
+      "memory_mb": 286.47
+    }
+  },
+  "recall_k20": {
+    "SHG": [
+      {
+        "efSearch": 20,
+        "recall": 0.709365,
+        "ms_per_query": 0.337085
+      },
+      {
+        "efSearch": 32,
+        "recall": 0.77604,
+        "ms_per_query": 0.07107
+      },
+      {
+        "efSearch": 40,
+        "recall": 0.80297,
+        "ms_per_query": 0.080696
+      },
+      {
+        "efSearch": 50,
+        "recall": 0.82975,
+        "ms_per_query": 0.096367
+      },
+      {
+        "efSearch": 64,
+        "recall": 0.854845,
+        "ms_per_query": 0.117225
+      },
+      {
+        "efSearch": 80,
+        "recall": 0.875915,
+        "ms_per_query": 0.141081
+      },
+      {
+        "efSearch": 100,
+        "recall": 0.893395,
+        "ms_per_query": 0.1715
+      },
+      {
+        "efSearch": 128,
+        "recall": 0.91009,
+        "ms_per_query": 0.218072
+      },
+      {
+        "efSearch": 160,
+        "recall": 0.923255,
+        "ms_per_query": 0.27296
+      },
+      {
+        "efSearch": 200,
+        "recall": 0.93477,
+        "ms_per_query": 0.356126
+      },
+      {
+        "efSearch": 256,
+        "recall": 0.946015,
+        "ms_per_query": 0.45328
+      },
+      {
+        "efSearch": 320,
+        "recall": 0.95432,
+        "ms_per_query": 0.584743
+      },
+      {
+        "efSearch": 400,
+        "recall": 0.961595,
+        "ms_per_query": 0.746583
+      },
+      {
+        "efSearch": 500,
+        "recall": 0.96716,
+        "ms_per_query": 0.97906
+      }
+    ],
+    "SHG-no-shortcut": [
+      {
+        "efSearch": 20,
+        "recall": 0.70835,
+        "ms_per_query": 0.04933
+      },
+      {
+        "efSearch": 32,
+        "recall": 0.77489,
+        "ms_per_query": 0.068244
+      },
+      {
+        "efSearch": 40,
+        "recall": 0.80406,
+        "ms_per_query": 0.08058
+      },
+      {
+        "efSearch": 50,
+        "recall": 0.82976,
+        "ms_per_query": 0.096702
+      },
+      {
+        "efSearch": 64,
+        "recall": 0.855405,
+        "ms_per_query": 0.118466
+      },
+      {
+        "efSearch": 80,
+        "recall": 0.87664,
+        "ms_per_query": 0.14295
+      },
+      {
+        "efSearch": 100,
+        "recall": 0.894265,
+        "ms_per_query": 0.174577
+      },
+      {
+        "efSearch": 128,
+        "recall": 0.91047,
+        "ms_per_query": 0.220574
+      },
+      {
+        "efSearch": 160,
+        "recall": 0.923635,
+        "ms_per_query": 0.277297
+      },
+      {
+        "efSearch": 200,
+        "recall": 0.93504,
+        "ms_per_query": 0.345614
+      },
+      {
+        "efSearch": 256,
+        "recall": 0.946495,
+        "ms_per_query": 0.457816
+      },
+      {
+        "efSearch": 320,
+        "recall": 0.95445,
+        "ms_per_query": 0.590669
+      },
+      {
+        "efSearch": 400,
+        "recall": 0.961725,
+        "ms_per_query": 0.783554
+      },
+      {
+        "efSearch": 500,
+        "recall": 0.96737,
+        "ms_per_query": 1.108431
+      }
+    ],
+    "SHG-no-lb": [
+      {
+        "efSearch": 20,
+        "recall": 0.713025,
+        "ms_per_query": 0.045562
+      },
+      {
+        "efSearch": 32,
+        "recall": 0.78104,
+        "ms_per_query": 0.060527
+      },
+      {
+        "efSearch": 40,
+        "recall": 0.80854,
+        "ms_per_query": 0.066547
+      },
+      {
+        "efSearch": 50,
+        "recall": 0.83528,
+        "ms_per_query": 0.078366
+      },
+      {
+        "efSearch": 64,
+        "recall": 0.860735,
+        "ms_per_query": 0.094385
+      },
+      {
+        "efSearch": 80,
+        "recall": 0.8809,
+        "ms_per_query": 0.115672
+      },
+      {
+        "efSearch": 100,
+        "recall": 0.898645,
+        "ms_per_query": 0.147273
+      },
+      {
+        "efSearch": 128,
+        "recall": 0.915385,
+        "ms_per_query": 0.185393
+      },
+      {
+        "efSearch": 160,
+        "recall": 0.92862,
+        "ms_per_query": 0.2413
+      },
+      {
+        "efSearch": 200,
+        "recall": 0.93967,
+        "ms_per_query": 0.279397
+      },
+      {
+        "efSearch": 256,
+        "recall": 0.950655,
+        "ms_per_query": 0.399692
+      },
+      {
+        "efSearch": 320,
+        "recall": 0.958445,
+        "ms_per_query": 0.51039
+      },
+      {
+        "efSearch": 400,
+        "recall": 0.965595,
+        "ms_per_query": 0.665083
+      },
+      {
+        "efSearch": 500,
+        "recall": 0.971105,
+        "ms_per_query": 0.880909
+      }
+    ],
+    "SHG-no-both": [
+      {
+        "efSearch": 20,
+        "recall": 0.712445,
+        "ms_per_query": 0.044524
+      },
+      {
+        "efSearch": 32,
+        "recall": 0.779995,
+        "ms_per_query": 0.060791
+      },
+      {
+        "efSearch": 40,
+        "recall": 0.808705,
+        "ms_per_query": 0.072029
+      },
+      {
+        "efSearch": 50,
+        "recall": 0.83511,
+        "ms_per_query": 0.085681
+      },
+      {
+        "efSearch": 64,
+        "recall": 0.861135,
+        "ms_per_query": 0.101426
+      },
+      {
+        "efSearch": 80,
+        "recall": 0.881655,
+        "ms_per_query": 0.115714
+      },
+      {
+        "efSearch": 100,
+        "recall": 0.89927,
+        "ms_per_query": 0.142493
+      },
+      {
+        "efSearch": 128,
+        "recall": 0.915665,
+        "ms_per_query": 0.183381
+      },
+      {
+        "efSearch": 160,
+        "recall": 0.928925,
+        "ms_per_query": 0.231838
+      },
+      {
+        "efSearch": 200,
+        "recall": 0.93975,
+        "ms_per_query": 0.285121
+      },
+      {
+        "efSearch": 256,
+        "recall": 0.95099,
+        "ms_per_query": 0.394404
+      },
+      {
+        "efSearch": 320,
+        "recall": 0.95865,
+        "ms_per_query": 0.503752
+      },
+      {
+        "efSearch": 400,
+        "recall": 0.965655,
+        "ms_per_query": 0.683134
+      },
+      {
+        "efSearch": 500,
+        "recall": 0.971135,
+        "ms_per_query": 0.926715
+      }
+    ],
+    "HNSW": [
+      {
+        "efSearch": 20,
+        "recall": 0.715015,
+        "ms_per_query": 0.145155
+      },
+      {
+        "efSearch": 32,
+        "recall": 0.77783,
+        "ms_per_query": 0.041008
+      },
+      {
+        "efSearch": 40,
+        "recall": 0.805145,
+        "ms_per_query": 0.044985
+      },
+      {
+        "efSearch": 50,
+        "recall": 0.83193,
+        "ms_per_query": 0.054801
+      },
+      {
+        "efSearch": 64,
+        "recall": 0.85733,
+        "ms_per_query": 0.071462
+      },
+      {
+        "efSearch": 80,
+        "recall": 0.878775,
+        "ms_per_query": 0.083986
+      },
+      {
+        "efSearch": 100,
+        "recall": 0.89732,
+        "ms_per_query": 0.101258
+      },
+      {
+        "efSearch": 128,
+        "recall": 0.914375,
+        "ms_per_query": 0.138173
+      },
+      {
+        "efSearch": 160,
+        "recall": 0.927625,
+        "ms_per_query": 0.17612
+      },
+      {
+        "efSearch": 200,
+        "recall": 0.939105,
+        "ms_per_query": 0.232838
+      },
+      {
+        "efSearch": 256,
+        "recall": 0.94991,
+        "ms_per_query": 0.308087
+      },
+      {
+        "efSearch": 320,
+        "recall": 0.95812,
+        "ms_per_query": 0.395404
+      },
+      {
+        "efSearch": 400,
+        "recall": 0.96502,
+        "ms_per_query": 0.521645
+      },
+      {
+        "efSearch": 500,
+        "recall": 0.97078,
+        "ms_per_query": 0.726585
+      }
+    ],
+    "Panorama": [
+      {
+        "efSearch": 20,
+        "recall": 0.71462,
+        "ms_per_query": 0.124744
+      },
+      {
+        "efSearch": 32,
+        "recall": 0.778545,
+        "ms_per_query": 0.050106
+      },
+      {
+        "efSearch": 40,
+        "recall": 0.806905,
+        "ms_per_query": 0.056566
+      },
+      {
+        "efSearch": 50,
+        "recall": 0.83429,
+        "ms_per_query": 0.067285
+      },
+      {
+        "efSearch": 64,
+        "recall": 0.85901,
+        "ms_per_query": 0.080808
+      },
+      {
+        "efSearch": 80,
+        "recall": 0.878825,
+        "ms_per_query": 0.099293
+      },
+      {
+        "efSearch": 100,
+        "recall": 0.896155,
+        "ms_per_query": 0.121797
+      },
+      {
+        "efSearch": 128,
+        "recall": 0.91327,
+        "ms_per_query": 0.153988
+      },
+      {
+        "efSearch": 160,
+        "recall": 0.927245,
+        "ms_per_query": 0.193757
+      },
+      {
+        "efSearch": 200,
+        "recall": 0.9389,
+        "ms_per_query": 0.247061
+      },
+      {
+        "efSearch": 256,
+        "recall": 0.94992,
+        "ms_per_query": 0.328903
+      },
+      {
+        "efSearch": 320,
+        "recall": 0.95788,
+        "ms_per_query": 0.431965
+      },
+      {
+        "efSearch": 400,
+        "recall": 0.964845,
+        "ms_per_query": 0.567803
+      },
+      {
+        "efSearch": 500,
+        "recall": 0.97088,
+        "ms_per_query": 0.733056
+      }
+    ],
+    "IVFFlat": [
+      {
+        "nprobe": 1,
+        "recall": 0.32181,
+        "ms_per_query": 0.013103
+      },
+      {
+        "nprobe": 2,
+        "recall": 0.43091,
+        "ms_per_query": 0.025491
+      },
+      {
+        "nprobe": 4,
+        "recall": 0.526805,
+        "ms_per_query": 0.05002
+      },
+      {
+        "nprobe": 8,
+        "recall": 0.61246,
+        "ms_per_query": 0.094615
+      },
+      {
+        "nprobe": 16,
+        "recall": 0.68981,
+        "ms_per_query": 0.183984
+      },
+      {
+        "nprobe": 32,
+        "recall": 0.75994,
+        "ms_per_query": 0.359964
+      },
+      {
+        "nprobe": 64,
+        "recall": 0.82428,
+        "ms_per_query": 0.713937
+      },
+      {
+        "nprobe": 128,
+        "recall": 0.880635,
+        "ms_per_query": 1.424117
+      },
+      {
+        "nprobe": 256,
+        "recall": 0.927965,
+        "ms_per_query": 2.87748
+      },
+      {
+        "nprobe": 512,
+        "recall": 0.964815,
+        "ms_per_query": 5.735212
+      }
+    ],
+    "IVFPQ": [
+      {
+        "nprobe": 1,
+        "recall": 0.28947,
+        "ms_per_query": 0.010239
+      },
+      {
+        "nprobe": 2,
+        "recall": 0.37845,
+        "ms_per_query": 0.017466
+      },
+      {
+        "nprobe": 4,
+        "recall": 0.45201,
+        "ms_per_query": 0.033103
+      },
+      {
+        "nprobe": 8,
+        "recall": 0.512355,
+        "ms_per_query": 0.07305
+      },
+      {
+        "nprobe": 16,
+        "recall": 0.560735,
+        "ms_per_query": 0.121927
+      },
+      {
+        "nprobe": 32,
+        "recall": 0.598355,
+        "ms_per_query": 0.229899
+      },
+      {
+        "nprobe": 64,
+        "recall": 0.62837,
+        "ms_per_query": 0.449701
+      },
+      {
+        "nprobe": 128,
+        "recall": 0.651215,
+        "ms_per_query": 0.896268
+      },
+      {
+        "nprobe": 256,
+        "recall": 0.668475,
+        "ms_per_query": 1.790389
+      },
+      {
+        "nprobe": 512,
+        "recall": 0.68016,
+        "ms_per_query": 3.538501
+      }
+    ]
+  },
+  "recall_k50": {
+    "SHG": [
+      {
+        "efSearch": 50,
+        "recall": 0.774458,
+        "ms_per_query": 0.102887
+      },
+      {
+        "efSearch": 64,
+        "recall": 0.80326,
+        "ms_per_query": 0.123576
+      },
+      {
+        "efSearch": 80,
+        "recall": 0.828074,
+        "ms_per_query": 0.161148
+      },
+      {
+        "efSearch": 100,
+        "recall": 0.849462,
+        "ms_per_query": 0.203436
+      },
+      {
+        "efSearch": 128,
+        "recall": 0.870882,
+        "ms_per_query": 0.248975
+      },
+      {
+        "efSearch": 160,
+        "recall": 0.887954,
+        "ms_per_query": 0.331077
+      },
+      {
+        "efSearch": 200,
+        "recall": 0.903536,
+        "ms_per_query": 0.369296
+      },
+      {
+        "efSearch": 256,
+        "recall": 0.918806,
+        "ms_per_query": 0.478542
+      },
+      {
+        "efSearch": 320,
+        "recall": 0.930792,
+        "ms_per_query": 0.639579
+      },
+      {
+        "efSearch": 400,
+        "recall": 0.941196,
+        "ms_per_query": 0.851673
+      },
+      {
+        "efSearch": 500,
+        "recall": 0.949956,
+        "ms_per_query": 1.036169
+      }
+    ],
+    "HNSW": [
+      {
+        "efSearch": 50,
+        "recall": 0.77942,
+        "ms_per_query": 0.056134
+      },
+      {
+        "efSearch": 64,
+        "recall": 0.808674,
+        "ms_per_query": 0.068923
+      },
+      {
+        "efSearch": 80,
+        "recall": 0.833804,
+        "ms_per_query": 0.082851
+      },
+      {
+        "efSearch": 100,
+        "recall": 0.855894,
+        "ms_per_query": 0.103907
+      },
+      {
+        "efSearch": 128,
+        "recall": 0.877476,
+        "ms_per_query": 0.133688
+      },
+      {
+        "efSearch": 160,
+        "recall": 0.894462,
+        "ms_per_query": 0.173715
+      },
+      {
+        "efSearch": 200,
+        "recall": 0.909798,
+        "ms_per_query": 0.219526
+      },
+      {
+        "efSearch": 256,
+        "recall": 0.92469,
+        "ms_per_query": 0.294578
+      },
+      {
+        "efSearch": 320,
+        "recall": 0.936492,
+        "ms_per_query": 0.394098
+      },
+      {
+        "efSearch": 400,
+        "recall": 0.9466,
+        "ms_per_query": 0.518563
+      },
+      {
+        "efSearch": 500,
+        "recall": 0.955398,
+        "ms_per_query": 0.673306
+      }
+    ],
+    "Panorama": [
+      {
+        "efSearch": 50,
+        "recall": 0.78133,
+        "ms_per_query": 0.068179
+      },
+      {
+        "efSearch": 64,
+        "recall": 0.810024,
+        "ms_per_query": 0.082727
+      },
+      {
+        "efSearch": 80,
+        "recall": 0.833646,
+        "ms_per_query": 0.099843
+      },
+      {
+        "efSearch": 100,
+        "recall": 0.854852,
+        "ms_per_query": 0.122848
+      },
+      {
+        "efSearch": 128,
+        "recall": 0.87626,
+        "ms_per_query": 0.156783
+      },
+      {
+        "efSearch": 160,
+        "recall": 0.894282,
+        "ms_per_query": 0.198421
+      },
+      {
+        "efSearch": 200,
+        "recall": 0.909882,
+        "ms_per_query": 0.250178
+      },
+      {
+        "efSearch": 256,
+        "recall": 0.925072,
+        "ms_per_query": 0.3324
+      },
+      {
+        "efSearch": 320,
+        "recall": 0.936354,
+        "ms_per_query": 0.433905
+      },
+      {
+        "efSearch": 400,
+        "recall": 0.946638,
+        "ms_per_query": 0.572627
+      },
+      {
+        "efSearch": 500,
+        "recall": 0.955742,
+        "ms_per_query": 0.797353
+      }
+    ],
+    "IVFFlat": [
+      {
+        "nprobe": 1,
+        "recall": 0.295608,
+        "ms_per_query": 0.013479
+      },
+      {
+        "nprobe": 2,
+        "recall": 0.396806,
+        "ms_per_query": 0.025176
+      },
+      {
+        "nprobe": 4,
+        "recall": 0.487012,
+        "ms_per_query": 0.047645
+      },
+      {
+        "nprobe": 8,
+        "recall": 0.570616,
+        "ms_per_query": 0.091902
+      },
+      {
+        "nprobe": 16,
+        "recall": 0.648836,
+        "ms_per_query": 0.179655
+      },
+      {
+        "nprobe": 32,
+        "recall": 0.723122,
+        "ms_per_query": 0.354398
+      },
+      {
+        "nprobe": 64,
+        "recall": 0.793458,
+        "ms_per_query": 0.710842
+      },
+      {
+        "nprobe": 128,
+        "recall": 0.85686,
+        "ms_per_query": 1.482244
+      },
+      {
+        "nprobe": 256,
+        "recall": 0.912182,
+        "ms_per_query": 2.996197
+      },
+      {
+        "nprobe": 512,
+        "recall": 0.95579,
+        "ms_per_query": 6.351322
+      }
+    ],
+    "IVFPQ": [
+      {
+        "nprobe": 1,
+        "recall": 0.271628,
+        "ms_per_query": 0.010695
+      },
+      {
+        "nprobe": 2,
+        "recall": 0.356686,
+        "ms_per_query": 0.017121
+      },
+      {
+        "nprobe": 4,
+        "recall": 0.427976,
+        "ms_per_query": 0.029762
+      },
+      {
+        "nprobe": 8,
+        "recall": 0.488386,
+        "ms_per_query": 0.059252
+      },
+      {
+        "nprobe": 16,
+        "recall": 0.53821,
+        "ms_per_query": 0.112775
+      },
+      {
+        "nprobe": 32,
+        "recall": 0.579926,
+        "ms_per_query": 0.222256
+      },
+      {
+        "nprobe": 64,
+        "recall": 0.613982,
+        "ms_per_query": 0.434866
+      },
+      {
+        "nprobe": 128,
+        "recall": 0.640386,
+        "ms_per_query": 0.858216
+      },
+      {
+        "nprobe": 256,
+        "recall": 0.66055,
+        "ms_per_query": 1.723047
+      },
+      {
+        "nprobe": 512,
+        "recall": 0.674772,
+        "ms_per_query": 3.514219
+      }
+    ]
+  },
+  "robustness": {
+    "SHG": {
+      "mean_recall": 0.959,
+      "median_recall": 1.0,
+      "min_recall": 0.1,
+      "max_recall": 1.0,
+      "q25_recall": 0.95,
+      "q75_recall": 1.0,
+      "ms_per_query": 0.1795
+    },
+    "HNSW": {
+      "mean_recall": 0.9622,
+      "median_recall": 1.0,
+      "min_recall": 0.05,
+      "max_recall": 1.0,
+      "q25_recall": 0.95,
+      "q75_recall": 1.0,
+      "ms_per_query": 0.0898
+    },
+    "Panorama": {
+      "mean_recall": 0.9603,
+      "median_recall": 1.0,
+      "min_recall": 0.0,
+      "max_recall": 1.0,
+      "q25_recall": 0.95,
+      "q75_recall": 1.0,
+      "ms_per_query": 0.1106
+    },
+    "IVFFlat": {
+      "mean_recall": 0.8515,
+      "median_recall": 0.9,
+      "min_recall": 0.3,
+      "max_recall": 1.0,
+      "q25_recall": 0.75,
+      "q75_recall": 1.0,
+      "ms_per_query": 0.7436
+    },
+    "IVFPQ": {
+      "mean_recall": 0.6746,
+      "median_recall": 0.7,
+      "min_recall": 0.2,
+      "max_recall": 1.0,
+      "q25_recall": 0.6,
+      "q75_recall": 0.8,
+      "ms_per_query": 0.4543
+    }
+  }
+}

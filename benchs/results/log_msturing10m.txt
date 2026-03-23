@@ -1,0 +1,216 @@
+Data dir:   /Users/dhm/Documents/data
+Index dir:  /Users/dhm/Documents/indices
+Output dir: /Users/dhm/Documents/SuCo/benchs/results
+Datasets:   ['msturing10m']
+Benchmarks: ['construction', 'recall_k20', 'recall_k50', 'robustness']
+
+######################################################################
+# Dataset: MSTURING10M
+######################################################################
+
+Loading dataset msturing10m...
+  Loaded in 1.0s: xb=(9062318, 100), xq=(10000, 100), gt=(10000, 100)
+  GT has IDs up to 9999998 but base has only 9062318 vectors — recomputing GT...
+  Computing ground truth (n=9062318, nq=10000, k=100)...
+  Loaded robustness queries from cache
+  All indices cached, freeing base vectors (3.6 GB)
+
+--- Loading SHG from /Users/dhm/Documents/indices/msturing10m_shg.idx ---
+  SHG: loaded, memory=8021.02MB
+  SHG ef=  20: recall=0.7094, time=0.3371 ms/q
+  SHG ef=  32: recall=0.7760, time=0.0711 ms/q
+  SHG ef=  40: recall=0.8030, time=0.0807 ms/q
+  SHG ef=  50: recall=0.8297, time=0.0964 ms/q
+  SHG ef=  64: recall=0.8548, time=0.1172 ms/q
+  SHG ef=  80: recall=0.8759, time=0.1411 ms/q
+  SHG ef= 100: recall=0.8934, time=0.1715 ms/q
+  SHG ef= 128: recall=0.9101, time=0.2181 ms/q
+  SHG ef= 160: recall=0.9233, time=0.2730 ms/q
+  SHG ef= 200: recall=0.9348, time=0.3561 ms/q
+  SHG ef= 256: recall=0.9460, time=0.4533 ms/q
+  SHG ef= 320: recall=0.9543, time=0.5847 ms/q
+  SHG ef= 400: recall=0.9616, time=0.7466 ms/q
+  SHG ef= 500: recall=0.9672, time=0.9791 ms/q
+  SHG-no-shortcut ef=  20: recall=0.7084, time=0.0493 ms/q
+  SHG-no-shortcut ef=  32: recall=0.7749, time=0.0682 ms/q
+  SHG-no-shortcut ef=  40: recall=0.8041, time=0.0806 ms/q
+  SHG-no-shortcut ef=  50: recall=0.8298, time=0.0967 ms/q
+  SHG-no-shortcut ef=  64: recall=0.8554, time=0.1185 ms/q
+  SHG-no-shortcut ef=  80: recall=0.8766, time=0.1429 ms/q
+  SHG-no-shortcut ef= 100: recall=0.8943, time=0.1746 ms/q
+  SHG-no-shortcut ef= 128: recall=0.9105, time=0.2206 ms/q
+  SHG-no-shortcut ef= 160: recall=0.9236, time=0.2773 ms/q
+  SHG-no-shortcut ef= 200: recall=0.9350, time=0.3456 ms/q
+  SHG-no-shortcut ef= 256: recall=0.9465, time=0.4578 ms/q
+  SHG-no-shortcut ef= 320: recall=0.9545, time=0.5907 ms/q
+  SHG-no-shortcut ef= 400: recall=0.9617, time=0.7836 ms/q
+  SHG-no-shortcut ef= 500: recall=0.9674, time=1.1084 ms/q
+  SHG-no-lb ef=  20: recall=0.7130, time=0.0456 ms/q
+  SHG-no-lb ef=  32: recall=0.7810, time=0.0605 ms/q
+  SHG-no-lb ef=  40: recall=0.8085, time=0.0665 ms/q
+  SHG-no-lb ef=  50: recall=0.8353, time=0.0784 ms/q
+  SHG-no-lb ef=  64: recall=0.8607, time=0.0944 ms/q
+  SHG-no-lb ef=  80: recall=0.8809, time=0.1157 ms/q
+  SHG-no-lb ef= 100: recall=0.8986, time=0.1473 ms/q
+  SHG-no-lb ef= 128: recall=0.9154, time=0.1854 ms/q
+  SHG-no-lb ef= 160: recall=0.9286, time=0.2413 ms/q
+  SHG-no-lb ef= 200: recall=0.9397, time=0.2794 ms/q
+  SHG-no-lb ef= 256: recall=0.9507, time=0.3997 ms/q
+  SHG-no-lb ef= 320: recall=0.9584, time=0.5104 ms/q
+  SHG-no-lb ef= 400: recall=0.9656, time=0.6651 ms/q
+  SHG-no-lb ef= 500: recall=0.9711, time=0.8809 ms/q
+  SHG-no-both ef=  20: recall=0.7124, time=0.0445 ms/q
+  SHG-no-both ef=  32: recall=0.7800, time=0.0608 ms/q
+  SHG-no-both ef=  40: recall=0.8087, time=0.0720 ms/q
+  SHG-no-both ef=  50: recall=0.8351, time=0.0857 ms/q
+  SHG-no-both ef=  64: recall=0.8611, time=0.1014 ms/q
+  SHG-no-both ef=  80: recall=0.8817, time=0.1157 ms/q
+  SHG-no-both ef= 100: recall=0.8993, time=0.1425 ms/q
+  SHG-no-both ef= 128: recall=0.9157, time=0.1834 ms/q
+  SHG-no-both ef= 160: recall=0.9289, time=0.2318 ms/q
+  SHG-no-both ef= 200: recall=0.9397, time=0.2851 ms/q
+  SHG-no-both ef= 256: recall=0.9510, time=0.3944 ms/q
+  SHG-no-both ef= 320: recall=0.9587, time=0.5038 ms/q
+  SHG-no-both ef= 400: recall=0.9657, time=0.6831 ms/q
+  SHG-no-both ef= 500: recall=0.9711, time=0.9267 ms/q
+  SHG ef=  50: recall=0.7745, time=0.1029 ms/q
+  SHG ef=  64: recall=0.8033, time=0.1236 ms/q
+  SHG ef=  80: recall=0.8281, time=0.1611 ms/q
+  SHG ef= 100: recall=0.8495, time=0.2034 ms/q
+  SHG ef= 128: recall=0.8709, time=0.2490 ms/q
+  SHG ef= 160: recall=0.8880, time=0.3311 ms/q
+  SHG ef= 200: recall=0.9035, time=0.3693 ms/q
+  SHG ef= 256: recall=0.9188, time=0.4785 ms/q
+  SHG ef= 320: recall=0.9308, time=0.6396 ms/q
+  SHG ef= 400: recall=0.9412, time=0.8517 ms/q
+  SHG ef= 500: recall=0.9500, time=1.0362 ms/q
+
+--- Loading HNSW from /Users/dhm/Documents/indices/msturing10m_hnsw.idx ---
+  HNSW: loaded, memory=6914.76MB
+  HNSW ef=  20: recall=0.7150, time=0.1452 ms/q
+  HNSW ef=  32: recall=0.7778, time=0.0410 ms/q
+  HNSW ef=  40: recall=0.8051, time=0.0450 ms/q
+  HNSW ef=  50: recall=0.8319, time=0.0548 ms/q
+  HNSW ef=  64: recall=0.8573, time=0.0715 ms/q
+  HNSW ef=  80: recall=0.8788, time=0.0840 ms/q
+  HNSW ef= 100: recall=0.8973, time=0.1013 ms/q
+  HNSW ef= 128: recall=0.9144, time=0.1382 ms/q
+  HNSW ef= 160: recall=0.9276, time=0.1761 ms/q
+  HNSW ef= 200: recall=0.9391, time=0.2328 ms/q
+  HNSW ef= 256: recall=0.9499, time=0.3081 ms/q
+  HNSW ef= 320: recall=0.9581, time=0.3954 ms/q
+  HNSW ef= 400: recall=0.9650, time=0.5216 ms/q
+  HNSW ef= 500: recall=0.9708, time=0.7266 ms/q
+  HNSW ef=  50: recall=0.7794, time=0.0561 ms/q
+  HNSW ef=  64: recall=0.8087, time=0.0689 ms/q
+  HNSW ef=  80: recall=0.8338, time=0.0829 ms/q
+  HNSW ef= 100: recall=0.8559, time=0.1039 ms/q
+  HNSW ef= 128: recall=0.8775, time=0.1337 ms/q
+  HNSW ef= 160: recall=0.8945, time=0.1737 ms/q
+  HNSW ef= 200: recall=0.9098, time=0.2195 ms/q
+  HNSW ef= 256: recall=0.9247, time=0.2946 ms/q
+  HNSW ef= 320: recall=0.9365, time=0.3941 ms/q
+  HNSW ef= 400: recall=0.9466, time=0.5186 ms/q
+  HNSW ef= 500: recall=0.9554, time=0.6733 ms/q
+
+--- Loading Panorama from /Users/dhm/Documents/indices/msturing10m_panorama.idx ---
+  Panorama: loaded, memory=6983.90MB
+  Panorama ef=  20: recall=0.7146, time=0.1247 ms/q
+  Panorama ef=  32: recall=0.7785, time=0.0501 ms/q
+  Panorama ef=  40: recall=0.8069, time=0.0566 ms/q
+  Panorama ef=  50: recall=0.8343, time=0.0673 ms/q
+  Panorama ef=  64: recall=0.8590, time=0.0808 ms/q
+  Panorama ef=  80: recall=0.8788, time=0.0993 ms/q
+  Panorama ef= 100: recall=0.8962, time=0.1218 ms/q
+  Panorama ef= 128: recall=0.9133, time=0.1540 ms/q
+  Panorama ef= 160: recall=0.9272, time=0.1938 ms/q
+  Panorama ef= 200: recall=0.9389, time=0.2471 ms/q
+  Panorama ef= 256: recall=0.9499, time=0.3289 ms/q
+  Panorama ef= 320: recall=0.9579, time=0.4320 ms/q
+  Panorama ef= 400: recall=0.9648, time=0.5678 ms/q
+  Panorama ef= 500: recall=0.9709, time=0.7331 ms/q
+  Panorama ef=  50: recall=0.7813, time=0.0682 ms/q
+  Panorama ef=  64: recall=0.8100, time=0.0827 ms/q
+  Panorama ef=  80: recall=0.8336, time=0.0998 ms/q
+  Panorama ef= 100: recall=0.8549, time=0.1228 ms/q
+  Panorama ef= 128: recall=0.8763, time=0.1568 ms/q
+  Panorama ef= 160: recall=0.8943, time=0.1984 ms/q
+  Panorama ef= 200: recall=0.9099, time=0.2502 ms/q
+  Panorama ef= 256: recall=0.9251, time=0.3324 ms/q
+  Panorama ef= 320: recall=0.9364, time=0.4339 ms/q
+  Panorama ef= 400: recall=0.9466, time=0.5726 ms/q
+  Panorama ef= 500: recall=0.9557, time=0.7974 ms/q
+
+--- Loading IVFFlat from /Users/dhm/Documents/indices/msturing10m_ivfflat.idx ---
+  IVFFlat: loaded, memory=3527.31MB
+  IVFFlat nprobe=   1: recall=0.3218, time=0.0131 ms/q
+  IVFFlat nprobe=   2: recall=0.4309, time=0.0255 ms/q
+  IVFFlat nprobe=   4: recall=0.5268, time=0.0500 ms/q
+  IVFFlat nprobe=   8: recall=0.6125, time=0.0946 ms/q
+  IVFFlat nprobe=  16: recall=0.6898, time=0.1840 ms/q
+  IVFFlat nprobe=  32: recall=0.7599, time=0.3600 ms/q
+  IVFFlat nprobe=  64: recall=0.8243, time=0.7139 ms/q
+  IVFFlat nprobe= 128: recall=0.8806, time=1.4241 ms/q
+  IVFFlat nprobe= 256: recall=0.9280, time=2.8775 ms/q
+  IVFFlat nprobe= 512: recall=0.9648, time=5.7352 ms/q
+  IVFFlat nprobe=   1: recall=0.2956, time=0.0135 ms/q
+  IVFFlat nprobe=   2: recall=0.3968, time=0.0252 ms/q
+  IVFFlat nprobe=   4: recall=0.4870, time=0.0476 ms/q
+  IVFFlat nprobe=   8: recall=0.5706, time=0.0919 ms/q
+  IVFFlat nprobe=  16: recall=0.6488, time=0.1797 ms/q
+  IVFFlat nprobe=  32: recall=0.7231, time=0.3544 ms/q
+  IVFFlat nprobe=  64: recall=0.7935, time=0.7108 ms/q
+  IVFFlat nprobe= 128: recall=0.8569, time=1.4822 ms/q
+  IVFFlat nprobe= 256: recall=0.9122, time=2.9962 ms/q
+  IVFFlat nprobe= 512: recall=0.9558, time=6.3513 ms/q
+
+--- Loading IVFPQ from /Users/dhm/Documents/indices/msturing10m_ivfpq.idx ---
+  IVFPQ: loaded, memory=286.47MB
+  IVFPQ nprobe=   1: recall=0.2895, time=0.0102 ms/q
+  IVFPQ nprobe=   2: recall=0.3785, time=0.0175 ms/q
+  IVFPQ nprobe=   4: recall=0.4520, time=0.0331 ms/q
+  IVFPQ nprobe=   8: recall=0.5124, time=0.0730 ms/q
+  IVFPQ nprobe=  16: recall=0.5607, time=0.1219 ms/q
+  IVFPQ nprobe=  32: recall=0.5984, time=0.2299 ms/q
+  IVFPQ nprobe=  64: recall=0.6284, time=0.4497 ms/q
+  IVFPQ nprobe= 128: recall=0.6512, time=0.8963 ms/q
+  IVFPQ nprobe= 256: recall=0.6685, time=1.7904 ms/q
+  IVFPQ nprobe= 512: recall=0.6802, time=3.5385 ms/q
+  IVFPQ nprobe=   1: recall=0.2716, time=0.0107 ms/q
+  IVFPQ nprobe=   2: recall=0.3567, time=0.0171 ms/q
+  IVFPQ nprobe=   4: recall=0.4280, time=0.0298 ms/q
+  IVFPQ nprobe=   8: recall=0.4884, time=0.0593 ms/q
+  IVFPQ nprobe=  16: recall=0.5382, time=0.1128 ms/q
+  IVFPQ nprobe=  32: recall=0.5799, time=0.2223 ms/q
+  IVFPQ nprobe=  64: recall=0.6140, time=0.4349 ms/q
+  IVFPQ nprobe= 128: recall=0.6404, time=0.8582 ms/q
+  IVFPQ nprobe= 256: recall=0.6605, time=1.7230 ms/q
+  IVFPQ nprobe= 512: recall=0.6748, time=3.5142 ms/q
+
+======================================================================
+BENCHMARK: Construction - msturing10m
+======================================================================
+  SHG: loaded from disk, memory=8021.02MB
+  HNSW: loaded from disk, memory=6914.76MB
+  Panorama: loaded from disk, memory=6983.90MB
+  IVFFlat: loaded from disk, memory=3527.31MB
+  IVFPQ: loaded from disk, memory=286.47MB
+
+======================================================================
+BENCHMARK: Recall vs Time (k=20) - msturing10m
+======================================================================
+
+======================================================================
+BENCHMARK: Recall vs Time (k=50) - msturing10m
+======================================================================
+
+======================================================================
+BENCHMARK: Robustness (unseen queries, k=20) - msturing10m
+======================================================================
+  SHG: mean=0.9590, median=1.0000, min=0.1000, max=1.0000
+  HNSW: mean=0.9622, median=1.0000, min=0.0500, max=1.0000
+  Panorama: mean=0.9603, median=1.0000, min=0.0000, max=1.0000
+  IVFFlat: mean=0.8515, median=0.9000, min=0.3000, max=1.0000
+  IVFPQ: mean=0.6746, median=0.7000, min=0.2000, max=1.0000
+
+Results saved to /Users/dhm/Documents/SuCo/benchs/results/results_msturing10m.json

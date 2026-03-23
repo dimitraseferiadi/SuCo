@@ -1,0 +1,214 @@
+Data dir:   /Users/dhm/Documents/data
+Index dir:  /Users/dhm/Documents/indices
+Output dir: /Users/dhm/Documents/SuCo/benchs/results
+Datasets:   ['msong']
+Benchmarks: ['construction', 'recall_k20', 'recall_k50', 'robustness']
+
+######################################################################
+# Dataset: MSONG
+######################################################################
+
+Loading dataset msong...
+  Loaded in 0.9s: xb=(992272, 420), xq=(200, 420), gt=(200, 20)
+  Loaded robustness queries from cache
+  All indices cached, freeing base vectors (1.7 GB)
+
+--- Loading SHG from /Users/dhm/Documents/indices/msong_shg.idx ---
+  SHG: loaded, memory=2494.54MB
+  SHG ef=  20: recall=0.9257, time=0.0659 ms/q
+  SHG ef=  32: recall=0.9540, time=0.0810 ms/q
+  SHG ef=  40: recall=0.9675, time=0.0896 ms/q
+  SHG ef=  50: recall=0.9755, time=0.1000 ms/q
+  SHG ef=  64: recall=0.9805, time=0.1246 ms/q
+  SHG ef=  80: recall=0.9850, time=0.1434 ms/q
+  SHG ef= 100: recall=0.9878, time=0.1729 ms/q
+  SHG ef= 128: recall=0.9905, time=0.2007 ms/q
+  SHG ef= 160: recall=0.9922, time=0.2397 ms/q
+  SHG ef= 200: recall=0.9938, time=0.2840 ms/q
+  SHG ef= 256: recall=0.9958, time=0.3426 ms/q
+  SHG ef= 320: recall=0.9962, time=0.4247 ms/q
+  SHG ef= 400: recall=0.9970, time=0.5050 ms/q
+  SHG ef= 500: recall=0.9975, time=0.5956 ms/q
+  SHG-no-shortcut ef=  20: recall=0.9295, time=0.0584 ms/q
+  SHG-no-shortcut ef=  32: recall=0.9565, time=0.0729 ms/q
+  SHG-no-shortcut ef=  40: recall=0.9677, time=0.0858 ms/q
+  SHG-no-shortcut ef=  50: recall=0.9762, time=0.1001 ms/q
+  SHG-no-shortcut ef=  64: recall=0.9812, time=0.1237 ms/q
+  SHG-no-shortcut ef=  80: recall=0.9860, time=0.1382 ms/q
+  SHG-no-shortcut ef= 100: recall=0.9885, time=0.1709 ms/q
+  SHG-no-shortcut ef= 128: recall=0.9908, time=0.1990 ms/q
+  SHG-no-shortcut ef= 160: recall=0.9930, time=0.2409 ms/q
+  SHG-no-shortcut ef= 200: recall=0.9948, time=0.2854 ms/q
+  SHG-no-shortcut ef= 256: recall=0.9962, time=0.3495 ms/q
+  SHG-no-shortcut ef= 320: recall=0.9965, time=0.4195 ms/q
+  SHG-no-shortcut ef= 400: recall=0.9970, time=0.5082 ms/q
+  SHG-no-shortcut ef= 500: recall=0.9975, time=0.5817 ms/q
+  SHG-no-lb ef=  20: recall=0.9335, time=0.0604 ms/q
+  SHG-no-lb ef=  32: recall=0.9615, time=0.0787 ms/q
+  SHG-no-lb ef=  40: recall=0.9755, time=0.0922 ms/q
+  SHG-no-lb ef=  50: recall=0.9842, time=0.1083 ms/q
+  SHG-no-lb ef=  64: recall=0.9888, time=0.1292 ms/q
+  SHG-no-lb ef=  80: recall=0.9925, time=0.1561 ms/q
+  SHG-no-lb ef= 100: recall=0.9968, time=0.1912 ms/q
+  SHG-no-lb ef= 128: recall=0.9982, time=0.2335 ms/q
+  SHG-no-lb ef= 160: recall=0.9992, time=0.2792 ms/q
+  SHG-no-lb ef= 200: recall=0.9992, time=0.3146 ms/q
+  SHG-no-lb ef= 256: recall=0.9998, time=0.4024 ms/q
+  SHG-no-lb ef= 320: recall=0.9998, time=0.4745 ms/q
+  SHG-no-lb ef= 400: recall=0.9998, time=0.5681 ms/q
+  SHG-no-lb ef= 500: recall=0.9998, time=0.6667 ms/q
+  SHG-no-both ef=  20: recall=0.9353, time=0.0577 ms/q
+  SHG-no-both ef=  32: recall=0.9635, time=0.0794 ms/q
+  SHG-no-both ef=  40: recall=0.9752, time=0.1003 ms/q
+  SHG-no-both ef=  50: recall=0.9848, time=0.1164 ms/q
+  SHG-no-both ef=  64: recall=0.9892, time=0.1406 ms/q
+  SHG-no-both ef=  80: recall=0.9930, time=0.1747 ms/q
+  SHG-no-both ef= 100: recall=0.9965, time=0.2013 ms/q
+  SHG-no-both ef= 128: recall=0.9980, time=0.2448 ms/q
+  SHG-no-both ef= 160: recall=0.9990, time=0.2721 ms/q
+  SHG-no-both ef= 200: recall=0.9992, time=0.3184 ms/q
+  SHG-no-both ef= 256: recall=0.9998, time=0.3955 ms/q
+  SHG-no-both ef= 320: recall=0.9998, time=0.4727 ms/q
+  SHG-no-both ef= 400: recall=0.9998, time=0.5566 ms/q
+  SHG-no-both ef= 500: recall=0.9998, time=0.6731 ms/q
+  SHG ef=  50: recall=0.9755, time=0.1136 ms/q
+  SHG ef=  64: recall=0.9805, time=0.1291 ms/q
+  SHG ef=  80: recall=0.9850, time=0.1594 ms/q
+  SHG ef= 100: recall=0.9878, time=0.1787 ms/q
+  SHG ef= 128: recall=0.9905, time=0.2192 ms/q
+  SHG ef= 160: recall=0.9922, time=0.2562 ms/q
+  SHG ef= 200: recall=0.9938, time=0.2875 ms/q
+  SHG ef= 256: recall=0.9958, time=0.3621 ms/q
+  SHG ef= 320: recall=0.9962, time=0.4167 ms/q
+  SHG ef= 400: recall=0.9970, time=0.4954 ms/q
+  SHG ef= 500: recall=0.9975, time=0.6018 ms/q
+
+--- Loading HNSW from /Users/dhm/Documents/indices/msong_hnsw.idx ---
+  HNSW: loaded, memory=1968.39MB
+  HNSW ef=  20: recall=0.9333, time=0.0473 ms/q
+  HNSW ef=  32: recall=0.9620, time=0.0634 ms/q
+  HNSW ef=  40: recall=0.9750, time=0.0758 ms/q
+  HNSW ef=  50: recall=0.9840, time=0.0934 ms/q
+  HNSW ef=  64: recall=0.9892, time=0.1081 ms/q
+  HNSW ef=  80: recall=0.9930, time=0.1320 ms/q
+  HNSW ef= 100: recall=0.9975, time=0.1499 ms/q
+  HNSW ef= 128: recall=0.9982, time=0.1869 ms/q
+  HNSW ef= 160: recall=0.9988, time=0.2170 ms/q
+  HNSW ef= 200: recall=0.9992, time=0.2629 ms/q
+  HNSW ef= 256: recall=0.9998, time=0.3212 ms/q
+  HNSW ef= 320: recall=0.9998, time=0.3871 ms/q
+  HNSW ef= 400: recall=0.9998, time=0.4707 ms/q
+  HNSW ef= 500: recall=0.9998, time=0.6005 ms/q
+  HNSW ef=  50: recall=0.9840, time=0.0937 ms/q
+  HNSW ef=  64: recall=0.9892, time=0.1097 ms/q
+  HNSW ef=  80: recall=0.9930, time=0.1308 ms/q
+  HNSW ef= 100: recall=0.9975, time=0.1628 ms/q
+  HNSW ef= 128: recall=0.9982, time=0.1896 ms/q
+  HNSW ef= 160: recall=0.9988, time=0.2377 ms/q
+  HNSW ef= 200: recall=0.9992, time=0.2782 ms/q
+  HNSW ef= 256: recall=0.9998, time=0.3413 ms/q
+  HNSW ef= 320: recall=0.9998, time=0.4100 ms/q
+  HNSW ef= 400: recall=0.9998, time=0.5170 ms/q
+  HNSW ef= 500: recall=0.9998, time=0.6398 ms/q
+
+--- Loading Panorama from /Users/dhm/Documents/indices/msong_panorama.idx ---
+  Panorama: loaded, memory=1975.96MB
+  Panorama ef=  20: recall=0.9315, time=0.0504 ms/q
+  Panorama ef=  32: recall=0.9617, time=0.0691 ms/q
+  Panorama ef=  40: recall=0.9745, time=0.0792 ms/q
+  Panorama ef=  50: recall=0.9838, time=0.0946 ms/q
+  Panorama ef=  64: recall=0.9890, time=0.1175 ms/q
+  Panorama ef=  80: recall=0.9930, time=0.1333 ms/q
+  Panorama ef= 100: recall=0.9975, time=0.1643 ms/q
+  Panorama ef= 128: recall=0.9980, time=0.1914 ms/q
+  Panorama ef= 160: recall=0.9985, time=0.2334 ms/q
+  Panorama ef= 200: recall=0.9990, time=0.2773 ms/q
+  Panorama ef= 256: recall=0.9995, time=0.3353 ms/q
+  Panorama ef= 320: recall=0.9995, time=0.4072 ms/q
+  Panorama ef= 400: recall=0.9995, time=0.4956 ms/q
+  Panorama ef= 500: recall=0.9995, time=0.6103 ms/q
+  Panorama ef=  50: recall=0.9838, time=0.1016 ms/q
+  Panorama ef=  64: recall=0.9890, time=0.1163 ms/q
+  Panorama ef=  80: recall=0.9930, time=0.1342 ms/q
+  Panorama ef= 100: recall=0.9975, time=0.1653 ms/q
+  Panorama ef= 128: recall=0.9980, time=0.1980 ms/q
+  Panorama ef= 160: recall=0.9985, time=0.2344 ms/q
+  Panorama ef= 200: recall=0.9990, time=0.2941 ms/q
+  Panorama ef= 256: recall=0.9995, time=0.3526 ms/q
+  Panorama ef= 320: recall=0.9995, time=0.4340 ms/q
+  Panorama ef= 400: recall=0.9995, time=0.5437 ms/q
+  Panorama ef= 500: recall=0.9995, time=0.6672 ms/q
+
+--- Loading IVFFlat from /Users/dhm/Documents/indices/msong_ivfflat.idx ---
+  IVFFlat: loaded, memory=1598.97MB
+  IVFFlat nprobe=   1: recall=0.4407, time=0.0291 ms/q
+  IVFFlat nprobe=   2: recall=0.6415, time=0.0533 ms/q
+  IVFFlat nprobe=   4: recall=0.8145, time=0.1052 ms/q
+  IVFFlat nprobe=   8: recall=0.9340, time=0.2139 ms/q
+  IVFFlat nprobe=  16: recall=0.9832, time=0.4092 ms/q
+  IVFFlat nprobe=  32: recall=0.9968, time=0.8010 ms/q
+  IVFFlat nprobe=  64: recall=0.9985, time=1.5558 ms/q
+  IVFFlat nprobe= 128: recall=1.0000, time=2.9386 ms/q
+  IVFFlat nprobe= 256: recall=1.0000, time=5.4616 ms/q
+  IVFFlat nprobe= 512: recall=1.0000, time=9.6392 ms/q
+  IVFFlat nprobe=   1: recall=0.4407, time=0.0375 ms/q
+  IVFFlat nprobe=   2: recall=0.6415, time=0.0640 ms/q
+  IVFFlat nprobe=   4: recall=0.8145, time=0.1181 ms/q
+  IVFFlat nprobe=   8: recall=0.9340, time=0.2227 ms/q
+  IVFFlat nprobe=  16: recall=0.9832, time=0.4248 ms/q
+  IVFFlat nprobe=  32: recall=0.9968, time=0.8085 ms/q
+  IVFFlat nprobe=  64: recall=0.9985, time=1.5537 ms/q
+  IVFFlat nprobe= 128: recall=1.0000, time=2.9388 ms/q
+  IVFFlat nprobe= 256: recall=1.0000, time=5.4898 ms/q
+  IVFFlat nprobe= 512: recall=1.0000, time=9.6232 ms/q
+
+--- Loading IVFPQ from /Users/dhm/Documents/indices/msong_ivfpq.idx ---
+  IVFPQ: loaded, memory=108.95MB
+  IVFPQ nprobe=   1: recall=0.4040, time=0.0425 ms/q
+  IVFPQ nprobe=   2: recall=0.5493, time=0.0519 ms/q
+  IVFPQ nprobe=   4: recall=0.6480, time=0.0877 ms/q
+  IVFPQ nprobe=   8: recall=0.7035, time=0.1842 ms/q
+  IVFPQ nprobe=  16: recall=0.7183, time=0.3421 ms/q
+  IVFPQ nprobe=  32: recall=0.7198, time=0.6167 ms/q
+  IVFPQ nprobe=  64: recall=0.7200, time=1.2566 ms/q
+  IVFPQ nprobe= 128: recall=0.7205, time=2.6254 ms/q
+  IVFPQ nprobe= 256: recall=0.7205, time=4.8423 ms/q
+  IVFPQ nprobe= 512: recall=0.7205, time=7.7525 ms/q
+  IVFPQ nprobe=   1: recall=0.4368, time=0.0363 ms/q
+  IVFPQ nprobe=   2: recall=0.6320, time=0.0559 ms/q
+  IVFPQ nprobe=   4: recall=0.7927, time=0.1005 ms/q
+  IVFPQ nprobe=   8: recall=0.8978, time=0.1684 ms/q
+  IVFPQ nprobe=  16: recall=0.9360, time=0.3420 ms/q
+  IVFPQ nprobe=  32: recall=0.9440, time=0.6188 ms/q
+  IVFPQ nprobe=  64: recall=0.9447, time=1.2239 ms/q
+  IVFPQ nprobe= 128: recall=0.9460, time=2.1670 ms/q
+  IVFPQ nprobe= 256: recall=0.9460, time=4.1197 ms/q
+  IVFPQ nprobe= 512: recall=0.9460, time=7.2592 ms/q
+
+======================================================================
+BENCHMARK: Construction - msong
+======================================================================
+  SHG: loaded from disk, memory=2494.54MB
+  HNSW: loaded from disk, memory=1968.39MB
+  Panorama: loaded from disk, memory=1975.96MB
+  IVFFlat: loaded from disk, memory=1598.97MB
+  IVFPQ: loaded from disk, memory=108.95MB
+
+======================================================================
+BENCHMARK: Recall vs Time (k=20) - msong
+======================================================================
+
+======================================================================
+BENCHMARK: Recall vs Time (k=50) - msong
+======================================================================
+
+======================================================================
+BENCHMARK: Robustness (unseen queries, k=20) - msong
+======================================================================
+  SHG: mean=0.9930, median=1.0000, min=0.8000, max=1.0000
+  HNSW: mean=0.9962, median=1.0000, min=0.9000, max=1.0000
+  Panorama: mean=0.9962, median=1.0000, min=0.9000, max=1.0000
+  IVFFlat: mean=0.9992, median=1.0000, min=0.9500, max=1.0000
+  IVFPQ: mean=0.7328, median=0.7500, min=0.4000, max=0.9500
+
+Results saved to /Users/dhm/Documents/SuCo/benchs/results/results_msong.json

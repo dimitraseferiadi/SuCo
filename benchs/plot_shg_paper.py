@@ -292,6 +292,54 @@ def plot_ablation(results, output_dir):
     print(f"  Saved fig9_ablation")
 
 
+def plot_shg_vs_hnsw(results, output_dir, k_key, k_val):
+    """Plot recall vs time for SHG and HNSW only, one subplot per dataset."""
+    datasets = [ds for ds in DATASETS_ORDER if ds in results and k_key in results[ds]]
+    if not datasets:
+        return
+
+    n_ds = len(datasets)
+    cols = min(3, n_ds)
+    rows = (n_ds + cols - 1) // cols
+    fig, axes = plt.subplots(rows, cols, figsize=(5 * cols, 4 * rows))
+    if n_ds == 1:
+        axes = np.array([axes])
+    axes = axes.flatten()
+
+    for idx, ds in enumerate(datasets):
+        ax = axes[idx]
+        data = results[ds][k_key]
+
+        for label in ["SHG", "HNSW"]:
+            points = data.get(label, [])
+            if not points:
+                continue
+            recalls = [p["recall"] for p in points]
+            times = [p["ms_per_query"] for p in points]
+            color = INDEX_COLORS.get(label.upper(), "#333")
+            marker = INDEX_MARKERS.get(label.upper(), "o")
+            ax.plot(times, recalls, marker=marker, color=color,
+                    label=label, markersize=6, linewidth=2)
+
+        ax.set_xlabel("Time (ms/query)")
+        ax.set_ylabel(f"Recall@{k_val}")
+        ax.set_title(f"{DATASET_LABELS.get(ds, ds)}")
+        ax.legend(fontsize=9, loc="lower right")
+        ax.set_ylim([0.8, 1.005])
+        ax.grid(True, alpha=0.3)
+
+    for idx in range(n_ds, len(axes)):
+        axes[idx].set_visible(False)
+
+    fig.suptitle(f"SHG vs HNSW — Recall vs Query Time (k={k_val})", fontsize=14)
+    fig.tight_layout()
+    fig_name = f"shg_vs_hnsw_k{k_val}"
+    fig.savefig(os.path.join(output_dir, f"{fig_name}.pdf"), dpi=150)
+    fig.savefig(os.path.join(output_dir, f"{fig_name}.png"), dpi=150)
+    plt.close(fig)
+    print(f"  Saved {fig_name}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Plot SHG paper benchmark results")
     parser.add_argument(
@@ -336,6 +384,12 @@ def main():
 
     print("Plotting ablation study...")
     plot_ablation(results, args.output_dir)
+
+    print("Plotting SHG vs HNSW (k=20)...")
+    plot_shg_vs_hnsw(results, args.output_dir, "recall_k20", 20)
+
+    print("Plotting SHG vs HNSW (k=50)...")
+    plot_shg_vs_hnsw(results, args.output_dir, "recall_k50", 50)
 
     print(f"\nAll plots saved to {args.output_dir}")
 

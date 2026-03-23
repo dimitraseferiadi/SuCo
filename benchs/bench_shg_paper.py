@@ -80,9 +80,15 @@ def read_ivecs(fname):
 
 
 def read_fbin(fname, dtype=np.float32):
-    """Read .fbin file: [n, d] int32 header, then n*d float32."""
+    """Read .fbin file: [n, d] int32 header, then n*d dtype values.
+    For cropped files where the header n exceeds actual data, compute n
+    from the file size."""
     with open(fname, "rb") as f:
         n, d = struct.unpack("ii", f.read(8))
+        file_size = os.path.getsize(fname)
+        actual_n = (file_size - 8) // (d * np.dtype(dtype).itemsize)
+        if actual_n < n:
+            n = actual_n
         data = np.fromfile(f, dtype=dtype, count=n * d).reshape(n, d)
     return data
 
@@ -91,6 +97,10 @@ def read_ibin(fname):
     """Read .bin ground truth: [n, k] int32 header, then n*k int32."""
     with open(fname, "rb") as f:
         n, k = struct.unpack("ii", f.read(8))
+        file_size = os.path.getsize(fname)
+        actual_n = (file_size - 8) // (k * 4)
+        if actual_n < n:
+            n = actual_n
         data = np.fromfile(f, dtype=np.int32, count=n * k).reshape(n, k)
     return data
 
@@ -146,11 +156,27 @@ def load_dataset(name, data_dir):
     name = name.lower()
 
     if name == "openai":
-        xb = read_openai_parquet(data_dir, max_vectors=1_000_000)
-        nq = 10_000
-        xq = xb[-nq:]
-        xb = xb[:-nq]
-        gt = compute_ground_truth(xb, xq, k=100)
+        gt_cache = os.path.join(data_dir, "openai1m", "openai_gt100.npy")
+        xb_cache = os.path.join(data_dir, "openai1m", "openai_xb.npy")
+        xq_cache = os.path.join(data_dir, "openai1m", "openai_xq.npy")
+
+        if os.path.exists(xb_cache) and os.path.exists(xq_cache):
+            xb = np.load(xb_cache)
+            xq = np.load(xq_cache)
+        else:
+            all_vecs = read_openai_parquet(data_dir, max_vectors=1_000_000)
+            nq = 10_000
+            xq = all_vecs[-nq:].copy()
+            xb = all_vecs[:-nq].copy()
+            del all_vecs
+            np.save(xb_cache, xb)
+            np.save(xq_cache, xq)
+
+        if os.path.exists(gt_cache):
+            gt = np.load(gt_cache)
+        else:
+            gt = compute_ground_truth(xb, xq, k=100)
+            np.save(gt_cache, gt)
         return xb, xq, gt
 
     elif name == "enron":
@@ -186,6 +212,9 @@ def load_dataset(name, data_dir):
         xb = read_fbin(os.path.join(p, "base1b.fbin.crop_nb_10000000"))
         xq = read_fbin(os.path.join(p, "testQuery10K.fbin"))
         gt = read_ibin(os.path.join(p, "msturing-gt-10M"))
+        # GT may have more rows than queries; truncate to match
+        if gt.shape[0] > xq.shape[0]:
+            gt = gt[: xq.shape[0]]
         return xb, xq, gt
 
     else:
@@ -193,11 +222,11 @@ def load_dataset(name, data_dir):
 
 
 def compute_ground_truth(xb, xq, k=100):
-    """Compute exact k-NN ground truth using brute force."""
+    """Compute exact k-NN ground truth using brute force.
+    Uses faiss.knn to avoid duplicating xb into an IndexFlatL2."""
     print(f"  Computing ground truth (n={xb.shape[0]}, nq={xq.shape[0]}, k={k})...")
-    index = faiss.IndexFlatL2(xb.shape[1])
-    index.add(xb)
-    _, I = index.search(xq, k)
+    # faiss.knn computes distances directly without copying xb into an index
+    D, I = faiss.knn(xq, xb, k, metric=faiss.METRIC_L2)
     return I
 
 
@@ -260,14 +289,11 @@ def build_index_ivfflat(xb, d):
 def build_index_ivfpq(xb, d):
     n = xb.shape[0]
     nlist = int(np.sqrt(n))
-    # Choose m_pq as a divisor of d
-    m_pq = None
-    for candidate in [d // 8, d // 4, d // 16, d // 2, 8, 16, 32]:
-        if candidate > 0 and d % candidate == 0:
-            m_pq = candidate
-            break
-    if m_pq is None:
-        m_pq = 8
+    # Choose m_pq as a divisor of d (target ~d/8 sub-vectors)
+    target = max(1, d // 8)
+    # Find all divisors of d, pick the one closest to target
+    divisors = [i for i in range(1, d + 1) if d % i == 0]
+    m_pq = min(divisors, key=lambda x: abs(x - target))
     quantizer = faiss.IndexFlatL2(d)
     idx = faiss.IndexIVFPQ(quantizer, d, nlist, m_pq, 8)
     t0 = time.time()
@@ -402,6 +428,8 @@ ALL_BENCHMARKS = ["construction", "recall_k20", "recall_k50", "robustness"]
 
 
 def run_benchmarks(dataset_name, benchmarks, data_dir, index_dir, output_dir):
+    import gc
+
     print(f"\n{'#'*70}")
     print(f"# Dataset: {dataset_name.upper()}")
     print(f"{'#'*70}")
@@ -411,20 +439,25 @@ def run_benchmarks(dataset_name, benchmarks, data_dir, index_dir, output_dir):
     t0 = time.time()
     xb, xq, gt = load_dataset(dataset_name, data_dir)
     print(f"  Loaded in {time.time()-t0:.1f}s: xb={xb.shape}, xq={xq.shape}, gt={gt.shape}")
+
+    # Recompute GT if precomputed IDs reference vectors beyond the base size
+    if gt.max() >= xb.shape[0]:
+        print(f"  GT has IDs up to {gt.max()} but base has only {xb.shape[0]} vectors — recomputing GT...")
+        gt = compute_ground_truth(xb, xq, k=gt.shape[1])
     d = xb.shape[1]
+    n = int(xb.shape[0])
 
     all_results = {
         "dataset": dataset_name,
-        "n": int(xb.shape[0]),
+        "n": n,
         "d": d,
         "nq": int(xq.shape[0]),
     }
 
     # -----------------------------------------------------------------------
-    # Build all indices (kept in memory for search benchmarks)
+    # Process indices ONE AT A TIME to stay within memory limits.
+    # Each index is loaded (or built), benchmarked, then released.
     # -----------------------------------------------------------------------
-    indices = {}  # name -> (index, build_time, mem_mb)
-
     builders = [
         ("SHG",       build_index_shg),
         ("HNSW",      build_index_hnsw),
@@ -433,153 +466,224 @@ def run_benchmarks(dataset_name, benchmarks, data_dir, index_dir, output_dir):
         ("IVFPQ",     build_index_ivfpq),
     ]
 
-    for name, builder in builders:
-        print(f"\n--- Building {name} ---")
-        try:
-            idx, build_time = builder(xb, d)
-            mem = index_size_bytes(idx)
-            mem_mb = mem / (1024 * 1024) if mem > 0 else -1
-            indices[name] = (idx, build_time, mem_mb)
-            print(f"  {name}: time={build_time:.2f}s, memory={mem_mb:.2f}MB")
+    # Prepare robustness queries once (shared across all indices).
+    # Must be done while xb is still in memory (needed for noise generation
+    # and GT computation on first run).
+    unseen_q = None
+    gt_unseen = None
+    if "robustness" in benchmarks:
+        rob_q_cache = os.path.join(index_dir, f"{dataset_name}_robustness_q.npy")
+        rob_gt_cache = os.path.join(index_dir, f"{dataset_name}_robustness_gt.npy")
 
-            # Save index to disk for reuse
-            idx_path = os.path.join(index_dir, f"{dataset_name}_{name.lower()}.idx")
+        if os.path.exists(rob_q_cache) and os.path.exists(rob_gt_cache):
+            unseen_q = np.load(rob_q_cache)
+            gt_unseen = np.load(rob_gt_cache)
+            print(f"  Loaded robustness queries from cache")
+        else:
+            n_unseen = min(1000, xq.shape[0])
+            rng = np.random.RandomState(42)
+            sample_ids = rng.choice(xb.shape[0], size=n_unseen, replace=False)
+            noise_scale = float(np.std(xb)) * 0.1
+            unseen_q = xb[sample_ids].copy() + \
+                rng.randn(n_unseen, d).astype(np.float32) * noise_scale
+            gt_unseen = compute_ground_truth(xb, unseen_q, k=50)
+            np.save(rob_q_cache, unseen_q)
+            np.save(rob_gt_cache, gt_unseen)
+
+    # Check which indices still need building (need xb for those)
+    needs_build = False
+    for name, _ in builders:
+        idx_path = os.path.join(index_dir, f"{dataset_name}_{name.lower()}.idx")
+        if not os.path.exists(idx_path):
+            needs_build = True
+            break
+
+    # Free xb if all indices are already built — saves ~6 GB for OpenAI
+    if not needs_build:
+        print(f"  All indices cached, freeing base vectors ({xb.nbytes / 1e9:.1f} GB)")
+        del xb
+        gc.collect()
+        xb = None
+
+    # Load previous results to carry forward build times for cached indices
+    prev_construction = {}
+    prev_results_path = os.path.join(output_dir, f"results_{dataset_name}.json")
+    if os.path.exists(prev_results_path):
+        try:
+            with open(prev_results_path) as f:
+                prev_construction = json.load(f).get("construction", {})
+        except Exception:
+            pass
+
+    # Result accumulators
+    construction_results = {}
+    rt_k20_results = {}
+    rt_k50_results = {}
+    rob_results = {}
+
+    for name, builder in builders:
+        idx_path = os.path.join(index_dir, f"{dataset_name}_{name.lower()}.idx")
+        idx = None
+        build_time = -1
+        mem_mb = -1
+
+        # Try loading a previously saved index
+        if os.path.exists(idx_path):
+            print(f"\n--- Loading {name} from {idx_path} ---")
             try:
-                faiss.write_index(idx, idx_path)
-                print(f"  Saved to {idx_path}")
+                idx = faiss.read_index(idx_path)
+                mem = index_size_bytes(idx)
+                mem_mb = mem / (1024 * 1024) if mem > 0 else -1
+                print(f"  {name}: loaded, memory={mem_mb:.2f}MB")
             except Exception as e:
-                print(f"  Could not save: {e}")
-        except Exception as e:
-            print(f"  {name}: FAILED - {e}")
-            traceback.print_exc()
-            indices[name] = (None, -1, -1)
+                print(f"  Failed to load, rebuilding: {e}")
+                idx = None
+
+        if idx is None:
+            if xb is None:
+                print(f"  {name}: skipping (cached file corrupt/missing, "
+                      f"re-run to rebuild)")
+                construction_results[name] = {
+                    "build_time_s": -1, "memory_mb": -1}
+                continue
+            print(f"\n--- Building {name} ---")
+            try:
+                idx, build_time = builder(xb, d)
+                mem = index_size_bytes(idx)
+                mem_mb = mem / (1024 * 1024) if mem > 0 else -1
+                print(f"  {name}: time={build_time:.2f}s, memory={mem_mb:.2f}MB")
+
+                # Save index to disk for reuse
+                try:
+                    faiss.write_index(idx, idx_path)
+                    print(f"  Saved to {idx_path}")
+                except Exception as e:
+                    print(f"  Could not save: {e}")
+            except Exception as e:
+                print(f"  {name}: FAILED - {e}")
+                traceback.print_exc()
+
+        if idx is None:
+            construction_results[name] = {
+                "build_time_s": -1, "memory_mb": -1}
+            continue
+
+        # -- Construction stats --
+        # Carry forward build_time from previous run if index was loaded from cache
+        recorded_build_time = round(build_time, 2) if build_time >= 0 else -1
+        if recorded_build_time < 0 and name in prev_construction:
+            prev_bt = prev_construction[name].get("build_time_s", -1)
+            if prev_bt >= 0:
+                recorded_build_time = prev_bt
+        construction_results[name] = {
+            "build_time_s": recorded_build_time,
+            "memory_mb": round(mem_mb, 2) if mem_mb >= 0 else -1,
+        }
+
+        # -- Recall vs time k=20 --
+        if "recall_k20" in benchmarks:
+            k = 20
+            if name == "SHG":
+                rt_k20_results["SHG"] = sweep_shg(
+                    idx, "SHG", xq, gt, k)
+                rt_k20_results["SHG-no-shortcut"] = sweep_shg(
+                    idx, "SHG-no-shortcut", xq, gt, k,
+                    use_sc=False, use_lb=True)
+                rt_k20_results["SHG-no-lb"] = sweep_shg(
+                    idx, "SHG-no-lb", xq, gt, k,
+                    use_sc=True, use_lb=False)
+                rt_k20_results["SHG-no-both"] = sweep_shg(
+                    idx, "SHG-no-both", xq, gt, k,
+                    use_sc=False, use_lb=False)
+            elif name in ("HNSW", "Panorama"):
+                rt_k20_results[name] = sweep_hnsw(idx, name, xq, gt, k)
+            elif name in ("IVFFlat", "IVFPQ"):
+                rt_k20_results[name] = sweep_ivf(idx, name, xq, gt, k)
+
+        # -- Recall vs time k=50 --
+        if "recall_k50" in benchmarks:
+            k = 50
+            if name == "SHG":
+                rt_k50_results["SHG"] = sweep_shg(
+                    idx, "SHG", xq, gt, k)
+            elif name in ("HNSW", "Panorama"):
+                rt_k50_results[name] = sweep_hnsw(idx, name, xq, gt, k)
+            elif name in ("IVFFlat", "IVFPQ"):
+                rt_k50_results[name] = sweep_ivf(idx, name, xq, gt, k)
+
+        # -- Robustness --
+        if "robustness" in benchmarks:
+            k_rob = 20
+            ef_test = max(k_rob * 4, 100)
+            nprobe_test = 64
+            try:
+                if name == "SHG":
+                    D, I, t = search_shg(idx, unseen_q, k_rob, ef_test)
+                elif name in ("HNSW", "Panorama"):
+                    D, I, t = search_hnsw(idx, unseen_q, k_rob, ef_test)
+                elif name in ("IVFFlat", "IVFPQ"):
+                    D, I, t = search_ivf(idx, unseen_q, k_rob, nprobe_test)
+                else:
+                    D, I, t = None, None, None
+
+                if I is not None:
+                    pqr = per_query_recall(I, gt_unseen, k_rob)
+                    rob_results[name] = {
+                        "mean_recall": round(float(pqr.mean()), 4),
+                        "median_recall": round(float(np.median(pqr)), 4),
+                        "min_recall": round(float(pqr.min()), 4),
+                        "max_recall": round(float(pqr.max()), 4),
+                        "q25_recall": round(float(np.percentile(pqr, 25)), 4),
+                        "q75_recall": round(float(np.percentile(pqr, 75)), 4),
+                        "ms_per_query": round(t * 1000 / unseen_q.shape[0], 4),
+                    }
+            except Exception as e:
+                print(f"  {name} robustness: ERROR - {e}")
+                traceback.print_exc()
+
+        # Release index memory before loading the next one
+        del idx
+        gc.collect()
 
     # -----------------------------------------------------------------------
-    # Benchmark 1: Construction
+    # Print summaries
     # -----------------------------------------------------------------------
     if "construction" in benchmarks:
         print(f"\n{'='*70}")
         print(f"BENCHMARK: Construction - {dataset_name}")
         print(f"{'='*70}")
-        construction_results = {}
-        for name, (idx, bt, mem) in indices.items():
-            construction_results[name] = {
-                "build_time_s": round(bt, 2) if bt >= 0 else -1,
-                "memory_mb": round(mem, 2) if mem >= 0 else -1,
-            }
+        for name, stats in construction_results.items():
+            bt = stats["build_time_s"]
+            mem = stats["memory_mb"]
             if bt >= 0:
                 print(f"  {name}: time={bt:.2f}s, memory={mem:.2f}MB")
+            elif mem >= 0:
+                print(f"  {name}: loaded from disk, memory={mem:.2f}MB")
             else:
                 print(f"  {name}: FAILED")
         all_results["construction"] = construction_results
 
-    # -----------------------------------------------------------------------
-    # Benchmark 2: Recall vs time k=20
-    # -----------------------------------------------------------------------
     if "recall_k20" in benchmarks:
-        k = 20
         print(f"\n{'='*70}")
-        print(f"BENCHMARK: Recall vs Time (k={k}) - {dataset_name}")
+        print(f"BENCHMARK: Recall vs Time (k=20) - {dataset_name}")
         print(f"{'='*70}")
+        all_results["recall_k20"] = rt_k20_results
 
-        rt_results = {}
-
-        for name, (idx, _, _) in indices.items():
-            if idx is None:
-                continue
-            if name == "SHG":
-                rt_results["SHG"] = sweep_shg(idx, "SHG", xq, gt, k)
-                # Ablations
-                rt_results["SHG-no-shortcut"] = sweep_shg(
-                    idx, "SHG-no-shortcut", xq, gt, k, use_sc=False, use_lb=True)
-                rt_results["SHG-no-lb"] = sweep_shg(
-                    idx, "SHG-no-lb", xq, gt, k, use_sc=True, use_lb=False)
-                rt_results["SHG-no-both"] = sweep_shg(
-                    idx, "SHG-no-both", xq, gt, k, use_sc=False, use_lb=False)
-            elif name in ("HNSW", "Panorama"):
-                rt_results[name] = sweep_hnsw(idx, name, xq, gt, k)
-            elif name in ("IVFFlat", "IVFPQ"):
-                rt_results[name] = sweep_ivf(idx, name, xq, gt, k)
-
-        all_results["recall_k20"] = rt_results
-
-    # -----------------------------------------------------------------------
-    # Benchmark 3: Recall vs time k=50
-    # -----------------------------------------------------------------------
     if "recall_k50" in benchmarks:
-        k = 50
         print(f"\n{'='*70}")
-        print(f"BENCHMARK: Recall vs Time (k={k}) - {dataset_name}")
+        print(f"BENCHMARK: Recall vs Time (k=50) - {dataset_name}")
         print(f"{'='*70}")
+        all_results["recall_k50"] = rt_k50_results
 
-        rt_results = {}
-
-        for name, (idx, _, _) in indices.items():
-            if idx is None:
-                continue
-            if name == "SHG":
-                rt_results["SHG"] = sweep_shg(idx, "SHG", xq, gt, k)
-            elif name in ("HNSW", "Panorama"):
-                rt_results[name] = sweep_hnsw(idx, name, xq, gt, k)
-            elif name in ("IVFFlat", "IVFPQ"):
-                rt_results[name] = sweep_ivf(idx, name, xq, gt, k)
-
-        all_results["recall_k50"] = rt_results
-
-    # -----------------------------------------------------------------------
-    # Benchmark 4: Robustness with unseen queries
-    # -----------------------------------------------------------------------
     if "robustness" in benchmarks:
-        k = 20
         print(f"\n{'='*70}")
-        print(f"BENCHMARK: Robustness (unseen queries, k={k}) - {dataset_name}")
+        print(f"BENCHMARK: Robustness (unseen queries, k=20) - {dataset_name}")
         print(f"{'='*70}")
-
-        # Generate unseen queries: sample base vectors + gaussian noise
-        n_unseen = min(1000, xq.shape[0])
-        rng = np.random.RandomState(42)
-        sample_ids = rng.choice(xb.shape[0], size=n_unseen, replace=False)
-        noise_scale = float(np.std(xb)) * 0.1
-        unseen_q = xb[sample_ids].copy() + \
-            rng.randn(n_unseen, d).astype(np.float32) * noise_scale
-
-        gt_unseen = compute_ground_truth(xb, unseen_q, k=max(k, 50))
-
-        ef_test = max(k * 4, 100)
-        nprobe_test = 64
-
-        rob_results = {}
-
-        for name, (idx, _, _) in indices.items():
-            if idx is None:
-                continue
-            try:
-                if name == "SHG":
-                    D, I, t = search_shg(idx, unseen_q, k, ef_test)
-                elif name in ("HNSW", "Panorama"):
-                    D, I, t = search_hnsw(idx, unseen_q, k, ef_test)
-                elif name in ("IVFFlat", "IVFPQ"):
-                    D, I, t = search_ivf(idx, unseen_q, k, nprobe_test)
-                else:
-                    continue
-
-                pqr = per_query_recall(I, gt_unseen, k)
-                rob_results[name] = {
-                    "mean_recall": round(float(pqr.mean()), 4),
-                    "median_recall": round(float(np.median(pqr)), 4),
-                    "min_recall": round(float(pqr.min()), 4),
-                    "max_recall": round(float(pqr.max()), 4),
-                    "q25_recall": round(float(np.percentile(pqr, 25)), 4),
-                    "q75_recall": round(float(np.percentile(pqr, 75)), 4),
-                    "ms_per_query": round(t * 1000 / n_unseen, 4),
-                }
-                print(f"  {name}: mean={pqr.mean():.4f}, "
-                      f"median={np.median(pqr):.4f}, "
-                      f"min={pqr.min():.4f}, max={pqr.max():.4f}")
-            except Exception as e:
-                print(f"  {name}: ERROR - {e}")
-                traceback.print_exc()
-
+        for name, stats in rob_results.items():
+            print(f"  {name}: mean={stats['mean_recall']:.4f}, "
+                  f"median={stats['median_recall']:.4f}, "
+                  f"min={stats['min_recall']:.4f}, "
+                  f"max={stats['max_recall']:.4f}")
         all_results["robustness"] = rob_results
 
     # -----------------------------------------------------------------------

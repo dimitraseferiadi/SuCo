@@ -1,0 +1,214 @@
+Data dir:   /Users/dhm/Documents/data
+Index dir:  /Users/dhm/Documents/indices
+Output dir: /Users/dhm/Documents/SuCo/benchs/results
+Datasets:   ['enron']
+Benchmarks: ['construction', 'recall_k20', 'recall_k50', 'robustness']
+
+######################################################################
+# Dataset: ENRON
+######################################################################
+
+Loading dataset enron...
+  Loaded in 0.1s: xb=(94987, 1369), xq=(200, 1369), gt=(200, 20)
+  Loaded robustness queries from cache
+  All indices cached, freeing base vectors (0.5 GB)
+
+--- Loading SHG from /Users/dhm/Documents/indices/enron_shg.idx ---
+  SHG: loaded, memory=697.89MB
+  SHG ef=  20: recall=0.9245, time=0.1067 ms/q
+  SHG ef=  32: recall=0.9575, time=0.1350 ms/q
+  SHG ef=  40: recall=0.9650, time=0.1563 ms/q
+  SHG ef=  50: recall=0.9750, time=0.1833 ms/q
+  SHG ef=  64: recall=0.9810, time=0.2204 ms/q
+  SHG ef=  80: recall=0.9870, time=0.2588 ms/q
+  SHG ef= 100: recall=0.9910, time=0.3018 ms/q
+  SHG ef= 128: recall=0.9938, time=0.3668 ms/q
+  SHG ef= 160: recall=0.9952, time=0.4387 ms/q
+  SHG ef= 200: recall=0.9965, time=0.4904 ms/q
+  SHG ef= 256: recall=0.9975, time=0.5959 ms/q
+  SHG ef= 320: recall=0.9978, time=0.6766 ms/q
+  SHG ef= 400: recall=0.9978, time=0.7744 ms/q
+  SHG ef= 500: recall=0.9988, time=0.8950 ms/q
+  SHG-no-shortcut ef=  20: recall=0.9245, time=0.1028 ms/q
+  SHG-no-shortcut ef=  32: recall=0.9575, time=0.1353 ms/q
+  SHG-no-shortcut ef=  40: recall=0.9650, time=0.1558 ms/q
+  SHG-no-shortcut ef=  50: recall=0.9750, time=0.1835 ms/q
+  SHG-no-shortcut ef=  64: recall=0.9810, time=0.2213 ms/q
+  SHG-no-shortcut ef=  80: recall=0.9870, time=0.2561 ms/q
+  SHG-no-shortcut ef= 100: recall=0.9910, time=0.3121 ms/q
+  SHG-no-shortcut ef= 128: recall=0.9938, time=0.3623 ms/q
+  SHG-no-shortcut ef= 160: recall=0.9952, time=0.4245 ms/q
+  SHG-no-shortcut ef= 200: recall=0.9965, time=0.4922 ms/q
+  SHG-no-shortcut ef= 256: recall=0.9975, time=0.5898 ms/q
+  SHG-no-shortcut ef= 320: recall=0.9978, time=0.6747 ms/q
+  SHG-no-shortcut ef= 400: recall=0.9978, time=0.7951 ms/q
+  SHG-no-shortcut ef= 500: recall=0.9988, time=0.8842 ms/q
+  SHG-no-lb ef=  20: recall=0.9247, time=0.0938 ms/q
+  SHG-no-lb ef=  32: recall=0.9577, time=0.1281 ms/q
+  SHG-no-lb ef=  40: recall=0.9653, time=0.1488 ms/q
+  SHG-no-lb ef=  50: recall=0.9748, time=0.1755 ms/q
+  SHG-no-lb ef=  64: recall=0.9808, time=0.2101 ms/q
+  SHG-no-lb ef=  80: recall=0.9870, time=0.2431 ms/q
+  SHG-no-lb ef= 100: recall=0.9910, time=0.2847 ms/q
+  SHG-no-lb ef= 128: recall=0.9938, time=0.3414 ms/q
+  SHG-no-lb ef= 160: recall=0.9952, time=0.3949 ms/q
+  SHG-no-lb ef= 200: recall=0.9965, time=0.4587 ms/q
+  SHG-no-lb ef= 256: recall=0.9975, time=0.5409 ms/q
+  SHG-no-lb ef= 320: recall=0.9978, time=0.6247 ms/q
+  SHG-no-lb ef= 400: recall=0.9978, time=0.7156 ms/q
+  SHG-no-lb ef= 500: recall=0.9988, time=0.8149 ms/q
+  SHG-no-both ef=  20: recall=0.9247, time=0.0943 ms/q
+  SHG-no-both ef=  32: recall=0.9577, time=0.1280 ms/q
+  SHG-no-both ef=  40: recall=0.9653, time=0.1500 ms/q
+  SHG-no-both ef=  50: recall=0.9748, time=0.1782 ms/q
+  SHG-no-both ef=  64: recall=0.9808, time=0.2125 ms/q
+  SHG-no-both ef=  80: recall=0.9870, time=0.2464 ms/q
+  SHG-no-both ef= 100: recall=0.9910, time=0.2855 ms/q
+  SHG-no-both ef= 128: recall=0.9938, time=0.3402 ms/q
+  SHG-no-both ef= 160: recall=0.9952, time=0.3984 ms/q
+  SHG-no-both ef= 200: recall=0.9965, time=0.4603 ms/q
+  SHG-no-both ef= 256: recall=0.9975, time=0.5432 ms/q
+  SHG-no-both ef= 320: recall=0.9978, time=0.6208 ms/q
+  SHG-no-both ef= 400: recall=0.9978, time=0.7155 ms/q
+  SHG-no-both ef= 500: recall=0.9988, time=0.8198 ms/q
+  SHG ef=  50: recall=0.9750, time=0.1836 ms/q
+  SHG ef=  64: recall=0.9810, time=0.2198 ms/q
+  SHG ef=  80: recall=0.9870, time=0.2585 ms/q
+  SHG ef= 100: recall=0.9910, time=0.3046 ms/q
+  SHG ef= 128: recall=0.9938, time=0.3618 ms/q
+  SHG ef= 160: recall=0.9952, time=0.4238 ms/q
+  SHG ef= 200: recall=0.9965, time=0.4920 ms/q
+  SHG ef= 256: recall=0.9975, time=0.5819 ms/q
+  SHG ef= 320: recall=0.9978, time=0.6708 ms/q
+  SHG ef= 400: recall=0.9978, time=0.7772 ms/q
+  SHG ef= 500: recall=0.9988, time=0.8897 ms/q
+
+--- Loading HNSW from /Users/dhm/Documents/indices/enron_hnsw.idx ---
+  HNSW: loaded, memory=532.30MB
+  HNSW ef=  20: recall=0.9273, time=0.0764 ms/q
+  HNSW ef=  32: recall=0.9550, time=0.1021 ms/q
+  HNSW ef=  40: recall=0.9663, time=0.1189 ms/q
+  HNSW ef=  50: recall=0.9755, time=0.1389 ms/q
+  HNSW ef=  64: recall=0.9815, time=0.1684 ms/q
+  HNSW ef=  80: recall=0.9865, time=0.1951 ms/q
+  HNSW ef= 100: recall=0.9908, time=0.2282 ms/q
+  HNSW ef= 128: recall=0.9945, time=0.2736 ms/q
+  HNSW ef= 160: recall=0.9955, time=0.3177 ms/q
+  HNSW ef= 200: recall=0.9962, time=0.3699 ms/q
+  HNSW ef= 256: recall=0.9972, time=0.4397 ms/q
+  HNSW ef= 320: recall=0.9980, time=0.5090 ms/q
+  HNSW ef= 400: recall=0.9980, time=0.5910 ms/q
+  HNSW ef= 500: recall=0.9982, time=0.6773 ms/q
+  HNSW ef=  50: recall=0.9758, time=0.1392 ms/q
+  HNSW ef=  64: recall=0.9818, time=0.1660 ms/q
+  HNSW ef=  80: recall=0.9868, time=0.1938 ms/q
+  HNSW ef= 100: recall=0.9910, time=0.2296 ms/q
+  HNSW ef= 128: recall=0.9948, time=0.2748 ms/q
+  HNSW ef= 160: recall=0.9958, time=0.3167 ms/q
+  HNSW ef= 200: recall=0.9965, time=0.3674 ms/q
+  HNSW ef= 256: recall=0.9975, time=0.4414 ms/q
+  HNSW ef= 320: recall=0.9982, time=0.5073 ms/q
+  HNSW ef= 400: recall=0.9982, time=0.5887 ms/q
+  HNSW ef= 500: recall=0.9985, time=0.6820 ms/q
+
+--- Loading Panorama from /Users/dhm/Documents/indices/enron_panorama.idx ---
+  Panorama: loaded, memory=533.03MB
+  Panorama ef=  20: recall=0.9273, time=0.0760 ms/q
+  Panorama ef=  32: recall=0.9565, time=0.1018 ms/q
+  Panorama ef=  40: recall=0.9653, time=0.1185 ms/q
+  Panorama ef=  50: recall=0.9748, time=0.1386 ms/q
+  Panorama ef=  64: recall=0.9810, time=0.1657 ms/q
+  Panorama ef=  80: recall=0.9875, time=0.1938 ms/q
+  Panorama ef= 100: recall=0.9910, time=0.2250 ms/q
+  Panorama ef= 128: recall=0.9938, time=0.2730 ms/q
+  Panorama ef= 160: recall=0.9952, time=0.3154 ms/q
+  Panorama ef= 200: recall=0.9962, time=0.3664 ms/q
+  Panorama ef= 256: recall=0.9970, time=0.4406 ms/q
+  Panorama ef= 320: recall=0.9972, time=0.5085 ms/q
+  Panorama ef= 400: recall=0.9972, time=0.5880 ms/q
+  Panorama ef= 500: recall=0.9980, time=0.6805 ms/q
+  Panorama ef=  50: recall=0.9752, time=0.1388 ms/q
+  Panorama ef=  64: recall=0.9815, time=0.1644 ms/q
+  Panorama ef=  80: recall=0.9880, time=0.1931 ms/q
+  Panorama ef= 100: recall=0.9915, time=0.2261 ms/q
+  Panorama ef= 128: recall=0.9942, time=0.2723 ms/q
+  Panorama ef= 160: recall=0.9958, time=0.3159 ms/q
+  Panorama ef= 200: recall=0.9968, time=0.3675 ms/q
+  Panorama ef= 256: recall=0.9975, time=0.4400 ms/q
+  Panorama ef= 320: recall=0.9978, time=0.5062 ms/q
+  Panorama ef= 400: recall=0.9978, time=0.5883 ms/q
+  Panorama ef= 500: recall=0.9985, time=0.6814 ms/q
+
+--- Loading IVFFlat from /Users/dhm/Documents/indices/enron_ivfflat.idx ---
+  IVFFlat: loaded, memory=498.39MB
+  IVFFlat nprobe=   1: recall=0.4535, time=0.0317 ms/q
+  IVFFlat nprobe=   2: recall=0.6358, time=0.0562 ms/q
+  IVFFlat nprobe=   4: recall=0.7825, time=0.1051 ms/q
+  IVFFlat nprobe=   8: recall=0.8905, time=0.2008 ms/q
+  IVFFlat nprobe=  16: recall=0.9577, time=0.3959 ms/q
+  IVFFlat nprobe=  32: recall=0.9855, time=0.7398 ms/q
+  IVFFlat nprobe=  64: recall=0.9975, time=1.3243 ms/q
+  IVFFlat nprobe= 128: recall=1.0000, time=2.2943 ms/q
+  IVFFlat nprobe= 256: recall=1.0000, time=3.9417 ms/q
+  IVFFlat nprobe= 512: recall=1.0000, time=4.3447 ms/q
+  IVFFlat nprobe=   1: recall=0.4535, time=0.0305 ms/q
+  IVFFlat nprobe=   2: recall=0.6358, time=0.0546 ms/q
+  IVFFlat nprobe=   4: recall=0.7825, time=0.1065 ms/q
+  IVFFlat nprobe=   8: recall=0.8905, time=0.2004 ms/q
+  IVFFlat nprobe=  16: recall=0.9577, time=0.4032 ms/q
+  IVFFlat nprobe=  32: recall=0.9855, time=0.7305 ms/q
+  IVFFlat nprobe=  64: recall=0.9975, time=1.3334 ms/q
+  IVFFlat nprobe= 128: recall=1.0000, time=2.2852 ms/q
+  IVFFlat nprobe= 256: recall=1.0000, time=3.9559 ms/q
+  IVFFlat nprobe= 512: recall=1.0000, time=4.3615 ms/q
+
+--- Loading IVFPQ from /Users/dhm/Documents/indices/enron_ivfpq.idx ---
+  IVFPQ: loaded, memory=7.02MB
+  IVFPQ nprobe=   1: recall=0.3232, time=0.0131 ms/q
+  IVFPQ nprobe=   2: recall=0.4090, time=0.0142 ms/q
+  IVFPQ nprobe=   4: recall=0.4612, time=0.0179 ms/q
+  IVFPQ nprobe=   8: recall=0.4823, time=0.0237 ms/q
+  IVFPQ nprobe=  16: recall=0.4930, time=0.0379 ms/q
+  IVFPQ nprobe=  32: recall=0.4968, time=0.0602 ms/q
+  IVFPQ nprobe=  64: recall=0.5002, time=0.1038 ms/q
+  IVFPQ nprobe= 128: recall=0.5005, time=0.1594 ms/q
+  IVFPQ nprobe= 256: recall=0.5005, time=0.2532 ms/q
+  IVFPQ nprobe= 512: recall=0.5005, time=0.2890 ms/q
+  IVFPQ nprobe=   1: recall=0.4042, time=0.0136 ms/q
+  IVFPQ nprobe=   2: recall=0.5417, time=0.0145 ms/q
+  IVFPQ nprobe=   4: recall=0.6298, time=0.0187 ms/q
+  IVFPQ nprobe=   8: recall=0.6773, time=0.0257 ms/q
+  IVFPQ nprobe=  16: recall=0.6967, time=0.0383 ms/q
+  IVFPQ nprobe=  32: recall=0.7017, time=0.0609 ms/q
+  IVFPQ nprobe=  64: recall=0.7073, time=0.1036 ms/q
+  IVFPQ nprobe= 128: recall=0.7075, time=0.1582 ms/q
+  IVFPQ nprobe= 256: recall=0.7075, time=0.2806 ms/q
+  IVFPQ nprobe= 512: recall=0.7075, time=0.2979 ms/q
+
+======================================================================
+BENCHMARK: Construction - enron
+======================================================================
+  SHG: loaded from disk, memory=697.89MB
+  HNSW: loaded from disk, memory=532.30MB
+  Panorama: loaded from disk, memory=533.03MB
+  IVFFlat: loaded from disk, memory=498.39MB
+  IVFPQ: loaded from disk, memory=7.02MB
+
+======================================================================
+BENCHMARK: Recall vs Time (k=20) - enron
+======================================================================
+
+======================================================================
+BENCHMARK: Recall vs Time (k=50) - enron
+======================================================================
+
+======================================================================
+BENCHMARK: Robustness (unseen queries, k=20) - enron
+======================================================================
+  SHG: mean=0.9872, median=1.0000, min=0.8000, max=1.0000
+  HNSW: mean=0.9888, median=1.0000, min=0.8000, max=1.0000
+  Panorama: mean=0.9870, median=1.0000, min=0.8000, max=1.0000
+  IVFFlat: mean=0.9972, median=1.0000, min=0.7000, max=1.0000
+  IVFPQ: mean=0.4698, median=0.4500, min=0.0000, max=0.9500
+
+Results saved to /Users/dhm/Documents/SuCo/benchs/results/results_enron.json
