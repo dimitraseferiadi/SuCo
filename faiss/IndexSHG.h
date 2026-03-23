@@ -130,7 +130,7 @@ struct IndexSHG : IndexHNSWFlat {
 
     // --- compression ---
 
-    /// Compression branching factor (eta in the paper). Original uses 4.
+    /// Compression branching factor. Original SHG-Index uses k_=4.
     int eta = 4;
 
     /// Maximum compression level (computed from d and eta).

@@ -622,6 +622,7 @@ IndexSHG::storage_idx_t IndexSHG::navigate_upper_levels(
                             (uint64_t)cand * (max_level_cache + 1) + cl;
                     auto it = dis_cache.find(key);
                     if (it != dis_cache.end()) {
+                        // Original: pow(k_, l - currLevel + 1)
                         float infer = it->second *
                                 std::pow((float)eta,
                                          (float)(cl - level + 1));
@@ -647,7 +648,7 @@ IndexSHG::storage_idx_t IndexSHG::navigate_upper_levels(
             }
         }
 
-        // Try shortcut
+        // Try shortcut — matches original logic exactly
         if (use_shortcut_flag && shortcut.size() >= 100) {
             int skip = shortcut.predict(curdist);
             int skip_to = level - skip;
@@ -657,7 +658,6 @@ IndexSHG::storage_idx_t IndexSHG::navigate_upper_levels(
             } else {
                 level = (skip_to > 0) ? skip_to : 0;
             }
-            // Original: if(skip_to_level == level) {level--;}
             if (skip_to == level) {
                 level--;
             }
@@ -686,8 +686,7 @@ bool IndexSHG::prune_by_lb(
     const float* c = get_compressed_data(candidate, cl);
 
     float approx_dis = compressed_l2sqr(q, c, cdim);
-    // Scale factor matching original: inferDis = approDis * pow(k_, 3)
-    // where k_=eta=4 and level=2, so pow(4, 3) = 64
+    // Original: inferDis = approDis * pow(k_, 3) with level=2, i.e. pow(k_, cl+1)
     float infer_dis = approx_dis * std::pow((float)eta, (float)(cl + 1));
     return infer_dis > current_bound;
 }
@@ -706,6 +705,7 @@ bool IndexSHG::prune_by_cache(
         uint64_t key = (uint64_t)candidate * (max_level_cache + 1) + cl;
         auto it = dis_cache.find(key);
         if (it != dis_cache.end()) {
+            // Original: pow(k_, l - currLevel + 1)
             float infer = it->second *
                     std::pow((float)eta, (float)(cl - cur_level + 1));
             if (infer > current_bound) return true;
@@ -745,9 +745,10 @@ void IndexSHG::search_base_level(
     results.push({d_ep, entry_point});
     visited.set(entry_point);
 
-    // FAISS improvement: use max(efSearch, k) so users can trade speed for
-    // recall via the standard efSearch knob.  The original paper uses ef=k.
-    int ef = std::max((int)k, (int)hns.efSearch);
+    // Original SHG uses ef=k for base search (not efSearch).
+    // The shortcut + compressed navigation finds a good entry point,
+    // so less exploration is needed at the base level.
+    int ef = (int)k;
     int hops = 0;
 
     // Compression level for LB pruning (original uses level 2)
@@ -771,8 +772,9 @@ void IndexSHG::search_base_level(
             storage_idx_t u = hns.neighbors[nb];
             if (u < 0) break;
 
-            if (visited.get(u)) continue;
-            visited.set(u);
+            // Original order: pruning checks BEFORE visited check.
+            // This allows pruning unvisited nodes without computing
+            // their full distance.
 
             // Cache-based pruning (pruneDisCompute at base level)
             if (use_lb_pruning &&
@@ -782,7 +784,9 @@ void IndexSHG::search_base_level(
                 continue;
             }
 
-            // LB pruning after initial hops (hops > 20)
+            // LB pruning after initial hops (hops > 20).
+            // Original uses break: if one neighbor fails the LB test,
+            // skip all remaining neighbors of this candidate.
             if (use_lb_pruning && hops > 20 &&
                     results.size() >= (size_t)ef &&
                     lb_comp_level > 0) {
@@ -791,9 +795,12 @@ void IndexSHG::search_base_level(
                             lb_comp_level,
                             query_rep,
                             u)) {
-                    continue;
+                    break;
                 }
             }
+
+            if (visited.get(u)) continue;
+            visited.set(u);
 
             float d_u = (*qdis)(u);
 
