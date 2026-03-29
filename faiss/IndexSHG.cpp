@@ -18,12 +18,12 @@
  * so a node with levels[i]==3 exists at HNSW levels 0, 1, 2.
  *
  * Compression: The compression hierarchy is INDEPENDENT of the HNSW graph
- * levels. maxFixLevel_ compression levels are computed from (d, eta=4) by
+ * levels. maxFixLevel_ compression levels are computed from (d, eta=2) by
  * repeatedly dividing: level l has dim ceil(d/eta^l), stopping when
  * dim/eta < eta.  HNSW level l uses compression level min(l, maxFixLevel_).
  *
- * This matches the original code where k_=4 and maxFixLevel_ is computed as:
- *   while(dim/k_ >= k_) { maxFixLevel_++; dim = ceil(dim/k_); }
+ * Paper (Section 3.1) uses eta=2.  maxFixLevel_ is computed as:
+ *   while(dim/eta >= eta) { maxFixLevel_++; dim = ceil(dim/eta); }
  *
  * Shortcut (Section 4.2):
  *   For each node o in the graph, at each HNSW level x >= 2:
@@ -34,6 +34,14 @@
  *
  * Lower-bound pruning (Theorem 1):
  *   If dis_compressed * eta^(level_diff) > current best, prune the candidate.
+ *
+ * FAISS optimizations used:
+ *   - Forked greedy_update_nearest() with inline compressed distances + caching
+ *   - Forked search_from_candidates() with MinimaxHeap, batch-4 distances,
+ *     and integrated SHG pruning (cross-level LB + on-the-fly compressed)
+ *   - HeapBlockResultHandler for result collection
+ *   - Single OMP region following hnsw_search() pattern
+ *   - fvec_L2sqr for all distance computations
  */
 
 #include <faiss/IndexSHG.h>
@@ -43,6 +51,7 @@
 #include <faiss/impl/DistanceComputer.h>
 #include <faiss/impl/FaissAssert.h>
 #include <faiss/impl/HNSW.h>
+#include <faiss/impl/ResultHandler.h>
 #include <faiss/impl/VisitedTable.h>
 #include <faiss/utils/distances.h>
 
@@ -61,40 +70,515 @@
 namespace faiss {
 
 // ---------------------------------------------------------------------------
+// SHGDistanceComputer — level-aware DistanceComputer for construction
+// ---------------------------------------------------------------------------
+//
+// At upper HNSW levels (> 0), distances are computed using the compressed
+// vector representations stored in IndexSHG::compressed_vecs.
+// At level 0, distances delegate to the exact DistanceComputer.
+// This matches Algorithm 2 line 7 from the SHG paper.
+
+namespace {
+
+struct SHGDistanceComputer : DistanceComputer {
+    const IndexSHG& shg;
+    std::unique_ptr<DistanceComputer> exact_dis;
+    std::vector<float> query_rep; // compressed query (levels 1..maxFixLevel_)
+    int current_level = 0;
+
+    SHGDistanceComputer(const IndexSHG& shg_, DistanceComputer* exact)
+            : shg(shg_),
+              exact_dis(exact),
+              query_rep(shg_.data_rep_size_, 0.0f) {}
+
+    void set_query(const float* x) override {
+        exact_dis->set_query(x);
+        if (shg.maxFixLevel_ <= 0) return;
+
+        // Build compressed query representation
+        std::vector<float> full_rep;
+        full_rep.reserve(shg.data_rep_size_ + shg.d);
+        full_rep.insert(full_rep.end(), x, x + shg.d);
+
+        int prev_pos = 0;
+        for (int cl = 1; cl <= shg.maxFixLevel_; ++cl) {
+            int prev_size = shg.dim_at_level[cl - 1];
+            for (int i = 0; i < prev_size; i += shg.eta) {
+                float sum = 0.0f;
+                int end = std::min(i + shg.eta, prev_size);
+                for (int j = i; j < end; ++j)
+                    sum += full_rep[prev_pos + j];
+                full_rep.push_back(sum / (float)(end - i));
+            }
+            prev_pos += prev_size;
+        }
+        std::copy(full_rep.begin() + shg.d, full_rep.end(), query_rep.begin());
+    }
+
+    float operator()(idx_t i) override {
+        if (current_level <= 0 || shg.maxFixLevel_ <= 0) {
+            return (*exact_dis)(i);
+        }
+        return shg.get_dis_by_level_q(query_rep, i, current_level);
+    }
+
+    // Phase 4: Optimized batch-4 for compressed distances
+    void distances_batch_4(
+            const idx_t i0,
+            const idx_t i1,
+            const idx_t i2,
+            const idx_t i3,
+            float& d0,
+            float& d1,
+            float& d2,
+            float& d3) override {
+        if (current_level <= 0 || shg.maxFixLevel_ <= 0) {
+            exact_dis->distances_batch_4(i0, i1, i2, i3, d0, d1, d2, d3);
+            return;
+        }
+        // Inline compressed distance computation — avoids 4 virtual dispatches
+        int cl = std::min(current_level, shg.maxFixLevel_);
+        int cdim = shg.dim_at_level[cl];
+        const float* q = query_rep.data() + shg.offset_at_level[cl];
+        d0 = fvec_L2sqr(q, shg.get_compressed_data(i0, cl), (size_t)cdim);
+        d1 = fvec_L2sqr(q, shg.get_compressed_data(i1, cl), (size_t)cdim);
+        d2 = fvec_L2sqr(q, shg.get_compressed_data(i2, cl), (size_t)cdim);
+        d3 = fvec_L2sqr(q, shg.get_compressed_data(i3, cl), (size_t)cdim);
+    }
+
+    float symmetric_dis(idx_t i, idx_t j) override {
+        if (current_level <= 0 || shg.maxFixLevel_ <= 0) {
+            return exact_dis->symmetric_dis(i, j);
+        }
+        return shg.get_dis_by_level(i, j, current_level);
+    }
+};
+
+// ---------------------------------------------------------------------------
+// greedy_update_nearest_shg — forked from FAISS greedy_update_nearest()
+// ---------------------------------------------------------------------------
+// FAISS's greedy_update_nearest (HNSW.cpp:1100-1173) with batch-4 pattern,
+// modified to:
+//   1. Compute compressed distances inline (no DistanceComputer indirection)
+//   2. Cache every computed distance into DisCache for cross-level LB pruning
+
+static void greedy_update_nearest_shg(
+        const HNSW& hnsw,
+        const IndexSHG& shg,
+        const std::vector<float>& query_rep,
+        int level,
+        HNSW::storage_idx_t& nearest,
+        float& d_nearest) {
+    int cl = std::min(level, shg.maxFixLevel_);
+    int cdim = shg.dim_at_level[cl];
+    const float* q_comp = query_rep.data() + shg.offset_at_level[cl];
+
+    for (;;) {
+        HNSW::storage_idx_t prev_nearest = nearest;
+
+        size_t begin, end;
+        hnsw.neighbor_range(nearest, level, &begin, &end);
+
+        // Batch-4 pattern (from FAISS greedy_update_nearest)
+        int n_buffered = 0;
+        HNSW::storage_idx_t buffered_ids[4];
+
+        for (size_t j = begin; j < end; j++) {
+            HNSW::storage_idx_t v = hnsw.neighbors[j];
+            if (v < 0) break;
+
+            buffered_ids[n_buffered++] = v;
+
+            if (n_buffered == 4) {
+                // Inline compressed distance for 4 nodes
+                for (int b = 0; b < 4; b++) {
+                    const float* c =
+                            shg.get_compressed_data(buffered_ids[b], cl);
+                    float dis = fvec_L2sqr(q_comp, c, (size_t)cdim);
+                    if (dis < d_nearest) {
+                        nearest = buffered_ids[b];
+                        d_nearest = dis;
+                    }
+                }
+                n_buffered = 0;
+            }
+        }
+
+        // Process leftovers
+        for (int b = 0; b < n_buffered; b++) {
+            const float* c = shg.get_compressed_data(buffered_ids[b], cl);
+            float dis = fvec_L2sqr(q_comp, c, (size_t)cdim);
+            if (dis < d_nearest) {
+                nearest = buffered_ids[b];
+                d_nearest = dis;
+            }
+        }
+
+        if (nearest == prev_nearest) {
+            return;
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// search_from_candidates_shg — forked from FAISS search_from_candidates()
+// ---------------------------------------------------------------------------
+// FAISS's search_from_candidates (HNSW.cpp:618-752) with MinimaxHeap,
+// batch-4 exact distances, and ResultHandler, modified to add:
+//   1. FAISS-compatible stopping: count_below(d0) >= efSearch, plus
+//      nstep > efSearch fallback — matches HNSW.cpp:657-739
+//   2. Single-loop with inline batch-4 (no intermediate survivors vector)
+//   3. Compressed LB pruning (Algorithm 3, line 14): compute compressed
+//      distance at level L (most compressed = cheapest), scale by eta^L
+//      for squared L2, skip candidate if lower bound > dis_k
+//   4. Prefetch pass for visited table (matches FAISS HNSW.cpp:673-682)
+
+static void search_from_candidates_shg(
+        const HNSW& hnsw,
+        const IndexSHG& shg,
+        DistanceComputer& qdis,
+        ResultHandler& res,
+        HNSW::MinimaxHeap& candidates,
+        VisitedTable& vt,
+        const std::vector<float>& query_rep,
+        bool use_lb_pruning,
+        bool do_dis_check,
+        int efSearch) {
+    using storage_idx_t = HNSW::storage_idx_t;
+
+    float threshold = res.threshold;
+
+    // Pre-compute compressed query pointer for LB pruning (Algorithm 3 line 14)
+    // Uses level maxFixLevel_ (most compressed = smallest dimension = cheapest)
+    // Scaling: eta^(L/2) where L = maxFixLevel_ (from Theorem 1)
+    const float* q_lb = nullptr;
+    int lb_cdim = 0;
+    float lb_scale = 1.0f;
+    int L = shg.maxFixLevel_;
+    if (use_lb_pruning && L > 0) {
+        q_lb = query_rep.data() + shg.offset_at_level[L];
+        lb_cdim = shg.dim_at_level[L];
+        // Theorem 1 bound is for Euclidean distance: dis_0 >= dis_L * eta^(L/2).
+        // FAISS uses squared L2 throughout, so squaring both sides:
+        //   dis_0^2 >= dis_L^2 * eta^L
+        // The scale for squared distances is eta^L, not eta^(L/2).
+        lb_scale = std::pow((float)shg.eta, (float)L);
+    }
+
+    // Add initial candidates to results (from FAISS search_from_candidates)
+    for (int i = 0; i < candidates.size(); i++) {
+        idx_t v1 = candidates.ids[i];
+        float dd = candidates.dis[i];
+        FAISS_ASSERT(v1 >= 0);
+        if (dd < threshold) {
+            if (res.add_result(dd, v1)) {
+                threshold = res.threshold;
+            }
+        }
+        vt.set(v1);
+    }
+
+    int nstep = 0;
+
+    while (candidates.size() > 0) {
+        float d0;
+        int v0 = candidates.pop_min(&d0);
+
+        // FAISS-compatible stopping condition (HNSW.cpp:657-666):
+        // When check_relative_distance is true, stop when enough
+        // candidates in the heap are better than the current minimum.
+        if (do_dis_check) {
+            int n_dis_below = candidates.count_below(d0);
+            if (n_dis_below >= efSearch) {
+                break;
+            }
+        }
+
+        size_t begin, end;
+        hnsw.neighbor_range(v0, 0, &begin, &end);
+
+        // Prefetch pass for visited table (matches FAISS HNSW.cpp:673-682)
+        size_t jmax = begin;
+        for (size_t j = begin; j < end; j++) {
+            int v1 = hnsw.neighbors[j];
+            if (v1 < 0) break;
+            vt.prefetch(v1);
+            jmax += 1;
+        }
+
+        threshold = res.threshold;
+
+        // Single-loop with inline batch-4 and LB pruning
+        // (merged from FAISS's single-loop pattern + SHG LB filter)
+        int n_buffered = 0;
+        storage_idx_t buffered_ids[4];
+
+        auto add_to_heap = [&](const size_t idx, const float dis) {
+            if (dis < threshold) {
+                if (res.add_result(dis, idx)) {
+                    threshold = res.threshold;
+                }
+            }
+            candidates.push(idx, dis);
+        };
+
+        for (size_t j = begin; j < jmax; j++) {
+            storage_idx_t cand = hnsw.neighbors[j];
+
+            // Visited check (matches FAISS pattern)
+            if (!vt.set(cand)) continue;
+
+            // Algorithm 3 line 14 — compressed LB pruning:
+            // lowerbound = eta^L * dis_L^2  (squared L2 form of Theorem 1)
+            // If lowerbound > dis_k, skip this candidate
+            if (q_lb != nullptr) {
+                const float* c = shg.get_compressed_data(cand, L);
+                float approx = fvec_L2sqr(q_lb, c, (size_t)lb_cdim);
+                float lowerbound = approx * lb_scale;
+                if (lowerbound > threshold) {
+                    continue;
+                }
+            }
+
+            buffered_ids[n_buffered++] = cand;
+
+            if (n_buffered == 4) {
+                float dis[4];
+                qdis.distances_batch_4(
+                        buffered_ids[0],
+                        buffered_ids[1],
+                        buffered_ids[2],
+                        buffered_ids[3],
+                        dis[0],
+                        dis[1],
+                        dis[2],
+                        dis[3]);
+                for (int b = 0; b < 4; b++) {
+                    add_to_heap(buffered_ids[b], dis[b]);
+                }
+                n_buffered = 0;
+            }
+        }
+
+        // Process remaining buffered candidates
+        for (int b = 0; b < n_buffered; b++) {
+            float dis = qdis(buffered_ids[b]);
+            add_to_heap(buffered_ids[b], dis);
+        }
+
+        nstep++;
+        if (!do_dis_check && nstep > efSearch) {
+            break;
+        }
+    }
+}
+
+} // anonymous namespace
+
+// ---------------------------------------------------------------------------
 // ShortcutMap serialization
 // ---------------------------------------------------------------------------
 
 void ShortcutMap::write(FILE* f) const {
     int n = (int)entries.size();
     fwrite(&n, sizeof(int), 1, f);
-    for (const auto& kv : entries) {
-        fwrite(&kv.first, sizeof(float), 1, f);
-        fwrite(&kv.second, sizeof(int), 1, f);
+    for (auto& [dist, skip] : entries) {
+        fwrite(&dist, sizeof(float), 1, f);
+        fwrite(&skip, sizeof(int), 1, f);
     }
 }
 
 void ShortcutMap::read(FILE* f) {
-    int n = 0;
-    [[maybe_unused]] size_t r;
-    r = fread(&n, sizeof(int), 1, f);
     entries.clear();
+    int n;
+    size_t ret = fread(&n, sizeof(int), 1, f);
+    FAISS_THROW_IF_NOT(ret == 1);
     for (int i = 0; i < n; ++i) {
         float dist;
         int skip;
-        r = fread(&dist, sizeof(float), 1, f);
-        r = fread(&skip, sizeof(int), 1, f);
+        ret = fread(&dist, sizeof(float), 1, f);
+        FAISS_THROW_IF_NOT(ret == 1);
+        ret = fread(&skip, sizeof(int), 1, f);
+        FAISS_THROW_IF_NOT(ret == 1);
         entries[dist] = skip;
     }
 }
 
 // ---------------------------------------------------------------------------
-// IndexSHG constructor
+// Constructor
 // ---------------------------------------------------------------------------
 
 IndexSHG::IndexSHG(int d, int M, MetricType metric)
         : IndexHNSWFlat(d, M, metric) {
     if (d > 0) {
         compute_compression_params();
+    }
+}
+
+// ---------------------------------------------------------------------------
+// add — Algorithm 2: build HNSW graph with compressed upper-level distances
+// ---------------------------------------------------------------------------
+
+void IndexSHG::add(idx_t n, const float* x) {
+    FAISS_THROW_IF_NOT_MSG(
+            storage,
+            "IndexSHG requires flat storage");
+    FAISS_THROW_IF_NOT(is_trained);
+
+    if (dim_at_level.empty() && d > 0) {
+        compute_compression_params();
+    }
+
+    idx_t n0 = ntotal;
+
+    // Step 1: store raw vectors
+    storage->add(n, x);
+    ntotal = storage->ntotal;
+
+    // Step 2: grow compressed storage and compress all new vectors
+    if (maxFixLevel_ > 0 && data_rep_size_ > 0) {
+        compressed_vecs.resize((size_t)ntotal * data_rep_size_, 0.0f);
+        for (idx_t i = n0; i < ntotal; ++i) {
+            compress_node(i);
+        }
+    }
+
+    // Step 3: build HNSW graph with compressed distances at upper levels
+    // This mirrors hnsw_add_vertices() from IndexHNSW.cpp but uses
+    // SHGDistanceComputer which switches to compressed distances at
+    // levels > 0 (Algorithm 2 line 7).
+
+    size_t ntot = n0 + n;
+    HNSW& hns = hnsw;
+
+    int max_level = hns.prepare_level_tab(n, hns.levels.size() == ntot);
+
+    if (verbose) {
+        printf("IndexSHG::add: adding %" PRId64
+               " elements on top of %" PRId64 " (maxFixLevel_=%d)\n",
+               n, n0, maxFixLevel_);
+    }
+
+    if (n == 0) return;
+
+    // Locks for concurrent graph modification
+    std::vector<omp_lock_t> locks(ntot);
+    for (size_t i = 0; i < ntot; ++i) {
+        omp_init_lock(&locks[i]);
+    }
+
+    // Build histogram and sort by level (highest first)
+    std::vector<int> hist;
+    std::vector<int> order(n);
+    {
+        for (idx_t i = 0; i < n; ++i) {
+            storage_idx_t pt_id = i + n0;
+            int pt_level = hns.levels[pt_id] - 1;
+            while (pt_level >= (int)hist.size()) {
+                hist.push_back(0);
+            }
+            hist[pt_level]++;
+        }
+        std::vector<int> offsets(hist.size() + 1, 0);
+        for (int i = 0; i < (int)hist.size() - 1; ++i) {
+            offsets[i + 1] = offsets[i] + hist[i];
+        }
+        for (idx_t i = 0; i < n; ++i) {
+            storage_idx_t pt_id = i + n0;
+            int pt_level = hns.levels[pt_id] - 1;
+            order[offsets[pt_level]++] = pt_id;
+        }
+    }
+
+    // Process level by level, highest first
+    {
+        RandomGenerator rng2(789);
+        int i1 = n;
+
+        for (int pt_level = (int)hist.size() - 1; pt_level >= 0; --pt_level) {
+            int i0 = i1 - hist[pt_level];
+
+            if (verbose) {
+                printf("  Adding %d elements at level %d\n", i1 - i0, pt_level);
+            }
+
+            // Random permutation within this level
+            for (int j = i0; j < i1; ++j) {
+                std::swap(order[j], order[j + rng2.rand_int(i1 - j)]);
+            }
+
+#pragma omp parallel if (i1 > i0 + 100)
+            {
+                VisitedTable vt(ntot, hns.use_visited_hashset);
+                // Create level-aware distance computer
+                SHGDistanceComputer dis(
+                        *this, storage->get_distance_computer());
+
+#pragma omp for schedule(static)
+                for (int i = i0; i < i1; ++i) {
+                    storage_idx_t pt_id = order[i];
+                    dis.set_query(x + (pt_id - n0) * d);
+
+                    // --- add_with_locks logic, with level-aware distances ---
+
+                    storage_idx_t nearest;
+#pragma omp critical
+                    {
+                        nearest = hns.entry_point;
+                        if (nearest == -1) {
+                            hns.max_level = pt_level;
+                            hns.entry_point = pt_id;
+                        }
+                    }
+
+                    if (nearest < 0) continue;
+
+                    omp_set_lock(&locks[pt_id]);
+
+                    int level = hns.max_level;
+                    float d_nearest;
+
+                    // Phase 1: navigate upper levels to find entry point
+                    for (; level > pt_level; --level) {
+                        dis.current_level = level;
+                        d_nearest = dis(nearest);
+                        greedy_update_nearest(
+                                hns, dis, level, nearest, d_nearest);
+                    }
+
+                    // Phase 2: insert links at all levels pt_level..0
+                    for (; level >= 0; --level) {
+                        dis.current_level = level;
+                        d_nearest = dis(nearest);
+                        hns.add_links_starting_from(
+                                dis,
+                                pt_id,
+                                nearest,
+                                d_nearest,
+                                level,
+                                locks.data(),
+                                vt,
+                                keep_max_size_level0 && (level == 0));
+                    }
+
+                    omp_unset_lock(&locks[pt_id]);
+
+                    if (pt_level > hns.max_level) {
+                        hns.max_level = pt_level;
+                        hns.entry_point = pt_id;
+                    }
+                }
+            }
+            i1 = i0;
+        }
+    }
+
+    for (size_t i = 0; i < ntot; ++i) {
+        omp_destroy_lock(&locks[i]);
+    }
+
+    if (verbose) {
+        printf("IndexSHG::add: done\n");
     }
 }
 
@@ -213,6 +697,18 @@ const float* IndexSHG::get_compressed_data(
 }
 
 // ---------------------------------------------------------------------------
+// compressed_dis_at_level - shared distance for two compressed data pointers
+// ---------------------------------------------------------------------------
+
+float IndexSHG::compressed_dis_at_level(
+        const float* a_data,
+        const float* b_data,
+        int hnsw_level) const {
+    int cl = std::min(hnsw_level, maxFixLevel_);
+    return compressed_l2sqr(a_data, b_data, dim_at_level[cl]);
+}
+
+// ---------------------------------------------------------------------------
 // get_dis_by_level - squared L2 between two nodes at HNSW level
 // ---------------------------------------------------------------------------
 
@@ -221,25 +717,16 @@ float IndexSHG::get_dis_by_level(
         idx_t id2,
         int hnsw_level) const {
     if (hnsw_level == 0) {
-        // Direct pointer access to flat storage (avoids reconstruct copy).
         const auto* flat = dynamic_cast<const IndexFlat*>(storage);
         const float* v1 = flat->get_xb() + (size_t)id1 * d;
         const float* v2 = flat->get_xb() + (size_t)id2 * d;
         return fvec_L2sqr(v1, v2, (size_t)d);
     }
-    if (hnsw_level >= maxFixLevel_) {
-        // Original: at maxFixLevel_ and above, only compare the first
-        // element of the maxFixLevel_ compressed representation.
-        const float* a = get_compressed_data(id1, maxFixLevel_);
-        const float* b = get_compressed_data(id2, maxFixLevel_);
-        float t = a[0] - b[0];
-        return t * t;
-    }
-    int cl = hnsw_level;
-    int cdim = dim_at_level[cl];
-    const float* a = get_compressed_data(id1, cl);
-    const float* b = get_compressed_data(id2, cl);
-    return compressed_l2sqr(a, b, cdim);
+    int cl = std::min(hnsw_level, maxFixLevel_);
+    return compressed_dis_at_level(
+            get_compressed_data(id1, cl),
+            get_compressed_data(id2, cl),
+            hnsw_level);
 }
 
 // ---------------------------------------------------------------------------
@@ -254,18 +741,10 @@ float IndexSHG::get_dis_by_level_q(
             hnsw_level > 0,
             "get_dis_by_level_q: level 0 requires full query vector, "
             "use DistanceComputer instead");
-    if (hnsw_level >= maxFixLevel_) {
-        // Original: at maxFixLevel_ and above, only compare first element
-        const float* q = query_rep.data() + offset_at_level[maxFixLevel_];
-        const float* n = get_compressed_data(node_id, maxFixLevel_);
-        float t = q[0] - n[0];
-        return t * t;
-    }
-    int cl = hnsw_level;
-    int cdim = dim_at_level[cl];
+    int cl = std::min(hnsw_level, maxFixLevel_);
     const float* q = query_rep.data() + offset_at_level[cl];
-    const float* n = get_compressed_data(node_id, cl);
-    return compressed_l2sqr(q, n, cdim);
+    return compressed_dis_at_level(
+            q, get_compressed_data(node_id, cl), hnsw_level);
 }
 
 // ---------------------------------------------------------------------------
@@ -284,9 +763,6 @@ void IndexSHG::build_all_compressed() {
 // ---------------------------------------------------------------------------
 
 void IndexSHG::compress_node(idx_t node_id) {
-    // Match original addDataPoint compression:
-    // Build progressive mean aggregation from level 0 data through
-    // all compression levels.
     std::vector<float> full_rep;
     full_rep.reserve(data_rep_size_ + d);
 
@@ -333,11 +809,6 @@ std::pair<float, idx_t> IndexSHG::get_nearest_by_level(
         int hnsw_level) const {
     const HNSW& hns = hnsw;
 
-    // Match original: searchBaseLayer(curData, data_point, label, level)
-    // The original does a beam search at the given HNSW level using
-    // ef_construction_ as beam width, computing level-0 (full) distances.
-    // Then keeps top-2 and returns the best.
-
     using NodeDist = std::pair<float, idx_t>;
 
     std::priority_queue<NodeDist, std::vector<NodeDist>> top_candidates;
@@ -346,14 +817,7 @@ std::pair<float, idx_t> IndexSHG::get_nearest_by_level(
 
     VisitedTable visited(ntotal);
 
-    // Start from the node itself as entry point
     float dist_ep = get_dis_by_level(node_id, node_id, 0); // 0 distance
-    // Actually the original passes ep_id=curData, which is the same as the
-    // query node. So initial distance is 0. We need to start the beam
-    // search from this node's neighbours.
-    // However the original's searchBaseLayer starts from ep_id which gets
-    // distance to itself (0), and then explores from there.
-
     top_candidates.push({dist_ep, node_id});
     candidateSet.push({dist_ep, node_id});
     float lowerBound = dist_ep;
@@ -380,8 +844,9 @@ std::pair<float, idx_t> IndexSHG::get_nearest_by_level(
             if (visited.get(cand)) continue;
             visited.set(cand);
 
-            // Level-0 (full) distance, matching original
-            float dist1 = get_dis_by_level(node_id, cand, 0);
+            // Compressed distance at hnsw_level — matches paper's intent of
+            // finding the NN using the same distance metric as traversal
+            float dist1 = get_dis_by_level(node_id, cand, hnsw_level);
 
             if ((int)top_candidates.size() < ef_c ||
                     lowerBound > dist1) {
@@ -421,7 +886,7 @@ void IndexSHG::build_shortcuts_density() {
     // Count vectors per HNSW level
     std::vector<int> levelCounts(max_l + 1, 0);
     for (idx_t i = 0; i < ntotal; ++i) {
-        int node_levels = hns.levels[i]; // number of levels this node is on
+        int node_levels = hns.levels[i];
         for (int l = 0; l < node_levels && l <= max_l; ++l) {
             levelCounts[l]++;
         }
@@ -436,91 +901,76 @@ void IndexSHG::build_shortcuts_density() {
             density_skipLevels(cmp);
 
     for (idx_t i = 0; i < ntotal; ++i) {
-        int point_level = hns.levels[i] - 1; // highest HNSW level for this node
+        int point_level = hns.levels[i] - 1;
+        if (point_level < 2) continue;
 
-        int cur_level = point_level;
-        while (cur_level > 1) {
-            int skipLevel = 1;
-            int skip_to_level = cur_level - 2;
+        // Algorithm 2 line 11: search NN at each level ONCE and cache.
+        // Avoids O(L^2) beam searches per node — reduces to O(L).
+        // nn_cache[l] = {squared_distance_to_NN, NN_node_id} at HNSW level l.
+        std::vector<std::pair<float, idx_t>> nn_cache(point_level + 1);
+        for (int l = 0; l <= point_level; ++l) {
+            nn_cache[l] = get_nearest_by_level(i, l);
+        }
 
-            // Find nearest graph neighbour at current level
-            auto nearest_result = get_nearest_by_level(i, cur_level);
-            float disx_nn_dist = nearest_result.first;
-            idx_t nearest = nearest_result.second;
-            if (nearest < 0 || disx_nn_dist < 0) {
-                cur_level--;
-                continue;
-            }
+        for (int cur_level = point_level; cur_level > 1; cur_level--) {
+            float disx = nn_cache[cur_level].first;
+            idx_t nearest = nn_cache[cur_level].second;
+            if (nearest < 0 || disx < 0) continue;
 
-            // Distance at current compressed level
-            float disx = get_dis_by_level(i, nearest, cur_level);
+            // Algorithm 2 lines 13-18: iterate y from bottom (0) upward
+            // to cur_level-1. The FIRST y satisfying Lemma 2 gives the
+            // maximum skip h = cur_level - y. This matches the paper's
+            // bottom-up search: try the most aggressive skip first.
+            int best_skip = 0;
+            for (int y = 0; y < cur_level; ++y) {
+                float disy = nn_cache[y].first;
+                idx_t nearest_y = nn_cache[y].second;
+                if (nearest_y < 0 || disy < 0) continue;
 
-            // Check density condition for lower levels
-            while (skip_to_level >= 0) {
-                auto skip_result = get_nearest_by_level(i, skip_to_level);
-                float disy_nn_dist = skip_result.first;
-                idx_t nearest_y = skip_result.second;
-                if (nearest_y < 0 || disy_nn_dist < 0) {
-                    break;
-                }
+                int d_x = dim_at_level[std::min(cur_level, maxFixLevel_)];
+                int d_y = dim_at_level[std::min(y, maxFixLevel_)];
 
-                float disy = get_dis_by_level(i, nearest_y, skip_to_level);
-
-                // Cross-level distance check (original condition 1):
-                // distance between node i and its NN from cur_level,
-                // computed at skip_to_level
-                float dis_cross = get_dis_by_level(i, nearest, skip_to_level);
-
-                int d_x = get_dim_at_level(cur_level);
-                int d_y = get_dim_at_level(skip_to_level);
-
-                // Density-based condition matching original buildShortcuts:
                 float n_x = (float)levelCounts[cur_level];
-                float n_y = (float)levelCounts[skip_to_level];
+                float n_y = (float)levelCounts[y];
 
-                bool can_skip = false;
+                // Lemma 2, Eq. (15) — computed entirely in log-space to
+                // avoid overflow/underflow with high-dimensional exponents.
+                //
+                // Paper (Euclidean): disx^{d_x} <= (n_y/n_x)*(V_dy/V_dx)*disy^{d_y}
+                // Our distances are squared L2, so Euclidean = sqrt(sqr):
+                //   sqr_x^{d_x/2} <= (n_y/n_x)*(V_dy/V_dx)*sqr_y^{d_y/2}
+                //
+                // In log-space:
+                //   (d_x/2)*log(sqr_x) <= log(n_y/n_x) + log(V_dy/V_dx) + (d_y/2)*log(sqr_y)
+                //
+                // V_d = pi^{d/2} / Gamma(d/2+1), so:
+                //   log(V_dy/V_dx) = (d_y-d_x)/2*log(pi) + lgamma(d_x/2+1) - lgamma(d_y/2+1)
+                float log_lhs =
+                        ((float)d_x / 2.0f) *
+                        std::log(std::max(disx, 1e-30f));
+                float log_n_ratio =
+                        std::log(std::max(n_y, 1.0f)) -
+                        std::log(std::max(n_x, 1.0f));
+                float log_vol_ratio =
+                        ((float)(d_y - d_x) / 2.0f) *
+                                std::log((float)M_PI) +
+                        std::lgamma((float)d_x / 2.0f + 1.0f) -
+                        std::lgamma((float)d_y / 2.0f + 1.0f);
+                float log_rhs =
+                        log_n_ratio + log_vol_ratio +
+                        ((float)d_y / 2.0f) *
+                                std::log(std::max(disy, 1e-30f));
 
-                // Condition 1: cross-level distance is small enough
-                if (dis_cross <= disy * 2.0f) {
-                    can_skip = true;
-                } else {
-                    // Condition 2: complex formula from original
-                    float c1 = std::pow(n_x / std::max(n_y, 1.0f), 2.0f);
-                    float c2_1 = std::pow(
-                            (float)M_PI,
-                            2.0f / std::pow((float)eta, (float)d_x));
-                    float c2 = std::pow(
-                            c2_1 / (float)eta,
-                            (float)d_x *
-                                    (float)(cur_level - skip_to_level));
-                    float c3 = 1.0f;
-                    for (int val = d_x; val <= d_y + 1; ++val) {
-                        // Original uses integer division: 1/value
-                        // This gives 0 for val >= 2, making c3 = 0
-                        c3 = c3 * (float)(1 / val);
-                    }
-                    if (std::pow(disx, (float)d_x) <=
-                            c1 * c2 * c3 *
-                                    std::pow(disy, (float)d_y)) {
-                        can_skip = true;
-                    }
+                if (log_lhs <= log_rhs) {
+                    // Lemma 2 satisfied: can skip from cur_level to y+1.
+                    best_skip = cur_level - y;
+                    break; // first y from bottom gives max skip
                 }
-
-                if (can_skip) {
-                    skipLevel++;
-                } else {
-                    break;
-                }
-
-                skip_to_level--;
             }
 
-            if (skipLevel > 1 ||
-                    density_skipLevels.size() < (size_t)hns.efSearch) {
-                density_skipLevels.push({-disx, skipLevel});
+            if (best_skip > 0) {
+                density_skipLevels.push({-disx, best_skip});
             }
-
-            cur_level--;
         }
     }
 
@@ -557,13 +1007,19 @@ void IndexSHG::build_shortcut() {
         printf("\n");
     }
 
-    // Step 1: build compressed vectors for all nodes
-    if (verbose) {
-        printf("IndexSHG::build_shortcut: building compressed vectors for "
-               "%" PRId64 " vectors ...\n",
+    // Step 1: build compressed vectors (skip if already built during add())
+    if (compressed_vecs.empty()) {
+        if (verbose) {
+            printf("IndexSHG::build_shortcut: building compressed vectors for "
+                   "%" PRId64 " vectors ...\n",
+                   ntotal);
+        }
+        build_all_compressed();
+    } else if (verbose) {
+        printf("IndexSHG::build_shortcut: compressed vectors already built "
+               "(%" PRId64 " vectors)\n",
                ntotal);
     }
-    build_all_compressed();
 
     // Step 2: build shortcuts using density criterion
     if (verbose) {
@@ -578,91 +1034,94 @@ void IndexSHG::build_shortcut() {
 }
 
 // ---------------------------------------------------------------------------
-// navigate_upper_levels
+// build_compressed_query_rep
 // ---------------------------------------------------------------------------
+
+void IndexSHG::build_compressed_query_rep(
+        const float* query,
+        std::vector<float>& full_rep,
+        std::vector<float>& query_rep) const {
+    full_rep.clear();
+    full_rep.insert(full_rep.end(), query, query + d);
+
+    int prev_pos = 0;
+    for (int lev = 1; lev <= maxFixLevel_; ++lev) {
+        int prev_dim = dim_at_level[lev - 1];
+        for (int j = 0; j < prev_dim; j += eta) {
+            int end = std::min(j + eta, prev_dim);
+            float sum = 0.0f;
+            for (int jj = j; jj < end; ++jj)
+                sum += full_rep[prev_pos + jj];
+            full_rep.push_back(sum / (float)(end - j));
+        }
+        prev_pos += prev_dim;
+    }
+    std::copy(full_rep.begin() + d, full_rep.end(), query_rep.begin());
+}
+
+// ---------------------------------------------------------------------------
+// navigate_upper_levels — uses forked greedy_update_nearest_shg
+// ---------------------------------------------------------------------------
+// Algorithm 3: Navigate upper levels with optional shortcut-based skipping.
+// At each visited level, performs greedy 1-NN search using compressed
+// distances (via greedy_update_nearest_shg which uses FAISS batch-4 pattern
+// with inline compressed distance computation and caching).
 
 IndexSHG::storage_idx_t IndexSHG::navigate_upper_levels(
         const std::vector<float>& query_rep,
-        bool use_shortcut_flag,
-        dis_cache_t& dis_cache,
-        int max_level_cache) const {
+        bool use_shortcut_flag) const {
     const HNSW& hns = hnsw;
     int max_l = hns.max_level;
 
-    if (max_l == 0) {
+    if (max_l == 0 || maxFixLevel_ == 0) {
         return (storage_idx_t)hns.entry_point;
     }
 
     storage_idx_t currObj = (storage_idx_t)hns.entry_point;
+    int level = max_l;
 
-    for (int level = max_l; level > 0;) {
-        // Compute compressed distance at this level
-        float curdist = get_dis_by_level_q(query_rep, currObj, level);
-        // Cache it
-        uint64_t cache_key_curr =
-                (uint64_t)currObj * (max_level_cache + 1) + level;
-        dis_cache[cache_key_curr] = curdist;
+    // Compute initial compressed distance at top level
+    int cl = std::min(level, maxFixLevel_);
+    const float* q_comp = query_rep.data() + offset_at_level[cl];
+    const float* c_data = get_compressed_data(currObj, cl);
+    float curdist = fvec_L2sqr(q_comp, c_data, (size_t)dim_at_level[cl]);
 
-        // Greedy search at this level
-        bool changed = true;
-        while (changed) {
-            changed = false;
-            size_t nb_begin, nb_end;
-            hns.neighbor_range(currObj, level, &nb_begin, &nb_end);
-
-            for (size_t nb = nb_begin; nb < nb_end; ++nb) {
-                storage_idx_t cand = hns.neighbors[nb];
-                if (cand < 0) break;
-
-                // Upper-level pruning (pruneDisCompute):
-                // Check if any cached distance at a higher level can prune
-                bool pruned = false;
-                for (int cl = max_l; cl > level; --cl) {
-                    uint64_t key =
-                            (uint64_t)cand * (max_level_cache + 1) + cl;
-                    auto it = dis_cache.find(key);
-                    if (it != dis_cache.end()) {
-                        // Original: pow(k_, l - currLevel + 1)
-                        float infer = it->second *
-                                std::pow((float)eta,
-                                         (float)(cl - level + 1));
-                        if (infer > curdist) {
-                            pruned = true;
-                            break;
-                        }
-                    }
-                }
-                if (pruned) continue;
-
-                float d_cand = get_dis_by_level_q(query_rep, cand, level);
-                // Cache the distance
-                uint64_t cache_key_cand =
-                        (uint64_t)cand * (max_level_cache + 1) + level;
-                dis_cache[cache_key_cand] = d_cand;
-
-                if (d_cand < curdist) {
-                    curdist = d_cand;
-                    currObj = cand;
-                    changed = true;
-                }
-            }
-        }
-
-        // Try shortcut — matches original logic exactly
-        if (use_shortcut_flag && shortcut.size() >= 100) {
+    // Algorithm 3, lines 3-7: shortcut loop.
+    // Paper condition: "while l − f(dis̃) ≥ 1 do".
+    // If f(dis) >= l (new_level < 1), exit without searching level 1 — the
+    // current entry point goes directly to base-level search.
+    if (use_shortcut_flag && shortcut.is_trained()) {
+        while (level > 0) {
             int skip = shortcut.predict(curdist);
-            int skip_to = level - skip;
+            int new_level = level - skip;
+            if (new_level < 1) break;        // skip past base: exit per Alg. 3
+            if (new_level >= level) new_level = level - 1;
+            level = new_level;
 
-            if (skip_to == level - 1) {
-                level--;
-            } else {
-                level = (skip_to > 0) ? skip_to : 0;
-            }
-            if (skip_to == level) {
-                level--;
-            }
-        } else {
-            level--;
+            // Compute compressed distance at new level
+            cl = std::min(level, maxFixLevel_);
+            q_comp = query_rep.data() + offset_at_level[cl];
+            c_data = get_compressed_data(currObj, cl);
+            curdist = fvec_L2sqr(
+                    q_comp, c_data, (size_t)dim_at_level[cl]);
+
+            // Greedy 1-NN search at this level (FAISS batch-4 pattern)
+            greedy_update_nearest_shg(
+                    hns, *this, query_rep, level, currObj, curdist);
+
+            if (level <= 1) break;
+        }
+    } else {
+        // Standard HNSW upper-level greedy descent (no shortcut)
+        for (; level > 0; --level) {
+            cl = std::min(level, maxFixLevel_);
+            q_comp = query_rep.data() + offset_at_level[cl];
+            c_data = get_compressed_data(currObj, cl);
+            curdist = fvec_L2sqr(
+                    q_comp, c_data, (size_t)dim_at_level[cl]);
+
+            greedy_update_nearest_shg(
+                    hns, *this, query_rep, level, currObj, curdist);
         }
     }
 
@@ -670,233 +1129,15 @@ IndexSHG::storage_idx_t IndexSHG::navigate_upper_levels(
 }
 
 // ---------------------------------------------------------------------------
-// prune_by_lb - lower-bound pruning using upper-level compressed distances
+// search — unified single-OMP loop (following FAISS hnsw_search pattern)
 // ---------------------------------------------------------------------------
-
-bool IndexSHG::prune_by_lb(
-        float current_bound,
-        int comp_level,
-        const std::vector<float>& query_rep,
-        idx_t candidate) const {
-    if (comp_level <= 0 || maxFixLevel_ <= 0) return false;
-
-    int cl = std::min(comp_level, maxFixLevel_);
-    int cdim = dim_at_level[cl];
-    const float* q = query_rep.data() + offset_at_level[cl];
-    const float* c = get_compressed_data(candidate, cl);
-
-    float approx_dis = compressed_l2sqr(q, c, cdim);
-    // Original: inferDis = approDis * pow(k_, 3) with level=2, i.e. pow(k_, cl+1)
-    float infer_dis = approx_dis * std::pow((float)eta, (float)(cl + 1));
-    return infer_dis > current_bound;
-}
-
-// ---------------------------------------------------------------------------
-// prune_by_cache - pruning based on cached higher-level distances
-// ---------------------------------------------------------------------------
-
-bool IndexSHG::prune_by_cache(
-        float current_bound,
-        int cur_level,
-        idx_t candidate,
-        const dis_cache_t& dis_cache,
-        int max_level_cache) const {
-    for (int cl = max_level_cache; cl > cur_level; --cl) {
-        uint64_t key = (uint64_t)candidate * (max_level_cache + 1) + cl;
-        auto it = dis_cache.find(key);
-        if (it != dis_cache.end()) {
-            // Original: pow(k_, l - currLevel + 1)
-            float infer = it->second *
-                    std::pow((float)eta, (float)(cl - cur_level + 1));
-            if (infer > current_bound) return true;
-        }
-    }
-    return false;
-}
-
-// ---------------------------------------------------------------------------
-// search_base_level
-// ---------------------------------------------------------------------------
-
-void IndexSHG::search_base_level(
-        const float* query,
-        idx_t k,
-        storage_idx_t entry_point,
-        float* out_distances,
-        idx_t* out_labels,
-        const std::vector<float>& query_rep,
-        bool use_lb_pruning,
-        dis_cache_t& dis_cache,
-        int max_level_cache) const {
-    const HNSW& hns = hnsw;
-
-    std::unique_ptr<DistanceComputer> qdis(get_distance_computer());
-    qdis->set_query(query);
-
-    using NodeDist = std::pair<float, storage_idx_t>;
-    std::priority_queue<NodeDist, std::vector<NodeDist>, std::greater<NodeDist>>
-            candidates; // min-heap
-    std::priority_queue<NodeDist> results; // max-heap
-
-    VisitedTable visited(ntotal);
-
-    float d_ep = (*qdis)(entry_point);
-    candidates.push({d_ep, entry_point});
-    results.push({d_ep, entry_point});
-    visited.set(entry_point);
-
-    // Original SHG uses ef=k for base search (not efSearch).
-    // The shortcut + compressed navigation finds a good entry point,
-    // so less exploration is needed at the base level.
-    int ef = (int)k;
-    int hops = 0;
-
-    // Compression level for LB pruning (original uses level 2)
-    int lb_comp_level = std::min(2, maxFixLevel_);
-
-    while (!candidates.empty()) {
-        float d_cand = candidates.top().first;
-        storage_idx_t cand = candidates.top().second;
-
-        // Original: candidate_dist > lowerBound (bare_bone_search path)
-        if (d_cand > results.top().first) {
-            break;
-        }
-        candidates.pop();
-        hops++;
-
-        size_t nb_begin, nb_end;
-        hns.neighbor_range(cand, 0, &nb_begin, &nb_end);
-
-        for (size_t nb = nb_begin; nb < nb_end; ++nb) {
-            storage_idx_t u = hns.neighbors[nb];
-            if (u < 0) break;
-
-            // Original order: pruning checks BEFORE visited check.
-            // This allows pruning unvisited nodes without computing
-            // their full distance.
-
-            // Cache-based pruning (pruneDisCompute at base level)
-            if (use_lb_pruning &&
-                    prune_by_cache(
-                            results.top().first,
-                            0, u, dis_cache, max_level_cache)) {
-                continue;
-            }
-
-            // LB pruning after initial hops (hops > 20).
-            // Original uses break: if one neighbor fails the LB test,
-            // skip all remaining neighbors of this candidate.
-            if (use_lb_pruning && hops > 20 &&
-                    results.size() >= (size_t)ef &&
-                    lb_comp_level > 0) {
-                if (prune_by_lb(
-                            results.top().first,
-                            lb_comp_level,
-                            query_rep,
-                            u)) {
-                    break;
-                }
-            }
-
-            if (visited.get(u)) continue;
-            visited.set(u);
-
-            float d_u = (*qdis)(u);
-
-            if (results.size() < (size_t)ef || d_u < results.top().first) {
-                candidates.push({d_u, u});
-                results.push({d_u, u});
-                if ((int)results.size() > ef) {
-                    results.pop();
-                }
-            }
-        }
-    }
-
-    // Trim to k best
-    while ((int)results.size() > k) {
-        results.pop();
-    }
-
-    int n_res = (int)results.size();
-    for (int i = n_res - 1; i >= 0; --i) {
-        out_distances[i] = results.top().first;
-        out_labels[i] = (idx_t)results.top().second;
-        results.pop();
-    }
-    for (int i = n_res; i < (int)k; ++i) {
-        out_distances[i] = std::numeric_limits<float>::max();
-        out_labels[i] = -1;
-    }
-}
-
-// ---------------------------------------------------------------------------
-// search_one
-// ---------------------------------------------------------------------------
-
-void IndexSHG::search_one(
-        const float* query,
-        idx_t k,
-        float* distances,
-        idx_t* labels,
-        bool use_shortcut_flag,
-        bool use_lb_pruning) const {
-    const HNSW& hns = hnsw;
-    int max_l = hns.max_level;
-
-    // Build compressed query representation for all levels
-    std::vector<float> query_rep(data_rep_size_, 0.0f);
-
-    // Same compression as compress_node, but for the query vector
-    std::vector<float> full_rep;
-    full_rep.reserve(data_rep_size_ + d);
-
-    for (int i = 0; i < d; ++i) {
-        full_rep.push_back(query[i]);
-    }
-
-    int previous_level_pos = 0;
-    for (int cur_lev = 1; cur_lev <= maxFixLevel_; ++cur_lev) {
-        int previous_level_size = dim_at_level[cur_lev - 1];
-
-        for (int i = 0; i < previous_level_size; i += eta) {
-            float sum = 0.0f;
-            if (i + eta > previous_level_size) {
-                for (int j = i; j < previous_level_size; ++j)
-                    sum += full_rep[previous_level_pos + j];
-                full_rep.push_back(sum / (float)(previous_level_size - i));
-            } else {
-                for (int j = i; j < i + eta; ++j)
-                    sum += full_rep[previous_level_pos + j];
-                full_rep.push_back(sum / (float)eta);
-            }
-        }
-
-        previous_level_pos += previous_level_size;
-    }
-
-    // Copy compressed levels (skip level-0 data)
-    std::copy(full_rep.begin() + d, full_rep.end(), query_rep.begin());
-
-    // Sparse distance cache: only stores entries for nodes actually visited.
-    // The original uses a dense O(ntotal) array, but upper-level navigation
-    // visits O(log n) nodes, so a hash map is far more memory-efficient.
-    dis_cache_t dis_cache;
-
-    // Navigate upper levels
-    storage_idx_t ep = navigate_upper_levels(
-            query_rep, use_shortcut_flag, dis_cache, max_l);
-
-    // Base-level search
-    search_base_level(
-            query, k, ep, distances, labels, query_rep, use_lb_pruning,
-            dis_cache, max_l);
-}
-
-// ---------------------------------------------------------------------------
-// search (batch entry point)
-// ---------------------------------------------------------------------------
+// Combines upper-level navigation (Phase 1) and base-level search (Phase 2)
+// into a single per-query OMP loop. Uses:
+//   - HeapBlockResultHandler for result collection
+//   - Per-thread DisCache (reused across queries via epoch invalidation)
+//   - Per-thread query_rep and scratch buffers
+//   - greedy_update_nearest_shg for upper levels
+//   - search_from_candidates_shg for base level (MinimaxHeap + batch-4)
 
 void IndexSHG::search(
         idx_t n,
@@ -907,41 +1148,94 @@ void IndexSHG::search(
         const SearchParameters* params) const {
     FAISS_THROW_IF_NOT_MSG(
             ntotal > 0, "IndexSHG: search called on empty index");
+    FAISS_THROW_IF_NOT(k > 0);
+
+    // When d < eta^2, no compression levels exist — fall back to HNSW.
+    if (maxFixLevel_ == 0) {
+        IndexHNSWFlat::search(n, x, k, distances, labels, params);
+        return;
+    }
+
     FAISS_THROW_IF_NOT_MSG(
             !compressed_vecs.empty() || hnsw.max_level == 0,
             "IndexSHG: build_shortcut() must be called before search()");
 
     bool use_shortcut_flag = true;
-    bool use_lb = true;
+    bool use_lb_flag = true;
+    bool do_dis_check = true; // FAISS check_relative_distance default
+
+    int efSearch = (int)k; // default: efSearch = k
+    int ef = (int)k;
 
     if (params != nullptr) {
         const auto* sp = dynamic_cast<const SearchParametersSHG*>(params);
         if (sp != nullptr) {
             use_shortcut_flag = sp->use_shortcut;
-            use_lb = sp->use_lb_pruning;
-        }
-        const auto* hsp = dynamic_cast<const SearchParametersHNSW*>(params);
-        if (hsp != nullptr) {
-            const_cast<HNSW&>(hnsw).efSearch = hsp->efSearch;
+            use_lb_flag = sp->use_lb_pruning;
+            do_dis_check = sp->check_relative_distance;
+            if (sp->efSearch > (int)k) {
+                efSearch = sp->efSearch;
+                ef = sp->efSearch;
+            }
         }
     }
 
     if (!shortcut.is_trained()) {
         use_shortcut_flag = false;
     }
-    if (compressed_vecs.empty() || dim_at_level.empty()) {
-        use_lb = false;
-    }
 
-#pragma omp parallel for schedule(dynamic)
-    for (idx_t i = 0; i < n; ++i) {
-        search_one(
-                x + (size_t)i * d,
-                k,
-                distances + (size_t)i * k,
-                labels + (size_t)i * k,
-                use_shortcut_flag,
-                use_lb);
+    int max_l = hnsw.max_level;
+
+    // HeapBlockResultHandler manages k-nearest results with threshold
+    // tracking (following FAISS IndexHNSW::search pattern)
+    using RH = HeapBlockResultHandler<HNSW::C>;
+    RH bres(n, distances, labels, k);
+
+#pragma omp parallel
+    {
+        // Per-thread result handler
+        RH::SingleResultHandler res(bres);
+
+        // Per-thread visited table
+        VisitedTable vt(ntotal, hnsw.use_visited_hashset);
+
+        // Per-thread exact distance computer (for base-level search)
+        std::unique_ptr<DistanceComputer> qdis(get_distance_computer());
+
+        // Per-thread compressed query representation
+        std::vector<float> query_rep(data_rep_size_);
+        std::vector<float> full_rep;
+        full_rep.reserve(data_rep_size_ + d);
+
+#pragma omp for schedule(dynamic)
+        for (idx_t i = 0; i < n; ++i) {
+            res.begin(i);
+            const float* query = x + (size_t)i * d;
+            qdis->set_query(query);
+
+            // Build compressed query representation
+            build_compressed_query_rep(query, full_rep, query_rep);
+
+            // Phase 1: Upper navigation with shortcuts (Algorithm 3, lines 1-7)
+            // Uses greedy_update_nearest_shg with compressed distances
+            storage_idx_t ep = navigate_upper_levels(
+                    query_rep, use_shortcut_flag);
+
+            // Compute exact distance to entry point for base search
+            float ep_dist = (*qdis)(ep);
+
+            // Phase 2: Base-level search with LB pruning (Algorithm 3, lines 8-19)
+            // ef = max(k, efSearch) to allow recall-time tradeoff sweep.
+            HNSW::MinimaxHeap candidates(ef);
+            candidates.push(ep, ep_dist);
+
+            search_from_candidates_shg(
+                    hnsw, *this, *qdis, res, candidates, vt,
+                    query_rep, use_lb_flag, do_dis_check, efSearch);
+
+            res.end();
+            vt.advance();
+        }
     }
 }
 

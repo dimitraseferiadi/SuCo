@@ -6,11 +6,12 @@ Comprehensive benchmark suite reproducing experiments from:
   "Accelerating Approximate Nearest Neighbor Search in Hierarchical Graphs:
    Efficient Level Navigation with Shortcuts" (PVLDB 18(10), 2025)
 
-Benchmarks:
-  1. Construction time & memory cost
-  2. Recall vs time (k=20, k=50)
-  3. Ablation: SHG with/without shortcuts, with/without LB pruning
-  4. Robustness with unseen query vectors
+Benchmarks (matching paper methodology):
+  1. Construction time & memory cost (Fig 4)
+  2. Recall-time curves k=20 (Fig 5) - per-query binning by recall
+  3. Recall-time curves k=50 (Fig 6) - per-query binning by recall
+  4. Robustness with unseen query vectors (Fig 8)
+  5. Ablation: SHG vs HNSW vs SHG variants (Fig 9)
 
 Indices tested:
   - IndexSHG (SHG implementation)
@@ -318,105 +319,175 @@ def index_size_bytes(idx):
 
 
 def compute_recall_at_k(I, gt, k):
-    """Recall@k: |A ∩ A*| / k, averaged over queries."""
+    """Recall@k: |A ∩ A*| / k, averaged over queries.
+    FAISS returns -1 for unfilled slots; exclude them from both sets."""
     nq = I.shape[0]
     k_gt = min(k, gt.shape[1])
     k_ret = min(k, I.shape[1])
     hits = 0
     for i in range(nq):
-        hits += len(set(gt[i, :k_gt].tolist()) & set(I[i, :k_ret].tolist()))
-    return hits / (nq * k_gt)
+        gt_set  = set(gt[i, :k_gt].tolist()) - {-1}
+        ret_set = set(I[i,  :k_ret].tolist()) - {-1}
+        hits += len(gt_set & ret_set)
+    return hits / (nq * k_gt) if k_gt > 0 else 0.0
 
 
 def per_query_recall(I, gt, k):
-    """Per-query recall array."""
+    """Per-query recall array.
+    FAISS returns -1 for unfilled slots; exclude them from both sets."""
     nq = I.shape[0]
     k_gt = min(k, gt.shape[1])
     k_ret = min(k, I.shape[1])
     recalls = np.zeros(nq)
     for i in range(nq):
-        recalls[i] = len(set(gt[i, :k_gt].tolist()) & set(I[i, :k_ret].tolist())) / k_gt
+        gt_set  = set(gt[i, :k_gt].tolist()) - {-1}
+        ret_set = set(I[i,  :k_ret].tolist()) - {-1}
+        recalls[i] = len(gt_set & ret_set) / k_gt if k_gt > 0 else 0.0
     return recalls
 
 
-def search_hnsw(idx, xq, k, efSearch):
-    sp = faiss.SearchParametersHNSW()
-    sp.efSearch = efSearch
-    t0 = time.time()
-    D, I = idx.search(xq, k, params=sp)
-    return D, I, time.time() - t0
-
-
-def search_shg(idx, xq, k, efSearch, use_shortcut=True, use_lb=True):
+def search_shg(idx, xq, k, use_shortcut=True, use_lb=True, efSearch=None):
+    """Search SHG index with optional efSearch override.
+    Defaults to max(k, 100) so robustness queries get a fair operating point."""
     sp = faiss.SearchParametersSHG()
-    sp.efSearch = efSearch
     sp.use_shortcut = use_shortcut
     sp.use_lb_pruning = use_lb
+    sp.efSearch = efSearch if efSearch is not None else max(k, 100)
     t0 = time.time()
     D, I = idx.search(xq, k, params=sp)
     return D, I, time.time() - t0
 
 
-def search_ivf(idx, xq, k, nprobe):
-    idx.nprobe = nprobe
-    t0 = time.time()
-    D, I = idx.search(xq, k)
-    return D, I, time.time() - t0
-
-
 # ---------------------------------------------------------------------------
-# Sweep helpers
+# Recall-time curve (paper methodology, Section 5.3)
 # ---------------------------------------------------------------------------
+#
+# The paper plots recall-time curves by sweeping the search parameter
+# (efSearch for HNSW/SHG, nprobe for IVF).  Each parameter value produces
+# one operating point (mean_recall, mean_time_ms).  The points are sorted by
+# recall to form the curve shown in Figures 5, 6, and 9.
+#
+# The paper additionally notes that "the query set is divided into equally
+# sized subsets ordered by recall values" — this describes per-query binning
+# *within* a single operating point for presentation; the curve itself comes
+# from the parameter sweep.
+#
+# All timing is single-threaded to match the paper's setup.
 
-EF_VALUES = [10, 16, 20, 32, 40, 50, 64, 80, 100, 128, 160, 200, 256, 320, 400, 500]
+# Parameter grids -------------------------------------------------------
+# efSearch values covering low-recall to high-recall range for HNSW / SHG.
+EF_SEARCH_VALUES = [
+    10, 15, 20, 30, 40, 60, 80, 100, 150,
+    200, 300, 400, 600, 800, 1000, 1500, 2000,
+]
+# nprobe values for IVF-family indices.
 NPROBE_VALUES = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512]
 
 
-def sweep_hnsw(idx, label, xq, gt, k):
-    """Sweep efSearch for HNSW-type index, return list of {efSearch, recall, ms_per_query}."""
+def recall_time_curve(idx, label, xq, gt, k, search_factory, param_values,
+                      n_warmup=3):
+    """
+    Sweep search parameters to build a recall-time curve.
+
+    Parameters
+    ----------
+    search_factory : callable
+        ``search_factory(param) -> fn`` where
+        ``fn(idx, xq_single_row, k) -> (D, I)``.
+    param_values : list
+        efSearch (or nprobe) values to sweep.  Each value yields one point.
+
+    Returns
+    -------
+    list of dicts  {param, recall, ms_per_query}  sorted by ascending recall.
+    """
+    nq = xq.shape[0]
+    k_gt = min(k, gt.shape[1])
+
+    prev_threads = faiss.omp_get_max_threads()
+    faiss.omp_set_num_threads(1)
+
     results = []
-    for ef in EF_VALUES:
-        if ef < k:
-            continue
-        try:
-            D, I, t = search_hnsw(idx, xq, k, ef)
-            r = compute_recall_at_k(I, gt, k)
-            ms = t * 1000 / xq.shape[0]
-            results.append({"efSearch": ef, "recall": round(r, 6), "ms_per_query": round(ms, 6)})
-            print(f"  {label} ef={ef:4d}: recall={r:.4f}, time={ms:.4f} ms/q")
-        except Exception as e:
-            print(f"  {label} ef={ef}: ERROR - {e}")
+
+    for param in param_values:
+        search_fn = search_factory(param)
+
+        # Warmup — amortise JIT / cache effects before timing.
+        for _ in range(n_warmup):
+            search_fn(idx, xq[:1], k)
+
+        # Batch timing: time the entire search over all queries at once,
+        # eliminating per-query Python overhead.
+        t0 = time.perf_counter()
+        D, I = search_fn(idx, xq, k)
+        total_time = time.perf_counter() - t0
+
+        # Compute recall per query from batch results.
+        per_query_recalls = np.zeros(nq)
+        for i in range(nq):
+            ret_ids = set(I[i].tolist()) - {-1}
+            gt_ids  = set(gt[i, :k_gt].tolist()) - {-1}
+            per_query_recalls[i] = (
+                len(gt_ids & ret_ids) / k_gt if k_gt > 0 else 0.0
+            )
+
+        mean_recall  = float(per_query_recalls.mean())
+        mean_time_ms = (total_time / nq) * 1000.0
+
+        results.append({
+            "param":        int(param),
+            "recall":       round(mean_recall,  6),
+            "ms_per_query": round(mean_time_ms, 6),
+        })
+        print(f"  {label} (ef/nprobe={param}): "
+              f"recall={mean_recall:.4f}, time={mean_time_ms:.4f} ms/q")
+
+    faiss.omp_set_num_threads(prev_threads)
+
+    results.sort(key=lambda x: x["recall"])
     return results
 
 
-def sweep_shg(idx, label, xq, gt, k, use_sc=True, use_lb=True):
-    results = []
-    for ef in EF_VALUES:
-        if ef < k:
-            continue
-        try:
-            D, I, t = search_shg(idx, xq, k, ef, use_sc, use_lb)
-            r = compute_recall_at_k(I, gt, k)
-            ms = t * 1000 / xq.shape[0]
-            results.append({"efSearch": ef, "recall": round(r, 6), "ms_per_query": round(ms, 6)})
-            print(f"  {label} ef={ef:4d}: recall={r:.4f}, time={ms:.4f} ms/q")
-        except Exception as e:
-            print(f"  {label} ef={ef}: ERROR - {e}")
-    return results
+# Search-factory helpers ------------------------------------------------
+# Each helper returns a *factory*: a callable that takes one parameter value
+# (efSearch or nprobe) and returns a search function
+# ``fn(idx, xq, k) -> (D, I)``.
+#
+# The SearchParameters objects are created *inside* the inner closure so
+# every parameter value gets its own fresh object — no shared-state bugs.
+
+def _make_hnsw_search_factory():
+    """Factory for IndexHNSWFlat / IndexHNSWFlatPanorama: sweeps efSearch."""
+    def factory(ef_search):
+        def fn(idx, xq, k):
+            sp = faiss.SearchParametersHNSW()
+            sp.efSearch = ef_search
+            return idx.search(xq, k, params=sp)
+        return fn
+    return factory
 
 
-def sweep_ivf(idx, label, xq, gt, k):
-    results = []
-    for nprobe in NPROBE_VALUES:
-        try:
-            D, I, t = search_ivf(idx, xq, k, nprobe)
-            r = compute_recall_at_k(I, gt, k)
-            ms = t * 1000 / xq.shape[0]
-            results.append({"nprobe": nprobe, "recall": round(r, 6), "ms_per_query": round(ms, 6)})
-            print(f"  {label} nprobe={nprobe:4d}: recall={r:.4f}, time={ms:.4f} ms/q")
-        except Exception as e:
-            print(f"  {label} nprobe={nprobe}: ERROR - {e}")
-    return results
+def _make_shg_search_factory(use_sc=True, use_lb=True):
+    """Factory for IndexSHG: sweeps efSearch, optional flags for ablation."""
+    def factory(ef_search):
+        def fn(idx, xq, k):
+            sp = faiss.SearchParametersSHG()
+            sp.use_shortcut  = use_sc
+            sp.use_lb_pruning = use_lb
+            sp.efSearch = ef_search
+            return idx.search(xq, k, params=sp)
+        return fn
+    return factory
+
+
+def _make_ivf_search_factory():
+    """Factory for IndexIVFFlat / IndexIVFPQ: sweeps nprobe."""
+    def factory(nprobe):
+        def fn(idx, xq, k):
+            idx.nprobe = nprobe
+            return idx.search(xq, k)
+        return fn
+    return factory
 
 
 # ---------------------------------------------------------------------------
@@ -424,7 +495,7 @@ def sweep_ivf(idx, label, xq, gt, k):
 # ---------------------------------------------------------------------------
 
 ALL_DATASETS = ["openai", "enron", "gist1m", "msong", "uqv", "msturing10m"]
-ALL_BENCHMARKS = ["construction", "recall_k20", "recall_k50", "robustness"]
+ALL_BENCHMARKS = ["construction", "recall_k20", "recall_k50", "robustness", "ablation"]
 
 
 def run_benchmarks(dataset_name, benchmarks, data_dir, index_dir, output_dir):
@@ -520,6 +591,7 @@ def run_benchmarks(dataset_name, benchmarks, data_dir, index_dir, output_dir):
     rt_k20_results = {}
     rt_k50_results = {}
     rob_results = {}
+    abl_results = {}
 
     for name, builder in builders:
         idx_path = os.path.join(index_dir, f"{dataset_name}_{name.lower()}.idx")
@@ -580,49 +652,87 @@ def run_benchmarks(dataset_name, benchmarks, data_dir, index_dir, output_dir):
             "memory_mb": round(mem_mb, 2) if mem_mb >= 0 else -1,
         }
 
-        # -- Recall vs time k=20 --
+        # -- Recall vs time k=20 (Fig 5) --
         if "recall_k20" in benchmarks:
             k = 20
             if name == "SHG":
-                rt_k20_results["SHG"] = sweep_shg(
-                    idx, "SHG", xq, gt, k)
-                rt_k20_results["SHG-no-shortcut"] = sweep_shg(
-                    idx, "SHG-no-shortcut", xq, gt, k,
-                    use_sc=False, use_lb=True)
-                rt_k20_results["SHG-no-lb"] = sweep_shg(
-                    idx, "SHG-no-lb", xq, gt, k,
-                    use_sc=True, use_lb=False)
-                rt_k20_results["SHG-no-both"] = sweep_shg(
-                    idx, "SHG-no-both", xq, gt, k,
-                    use_sc=False, use_lb=False)
+                rt_k20_results["SHG"] = recall_time_curve(
+                    idx, "SHG", xq, gt, k,
+                    search_factory=_make_shg_search_factory(),
+                    param_values=EF_SEARCH_VALUES)
             elif name in ("HNSW", "Panorama"):
-                rt_k20_results[name] = sweep_hnsw(idx, name, xq, gt, k)
+                rt_k20_results[name] = recall_time_curve(
+                    idx, name, xq, gt, k,
+                    search_factory=_make_hnsw_search_factory(),
+                    param_values=EF_SEARCH_VALUES)
             elif name in ("IVFFlat", "IVFPQ"):
-                rt_k20_results[name] = sweep_ivf(idx, name, xq, gt, k)
+                rt_k20_results[name] = recall_time_curve(
+                    idx, name, xq, gt, k,
+                    search_factory=_make_ivf_search_factory(),
+                    param_values=NPROBE_VALUES)
 
-        # -- Recall vs time k=50 --
+        # -- Recall vs time k=50 (Fig 6) --
         if "recall_k50" in benchmarks:
             k = 50
             if name == "SHG":
-                rt_k50_results["SHG"] = sweep_shg(
-                    idx, "SHG", xq, gt, k)
+                rt_k50_results["SHG"] = recall_time_curve(
+                    idx, "SHG", xq, gt, k,
+                    search_factory=_make_shg_search_factory(),
+                    param_values=EF_SEARCH_VALUES)
             elif name in ("HNSW", "Panorama"):
-                rt_k50_results[name] = sweep_hnsw(idx, name, xq, gt, k)
+                rt_k50_results[name] = recall_time_curve(
+                    idx, name, xq, gt, k,
+                    search_factory=_make_hnsw_search_factory(),
+                    param_values=EF_SEARCH_VALUES)
             elif name in ("IVFFlat", "IVFPQ"):
-                rt_k50_results[name] = sweep_ivf(idx, name, xq, gt, k)
+                rt_k50_results[name] = recall_time_curve(
+                    idx, name, xq, gt, k,
+                    search_factory=_make_ivf_search_factory(),
+                    param_values=NPROBE_VALUES)
 
-        # -- Robustness --
+        # -- Ablation: SHG vs HNSW vs SHG-original-vectors (Fig 9) --
+        if "ablation" in benchmarks:
+            k = 20
+            if name == "SHG":
+                abl_results["SHG"] = recall_time_curve(
+                    idx, "SHG", xq, gt, k,
+                    search_factory=_make_shg_search_factory(),
+                    param_values=EF_SEARCH_VALUES)
+                abl_results["SHG-no-shortcut"] = recall_time_curve(
+                    idx, "SHG-no-shortcut", xq, gt, k,
+                    search_factory=_make_shg_search_factory(use_sc=False, use_lb=True),
+                    param_values=EF_SEARCH_VALUES)
+                abl_results["SHG-no-lb"] = recall_time_curve(
+                    idx, "SHG-no-lb", xq, gt, k,
+                    search_factory=_make_shg_search_factory(use_sc=True, use_lb=False),
+                    param_values=EF_SEARCH_VALUES)
+            elif name == "HNSW":
+                abl_results["HNSW"] = recall_time_curve(
+                    idx, "HNSW", xq, gt, k,
+                    search_factory=_make_hnsw_search_factory(),
+                    param_values=EF_SEARCH_VALUES)
+
+        # -- Robustness (Fig 8) --
         if "robustness" in benchmarks:
             k_rob = 20
-            ef_test = max(k_rob * 4, 100)
-            nprobe_test = 64
+            # Use a reasonably high efSearch so recall is meaningful for the
+            # distribution comparison (paper uses a fixed operating point near
+            # ~90% recall for this experiment).
+            rob_ef = 200
             try:
                 if name == "SHG":
-                    D, I, t = search_shg(idx, unseen_q, k_rob, ef_test)
+                    D, I, t = search_shg(idx, unseen_q, k_rob, efSearch=rob_ef)
                 elif name in ("HNSW", "Panorama"):
-                    D, I, t = search_hnsw(idx, unseen_q, k_rob, ef_test)
+                    sp = faiss.SearchParametersHNSW()
+                    sp.efSearch = rob_ef
+                    t0 = time.time()
+                    D, I = idx.search(unseen_q, k_rob, params=sp)
+                    t = time.time() - t0
                 elif name in ("IVFFlat", "IVFPQ"):
-                    D, I, t = search_ivf(idx, unseen_q, k_rob, nprobe_test)
+                    idx.nprobe = 64
+                    t0 = time.time()
+                    D, I = idx.search(unseen_q, k_rob)
+                    t = time.time() - t0
                 else:
                     D, I, t = None, None, None
 
@@ -685,6 +795,12 @@ def run_benchmarks(dataset_name, benchmarks, data_dir, index_dir, output_dir):
                   f"min={stats['min_recall']:.4f}, "
                   f"max={stats['max_recall']:.4f}")
         all_results["robustness"] = rob_results
+
+    if "ablation" in benchmarks:
+        print(f"\n{'='*70}")
+        print(f"BENCHMARK: Ablation (k=20) - {dataset_name}")
+        print(f"{'='*70}")
+        all_results["ablation"] = abl_results
 
     # -----------------------------------------------------------------------
     # Save results

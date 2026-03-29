@@ -153,7 +153,7 @@ def plot_recall_vs_time(results, output_dir, k_key, k_val):
             ax.plot(times, recalls, marker=marker, color=color,
                     label=label, markersize=5, linewidth=1.5)
 
-        ax.set_xlabel("Time (ms/query)")
+        ax.set_xlabel("Time (ms)")
         ax.set_ylabel("Recall")
         ax.set_title(f"{DATASET_LABELS.get(ds, ds)} (k={k_val})")
         ax.legend(fontsize=7, loc="lower right")
@@ -274,7 +274,7 @@ def plot_ablation(results, output_dir):
                     label=ablation_labels.get(label, label),
                     markersize=5, linewidth=1.5)
 
-        ax.set_xlabel("Time (ms/query)")
+        ax.set_xlabel("Time (ms)")
         ax.set_ylabel("Recall")
         ax.set_title(f"{DATASET_LABELS.get(ds, ds)}")
         ax.legend(fontsize=6, loc="lower right")
@@ -321,7 +321,7 @@ def plot_shg_vs_hnsw(results, output_dir, k_key, k_val):
             ax.plot(times, recalls, marker=marker, color=color,
                     label=label, markersize=6, linewidth=2)
 
-        ax.set_xlabel("Time (ms/query)")
+        ax.set_xlabel("Time (ms)")
         ax.set_ylabel(f"Recall@{k_val}")
         ax.set_title(f"{DATASET_LABELS.get(ds, ds)}")
         ax.legend(fontsize=9, loc="lower right")

@@ -30,6 +30,8 @@
 #include <faiss/IndexAdditiveQuantizerFastScan.h>
 #include <faiss/IndexFlat.h>
 #include <faiss/IndexHNSW.h>
+#include <faiss/IndexCSPG.h>
+#include <faiss/IndexCSPG_io.h>
 #include <faiss/IndexSHG.h>
 #include <faiss/IndexSHG_io.h>
 #include <faiss/IndexIVF.h>
@@ -1415,6 +1417,11 @@ std::unique_ptr<Index> read_index_up(IOReader* f, int io_flags) {
         READ1(idxp->code_size);
         read_vector(idxp->codes, f);
         idx = std::move(idxp);
+    } else if (h == fourcc("ICSP")) {
+        auto idxcspg = std::make_unique<IndexCSPG>();
+        read_index_header(*idxcspg, f);
+        read_index_cspg_extra(idxcspg.get(), f);
+        idx = std::move(idxcspg);
     } else if (
             h == fourcc("IHNf") || h == fourcc("IHNp") || h == fourcc("IHNs") ||
             h == fourcc("IHN2") || h == fourcc("IHNc") || h == fourcc("IHc2") ||

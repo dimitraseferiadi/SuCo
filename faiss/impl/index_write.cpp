@@ -27,6 +27,8 @@
 #include <faiss/IndexAdditiveQuantizerFastScan.h>
 #include <faiss/IndexFlat.h>
 #include <faiss/IndexHNSW.h>
+#include <faiss/IndexCSPG.h>
+#include <faiss/IndexCSPG_io.h>
 #include <faiss/IndexSHG.h>
 #include <faiss/IndexSHG_io.h>
 #include <faiss/IndexIVF.h>
@@ -850,6 +852,12 @@ void write_index(const Index* idx, IOWriter* f, int io_flags) {
         write_index_header(idxmap, f);
         write_index(idxmap->index, f);
         WRITEVECTOR(idxmap->id_map);
+    } else if (
+            const IndexCSPG* idxcspg = dynamic_cast<const IndexCSPG*>(idx)) {
+        uint32_t h = fourcc("ICSP");
+        WRITE1(h);
+        write_index_header(idxcspg, f);
+        write_index_cspg_extra(idxcspg, f);
     } else if (const IndexHNSW* idxhnsw = dynamic_cast<const IndexHNSW*>(idx)) {
         uint32_t h = dynamic_cast<const IndexSHG*>(idx)
                 ? fourcc("ISHG")

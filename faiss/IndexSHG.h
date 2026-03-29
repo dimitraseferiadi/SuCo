@@ -17,7 +17,7 @@
  *   PVLDB 18(10): 3518-3530, 2025.
  *
  * Two core innovations over HNSW:
- *   1. Hierarchical vector compression (progressive mean aggregation, eta=4).
+ *   1. Hierarchical vector compression (progressive mean aggregation, eta=2).
  *      Upper-level distances use compressed low-dimensional representations,
  *      cutting per-level computation cost.  Compression levels are computed
  *      independently of the HNSW graph levels: maxFixLevel_ is determined by
@@ -33,7 +33,7 @@
  * -----
  *   // Build:
  *   IndexSHG idx(d, M);
- *   idx.add(n, data);        // standard HNSW graph construction
+ *   idx.add(n, data);        // HNSW graph with compressed upper-level distances
  *   idx.build_shortcut();    // one-time: compress vectors + train shortcut
  *
  *   // Search (uses shortcuts automatically):
@@ -44,9 +44,7 @@
 #include <faiss/impl/HNSW.h>
 
 #include <cmath>
-#include <cstdint>
 #include <map>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -121,7 +119,7 @@ struct SearchParametersSHG : SearchParametersHNSW {
  * the compressed representations stored in compressed_vecs.
  *
  * The compression hierarchy is independent of the HNSW levels:
- *   - maxFixLevel_ compression levels are computed from d and eta (=4),
+ *   - maxFixLevel_ compression levels are computed from d and eta (=2),
  *     where each level l has dimension ceil(d / eta^l).
  *   - HNSW level l uses compression level min(l, maxFixLevel_).
  */
@@ -130,8 +128,8 @@ struct IndexSHG : IndexHNSWFlat {
 
     // --- compression ---
 
-    /// Compression branching factor. Original SHG-Index uses k_=4.
-    int eta = 4;
+    /// Compression branching factor. Paper (Section 4.1) uses η=2.
+    int eta = 2;
 
     /// Maximum compression level (computed from d and eta).
     int maxFixLevel_ = 0;
@@ -166,6 +164,12 @@ struct IndexSHG : IndexHNSWFlat {
             int d = 0,
             int M = 32,
             MetricType metric = METRIC_L2);
+
+    /**
+     * Add vectors, building the HNSW graph with compressed distances
+     * at upper levels (Algorithm 2 line 7 from the paper).
+     */
+    void add(idx_t n, const float* x) override;
 
     /**
      * Build compressed vectors for all nodes and train the shortcut.
@@ -217,7 +221,44 @@ struct IndexSHG : IndexHNSWFlat {
             idx_t node_id,
             int hnsw_level) const;
 
+    /// Distance cache with epoch-based invalidation.
+    /// Avoids O(ntotal) clear per query: only increments a counter.
+    /// Used to carry compressed distances from upper-level navigation into
+    /// the base-level search for cross-level pruning.
+    struct DisCache {
+        std::vector<float> values;
+        std::vector<uint32_t> stamps;
+        uint32_t cur_stamp = 0;
+
+        void resize(size_t n) {
+            values.resize(n);
+            stamps.resize(n, 0);
+        }
+        void new_query() {
+            if (++cur_stamp == 0) {
+                std::fill(stamps.begin(), stamps.end(), 0u);
+                cur_stamp = 1;
+            }
+        }
+        float get(size_t idx) const {
+            return stamps[idx] == cur_stamp ? values[idx] : -1.0f;
+        }
+        void set(size_t idx, float val) {
+            values[idx] = val;
+            stamps[idx] = cur_stamp;
+        }
+    };
+    using dis_cache_t = DisCache;
+
    private:
+    /// Shared distance computation for two compressed data pointers at a
+    /// given HNSW level. Both get_dis_by_level and get_dis_by_level_q
+    /// delegate here for levels > 0, ensuring a single code path.
+    float compressed_dis_at_level(
+            const float* a_data,
+            const float* b_data,
+            int hnsw_level) const;
+
     void compute_compression_params();
     void build_all_compressed();
     void compress_node(idx_t node_id);
@@ -227,48 +268,19 @@ struct IndexSHG : IndexHNSWFlat {
 
     void build_shortcuts_density();
 
-    void search_one(
+    /// Build compressed query representation into query_rep.
+    /// full_rep is a per-thread scratch buffer.
+    void build_compressed_query_rep(
             const float* query,
-            idx_t k,
-            float* distances,
-            idx_t* labels,
-            bool use_shortcut,
-            bool use_lb_pruning) const;
+            std::vector<float>& full_rep,
+            std::vector<float>& query_rep) const;
 
-    /// Sparse distance cache: key = node_id * (max_level+1) + level.
-    /// Only stores distances for nodes actually visited (O(log n) entries
-    /// during upper-level navigation), avoiding the O(ntotal) dense array.
-    using dis_cache_t = std::unordered_map<uint64_t, float>;
-
+    /// Navigate upper levels using compressed distances + optional shortcuts.
+    /// Uses a forked version of FAISS's greedy_update_nearest with inline
+    /// compressed distance computation (batch-4 pattern).
     storage_idx_t navigate_upper_levels(
             const std::vector<float>& query_rep,
-            bool use_shortcut,
-            dis_cache_t& dis_cache,
-            int max_level_cache) const;
-
-    void search_base_level(
-            const float* query,
-            idx_t k,
-            storage_idx_t entry_point,
-            float* distances,
-            idx_t* labels,
-            const std::vector<float>& query_rep,
-            bool use_lb_pruning,
-            dis_cache_t& dis_cache,
-            int max_level_cache) const;
-
-    bool prune_by_lb(
-            float current_bound,
-            int comp_level,
-            const std::vector<float>& query_rep,
-            idx_t candidate) const;
-
-    bool prune_by_cache(
-            float current_bound,
-            int cur_level,
-            idx_t candidate,
-            const dis_cache_t& dis_cache,
-            int max_level_cache) const;
+            bool use_shortcut) const;
 };
 
 } // namespace faiss
