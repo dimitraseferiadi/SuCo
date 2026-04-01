@@ -37,11 +37,11 @@ DATASET_LABELS = {
 }
 
 INDEX_COLORS = {
-    "SHG": "#e74c3c",
-    "HNSW": "#3498db",
-    "PANORAMA": "#2ecc71",
-    "IVFFLAT": "#9b59b6",
-    "IVFPQ": "#f39c12",
+    "SHG": "#f4a261",
+    "HNSW": "#e63946",
+    "PANORAMA": "#6ab187",
+    "IVFFLAT": "#457b9d",
+    "IVFPQ": "#a8dadc",
     "SHG-NO-SHORTCUT": "#c0392b",
     "SHG-NO-LB": "#e67e22",
     "SHG-NO-BOTH": "#95a5a6",

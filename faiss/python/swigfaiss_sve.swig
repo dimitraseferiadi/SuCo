@@ -123,6 +123,7 @@ typedef uint64_t size_t;
 #include <faiss/IndexReplicas.h>
 #include <faiss/impl/HNSW.h>
 #include <faiss/IndexHNSW.h>
+#include <faiss/IndexCSPG.h>
 #include <faiss/IndexSHG.h>
 
 #include <faiss/impl/kmeans1d.h>
@@ -561,6 +562,7 @@ void gpu_sync_all_devices()
 %include  <faiss/IndexIVFAdditiveQuantizer.h>
 %include  <faiss/impl/HNSW.h>
 %include  <faiss/IndexHNSW.h>
+%include  <faiss/IndexCSPG.h>
 
 // IndexSHG: ignore the std::map member that SWIG cannot wrap automatically
 %ignore faiss::ShortcutMap::entries;
@@ -809,6 +811,7 @@ struct faiss::simd16uint16 {};
     DOWNCAST ( IndexLattice )
     DOWNCAST ( IndexPreTransform )
     DOWNCAST ( MultiIndexQuantizer )
+    DOWNCAST ( IndexCSPG )
     DOWNCAST ( IndexSHG )
     DOWNCAST ( IndexHNSWFlatPanorama )
     DOWNCAST ( IndexHNSWFlat )

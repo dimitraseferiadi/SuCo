@@ -1021,6 +1021,8 @@ def _make_hnsw_params(ef):
 # ===========================================================================
 
 def main():
+    global DEFAULT_M, DEFAULT_EFC, DEFAULT_NUM_PARTITIONS, DEFAULT_LAMBDA
+
     parser = argparse.ArgumentParser(
         description="CSPG (NeurIPS 2024) benchmark suite vs FAISS baselines",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -1065,7 +1067,6 @@ def main():
         )
 
     # Apply CLI overrides to module-level defaults
-    global DEFAULT_M, DEFAULT_EFC, DEFAULT_NUM_PARTITIONS, DEFAULT_LAMBDA
     DEFAULT_M              = args.M
     DEFAULT_EFC            = args.efc
     DEFAULT_NUM_PARTITIONS = args.m
