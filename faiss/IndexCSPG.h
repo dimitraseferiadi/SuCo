@@ -43,6 +43,7 @@
  */
 
 #include <faiss/Index.h>
+#include <faiss/IndexFlat.h>
 #include <faiss/IndexHNSW.h>
 #include <faiss/impl/HNSW.h>
 
@@ -95,24 +96,29 @@ struct IndexCSPG : Index {
     /// Default second-stage candidate set size (ef2).
     int efSearch = 128;
 
+    // --- Shared vector storage ---
+
+    /// Single contiguous storage for ALL vectors (no duplication).
+    /// Routing vectors are stored once; partitions reference them by global ID.
+    IndexFlat* shared_flat = nullptr;
+
     // --- Partition sub-graphs ---
 
     /// One HNSW-Flat index per partition.  Owned if own_fields is true.
+    /// During construction the partitions contain their own vector copies;
+    /// at search time we bypass them and use shared_flat via remapped DCs.
     std::vector<IndexHNSWFlat*> partitions;
     bool own_fields = true;
-
-    // --- Vector storage ---
-
-    /// Flat storage of ALL n vectors (ntotal * d floats).
-    /// Kept for efficient cross-partition distance computation via
-    /// refunction mapping, and for reconstruct().
-    std::vector<float> all_vectors;
 
     // --- ID mapping ---
 
     /// refunction[partition_id][local_id] = global_id.
     /// Routing vectors occupy local IDs 0..num_routing-1 in every partition.
     std::vector<std::vector<idx_t>> refunction;
+
+    /// Reverse mapping: global_id -> (partition_id, local_id).
+    /// For routing vectors (present in all partitions), stores partition 0.
+    std::vector<std::pair<int, idx_t>> global_to_local;
 
     /// Number of routing vectors (= floor(ntotal * lambda)).
     idx_t num_routing = 0;
@@ -148,9 +154,10 @@ struct IndexCSPG : Index {
     // --- Helpers ---
 
     /// Pointer to vector data for a given (partition, local_id) pair.
-    /// Uses all_vectors + refunction for O(1) lookup.
-    const float* get_vec(int gid, idx_t local_id) const {
-        return all_vectors.data() + refunction[gid][local_id] * d;
+    /// Uses shared_flat: maps local_id → global_id → shared storage.
+    const float* get_vec(int pid, idx_t local_id) const {
+        idx_t global_id = refunction[pid][local_id];
+        return shared_flat->get_xb() + global_id * d;
     }
 };
 

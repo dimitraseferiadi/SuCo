@@ -21,11 +21,14 @@ Benchmarks:
   robustness    — Per-query recall distribution on held-out queries (Figure 8 style)
 
 Indices benchmarked:
-  CSPG          — IndexCSPG (default: M=32, efConstruction=128, m=2, λ=0.5)
-  HNSW          — IndexHNSWFlat (same M, efConstruction as CSPG)
+    CSPG          — IndexCSPG (default: M=32, efConstruction=128, m=2, λ=0.5)
+    HNSW          — IndexHNSWFlat (same M, efConstruction as CSPG)
   IVFFlat       — IndexIVFFlat (nlist = sqrt(n))
   IVFPQ         — IndexIVFPQ   (nlist = sqrt(n), m_pq ≈ d/8)
   Flat          — IndexFlatL2  (exact, skipped for n > 2M by default)
+
+Default index set:
+    cspg, hnsw
 
 Datasets (paper set):
     sift1m, deep1m, gist1m, sift10m
@@ -100,6 +103,9 @@ ALL_BENCHMARKS = [
     "ablation_ef1",
     "robustness",
 ]
+
+ALL_INDEX_TYPES = ["cspg", "hnsw", "ivfflat", "ivfpq", "flat"]
+DEFAULT_INDEX_TYPES = ["cspg", "hnsw"]
 
 
 # ===========================================================================
@@ -577,7 +583,7 @@ def recall_time_curve(idx, label, xq, gt, k, search_fn_factory,
 # Main benchmark runner (one dataset)
 # ===========================================================================
 
-def run_benchmarks(dataset_name, benchmarks, data_dir, index_dir, output_dir):
+def run_benchmarks(dataset_name, benchmarks, index_types, data_dir, index_dir, output_dir):
 
     print(f"\n{'#'*72}")
     print(f"# Dataset: {dataset_name.upper()}")
@@ -681,21 +687,20 @@ def run_benchmarks(dataset_name, benchmarks, data_dir, index_dir, output_dir):
         print(f"BENCHMARK: Construction — {dataset_name}")
         print(f"{'='*60}")
 
-        build_plan = [
-            ("cspg_default",
-             f"CSPG(m={DEFAULT_NUM_PARTITIONS}, λ={DEFAULT_LAMBDA})",
-             lambda xb, d: build_cspg(xb, d)),
-            ("hnsw",
-             "HNSW",
-             lambda xb, d: build_hnsw(xb, d)),
-            ("ivfflat",
-             "IVFFlat",
-             lambda xb, d: build_ivfflat(xb, d)),
-            ("ivfpq",
-             "IVFPQ",
-             lambda xb, d: build_ivfpq(xb, d)),
-        ]
-        if n <= FLAT_MAX_VECTORS:
+        build_plan = []
+        if "cspg" in index_types:
+            build_plan.append(
+                ("cspg_default",
+                 f"CSPG(m={DEFAULT_NUM_PARTITIONS}, λ={DEFAULT_LAMBDA})",
+                 lambda xb, d: build_cspg(xb, d))
+            )
+        if "hnsw" in index_types:
+            build_plan.append(("hnsw", "HNSW", lambda xb, d: build_hnsw(xb, d)))
+        if "ivfflat" in index_types:
+            build_plan.append(("ivfflat", "IVFFlat", lambda xb, d: build_ivfflat(xb, d)))
+        if "ivfpq" in index_types:
+            build_plan.append(("ivfpq", "IVFPQ", lambda xb, d: build_ivfpq(xb, d)))
+        if "flat" in index_types and n <= FLAT_MAX_VECTORS:
             build_plan.append(
                 ("flat", "Flat", lambda xb, d: build_flat(xb, d))
             )
@@ -733,37 +738,48 @@ def run_benchmarks(dataset_name, benchmarks, data_dir, index_dir, output_dir):
 
     if recall_k_list:
         # Define index variants and their search factories + sweep grids
-        recall_index_plan = [
-            (
-                "cspg_default",
-                f"CSPG(m={DEFAULT_NUM_PARTITIONS},λ={DEFAULT_LAMBDA})",
-                lambda xb, d: build_cspg(xb, d),
-                lambda ef2: _cspg_search_fn(ef2, ef1=1),
-                EF2_SWEEP,
-            ),
-            (
-                "hnsw",
-                "HNSW",
-                lambda xb, d: build_hnsw(xb, d),
-                _hnsw_search_fn,
-                EF2_SWEEP,
-            ),
-            (
-                "ivfflat",
-                "IVFFlat",
-                lambda xb, d: build_ivfflat(xb, d),
-                _ivf_search_fn,
-                NPROBE_SWEEP,
-            ),
-            (
-                "ivfpq",
-                "IVFPQ",
-                lambda xb, d: build_ivfpq(xb, d),
-                _ivf_search_fn,
-                NPROBE_SWEEP,
-            ),
-        ]
-        if n <= FLAT_MAX_VECTORS:
+        recall_index_plan = []
+        if "cspg" in index_types:
+            recall_index_plan.append(
+                (
+                    "cspg_default",
+                    f"CSPG(m={DEFAULT_NUM_PARTITIONS},λ={DEFAULT_LAMBDA})",
+                    lambda xb, d: build_cspg(xb, d),
+                    lambda ef2: _cspg_search_fn(ef2, ef1=1),
+                    EF2_SWEEP,
+                )
+            )
+        if "hnsw" in index_types:
+            recall_index_plan.append(
+                (
+                    "hnsw",
+                    "HNSW",
+                    lambda xb, d: build_hnsw(xb, d),
+                    _hnsw_search_fn,
+                    EF2_SWEEP,
+                )
+            )
+        if "ivfflat" in index_types:
+            recall_index_plan.append(
+                (
+                    "ivfflat",
+                    "IVFFlat",
+                    lambda xb, d: build_ivfflat(xb, d),
+                    _ivf_search_fn,
+                    NPROBE_SWEEP,
+                )
+            )
+        if "ivfpq" in index_types:
+            recall_index_plan.append(
+                (
+                    "ivfpq",
+                    "IVFPQ",
+                    lambda xb, d: build_ivfpq(xb, d),
+                    _ivf_search_fn,
+                    NPROBE_SWEEP,
+                )
+            )
+        if "flat" in index_types and n <= FLAT_MAX_VECTORS:
             recall_index_plan.append((
                 "flat", "Flat",
                 lambda xb, d: build_flat(xb, d),
@@ -907,37 +923,48 @@ def run_benchmarks(dataset_name, benchmarks, data_dir, index_dir, output_dir):
         ROB_EF2 = 200
         ROB_K   = 20
 
-        rob_plan = [
-            (
-                "cspg_default",
-                f"CSPG(m={DEFAULT_NUM_PARTITIONS},λ={DEFAULT_LAMBDA})",
-                lambda xb, d: build_cspg(xb, d),
-                lambda idx: idx.search(unseen_q, ROB_K,
-                    params=(faiss.SearchParametersCSPG().__setattr__("efSearch", ROB_EF2)
-                            or faiss.SearchParametersCSPG()) if _HAS_CSPG_PARAMS else None),
-            ),
-            (
-                "hnsw",
-                "HNSW",
-                lambda xb, d: build_hnsw(xb, d),
-                lambda idx: idx.search(unseen_q, ROB_K,
-                    params=_make_hnsw_params(ROB_EF2)),
-            ),
-            (
-                "ivfflat",
-                "IVFFlat",
-                lambda xb, d: build_ivfflat(xb, d),
-                lambda idx: (setattr(idx, "nprobe", 64),
-                             idx.search(unseen_q, ROB_K))[1],
-            ),
-            (
-                "ivfpq",
-                "IVFPQ",
-                lambda xb, d: build_ivfpq(xb, d),
-                lambda idx: (setattr(idx, "nprobe", 64),
-                             idx.search(unseen_q, ROB_K))[1],
-            ),
-        ]
+        rob_plan = []
+        if "cspg" in index_types:
+            rob_plan.append(
+                (
+                    "cspg_default",
+                    f"CSPG(m={DEFAULT_NUM_PARTITIONS},λ={DEFAULT_LAMBDA})",
+                    lambda xb, d: build_cspg(xb, d),
+                    lambda idx: idx.search(unseen_q, ROB_K,
+                        params=(faiss.SearchParametersCSPG().__setattr__("efSearch", ROB_EF2)
+                                or faiss.SearchParametersCSPG()) if _HAS_CSPG_PARAMS else None),
+                )
+            )
+        if "hnsw" in index_types:
+            rob_plan.append(
+                (
+                    "hnsw",
+                    "HNSW",
+                    lambda xb, d: build_hnsw(xb, d),
+                    lambda idx: idx.search(unseen_q, ROB_K,
+                        params=_make_hnsw_params(ROB_EF2)),
+                )
+            )
+        if "ivfflat" in index_types:
+            rob_plan.append(
+                (
+                    "ivfflat",
+                    "IVFFlat",
+                    lambda xb, d: build_ivfflat(xb, d),
+                    lambda idx: (setattr(idx, "nprobe", 64),
+                                 idx.search(unseen_q, ROB_K))[1],
+                )
+            )
+        if "ivfpq" in index_types:
+            rob_plan.append(
+                (
+                    "ivfpq",
+                    "IVFPQ",
+                    lambda xb, d: build_ivfpq(xb, d),
+                    lambda idx: (setattr(idx, "nprobe", 64),
+                                 idx.search(unseen_q, ROB_K))[1],
+                )
+            )
 
         for cache_key, label, builder, searcher in rob_plan:
             idx, _, _ = _get_index(cache_key, builder, label)
@@ -1049,6 +1076,12 @@ def main():
         choices=ALL_BENCHMARKS + ["all"],
         help="Which benchmarks to run (default: all)",
     )
+    parser.add_argument(
+        "--index-type", nargs="+", default=DEFAULT_INDEX_TYPES,
+        choices=ALL_INDEX_TYPES + ["all"],
+        help=("Index families to benchmark (default: cspg hnsw). "
+              "Use 'all' to include ivfflat ivfpq flat."),
+    )
     # Override construction parameters
     parser.add_argument("--M",   type=int,   default=DEFAULT_M,
                         help=f"HNSW M parameter (default {DEFAULT_M})")
@@ -1073,6 +1106,7 @@ def main():
     DEFAULT_LAMBDA         = args.lam
 
     benchmarks = ALL_BENCHMARKS if "all" in args.benchmark else args.benchmark
+    index_types = ALL_INDEX_TYPES if "all" in args.index_type else args.index_type
     datasets   = ALL_DATASETS if args.dataset == "all" else [args.dataset]
 
     os.makedirs(args.index_dir,  exist_ok=True)
@@ -1086,6 +1120,7 @@ def main():
     print(f"  Output dir:       {args.output_dir}")
     print(f"  Datasets:         {datasets}")
     print(f"  Benchmarks:       {benchmarks}")
+    print(f"  Index types:      {index_types}")
     print(f"  CSPG params:      M={DEFAULT_M}, efC={DEFAULT_EFC}, "
           f"m={DEFAULT_NUM_PARTITIONS}, λ={DEFAULT_LAMBDA}")
     print(f"  SearchParamsCSPG: {'available' if _HAS_CSPG_PARAMS else 'NOT FOUND — using index defaults'}")
@@ -1093,7 +1128,8 @@ def main():
 
     for ds in datasets:
         try:
-            run_benchmarks(ds, benchmarks, args.data_dir, args.index_dir, args.output_dir)
+            run_benchmarks(ds, benchmarks, index_types,
+                           args.data_dir, args.index_dir, args.output_dir)
         except Exception as e:
             print(f"\nERROR on dataset {ds!r}: {e}")
             traceback.print_exc()

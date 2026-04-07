@@ -293,7 +293,7 @@ def main():
 
     if args.results_dir is None:
         args.results_dir = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "results")
+            os.path.dirname(os.path.abspath(__file__)), "results_cspg")
     if args.output_dir is None:
         args.output_dir = os.path.join(args.results_dir, "plots")
 

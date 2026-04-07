@@ -21,33 +21,93 @@
  * Search (Algorithm 1 in the paper):
  *   Stage 1 – Fast approaching:
  *     Navigate partition 0's HNSW from entry_point through upper levels via
- *     greedy descent.  Then beam-search at level 0 with ef = ef1.
+ *     greedy descent (using FAISS's greedy_update_nearest).  If ef1 > 1,
+ *     also perform beam search at level 0 using search_from_candidate_unbounded.
  *   Stage 2 – Cross-partition expansion:
  *     Starting from the closest point found in stage 1, perform beam search
  *     across ALL partitions with candidate set size ef2.  When a routing
  *     vector is encountered, it is simultaneously inserted into the candidate
  *     sets of all partitions, enabling the search to "cross" between graphs.
  *
- * Distance computation uses fvec_L2sqr (SIMD-optimized squared L2).
- * Graph neighbor access uses HNSW::neighbor_range at level 0.
+ * All vectors are stored once in a shared IndexFlat (shared_flat).
+ * Per-partition flat storage is freed after construction; search uses
+ * RemappedDistanceComputer to map local IDs → global positions in
+ * shared_flat, eliminating routing-vector duplication and cache misses.
  */
 
 #include <faiss/IndexCSPG.h>
 #include <faiss/IndexFlat.h>
 
+#include <faiss/impl/DistanceComputer.h>
 #include <faiss/impl/FaissAssert.h>
 #include <faiss/impl/HNSW.h>
+#include <faiss/impl/VisitedTable.h>
 #include <faiss/utils/distances.h>
+#include <faiss/utils/prefetch.h>
 
 #include <algorithm>
 #include <cstring>
 #include <limits>
-#include <queue>
+#include <memory>
 #include <random>
-#include <tuple>
 #include <vector>
 
 namespace faiss {
+
+// =========================================================================
+// RemappedDistanceComputer
+// =========================================================================
+//
+// Wraps a DistanceComputer backed by shared_flat (all n vectors stored once)
+// and remaps local partition IDs → global IDs via a switchable mapping.
+// This lets us use a single contiguous vector store for all partitions,
+// eliminating routing-vector duplication and cross-partition cache misses.
+
+struct RemappedDistanceComputer : DistanceComputer {
+    DistanceComputer* base; // DC from shared_flat (NOT owned)
+    const idx_t* mapping;   // refunction[p].data() for current partition
+
+    RemappedDistanceComputer(DistanceComputer* base, const idx_t* mapping)
+            : base(base), mapping(mapping) {}
+
+    void set_mapping(const idx_t* m) {
+        mapping = m;
+    }
+
+    void set_query(const float* x) override {
+        base->set_query(x);
+    }
+
+    float operator()(idx_t i) override {
+        return (*base)(mapping[i]);
+    }
+
+    void distances_batch_4(
+            const idx_t idx0,
+            const idx_t idx1,
+            const idx_t idx2,
+            const idx_t idx3,
+            float& dis0,
+            float& dis1,
+            float& dis2,
+            float& dis3) override {
+        base->distances_batch_4(
+                mapping[idx0],
+                mapping[idx1],
+                mapping[idx2],
+                mapping[idx3],
+                dis0,
+                dis1,
+                dis2,
+                dis3);
+    }
+
+    float symmetric_dis(idx_t i, idx_t j) override {
+        return base->symmetric_dis(mapping[i], mapping[j]);
+    }
+
+    ~RemappedDistanceComputer() override {} // base not owned
+};
 
 // =========================================================================
 // Constructor / Destructor
@@ -76,6 +136,7 @@ IndexCSPG::~IndexCSPG() {
         for (auto* p : partitions)
             delete p;
     }
+    delete shared_flat;
 }
 
 // =========================================================================
@@ -92,15 +153,17 @@ void IndexCSPG::reset() {
             delete p;
     }
     partitions.clear();
-    all_vectors.clear();
+    delete shared_flat;
+    shared_flat = nullptr;
     refunction.clear();
+    global_to_local.clear();
     num_routing = 0;
     ntotal = 0;
 }
 
 void IndexCSPG::reconstruct(idx_t key, float* recons) const {
     FAISS_THROW_IF_NOT(key >= 0 && key < ntotal);
-    memcpy(recons, all_vectors.data() + key * d, sizeof(float) * d);
+    memcpy(recons, shared_flat->get_xb() + key * d, sizeof(float) * d);
 }
 
 // =========================================================================
@@ -115,10 +178,6 @@ void IndexCSPG::add(idx_t n, const float* x) {
     FAISS_THROW_IF_NOT(n > 0);
 
     ntotal = n;
-
-    // ---- Store all vectors ----
-    all_vectors.resize(n * d);
-    memcpy(all_vectors.data(), x, n * d * sizeof(float));
 
     // ---- Compute number of routing vectors ----
     num_routing = static_cast<idx_t>(n * lambda);
@@ -142,12 +201,29 @@ void IndexCSPG::add(idx_t n, const float* x) {
     }
 
     // Non-routing vectors are randomly assigned to exactly one partition.
-    // Matches the original CSPG code: rand() % num_partition_.
     std::mt19937 rng(1234); // fixed seed for reproducibility
     for (idx_t id = num_routing; id < n; id++) {
         int p = static_cast<int>(rng() % num_partitions);
         refunction[p].push_back(id);
     }
+
+    // ---- Build reverse mapping global_id -> (partition, local_id) ----
+    global_to_local.resize(n, {-1, -1});
+    for (int p = 0; p < num_partitions; p++) {
+        for (idx_t lid = 0; lid < static_cast<idx_t>(refunction[p].size());
+             lid++) {
+            idx_t gid = refunction[p][lid];
+            // For routing vectors, store partition 0 (any would work).
+            if (global_to_local[gid].first < 0) {
+                global_to_local[gid] = {p, lid};
+            }
+        }
+    }
+
+    // ---- Create shared flat storage (all n vectors stored once) ----
+    delete shared_flat;
+    shared_flat = new IndexFlat(d, METRIC_L2);
+    shared_flat->add(n, x);
 
     // ---- Clear old partitions ----
     if (own_fields) {
@@ -161,11 +237,11 @@ void IndexCSPG::add(idx_t n, const float* x) {
     for (int p = 0; p < num_partitions; p++) {
         idx_t np = static_cast<idx_t>(refunction[p].size());
 
-        // Gather partition data (copies, since HNSW stores its own vectors)
+        // Gather partition data for HNSW construction.
         std::vector<float> part_data(np * d);
         for (idx_t j = 0; j < np; j++) {
             memcpy(part_data.data() + j * d,
-                   all_vectors.data() + refunction[p][j] * d,
+                   x + refunction[p][j] * d,
                    d * sizeof(float));
         }
 
@@ -173,6 +249,10 @@ void IndexCSPG::add(idx_t n, const float* x) {
         auto* part = new IndexHNSWFlat(d, M);
         part->hnsw.efConstruction = efConstruction;
         part->add(np, part_data.data());
+
+        // Free per-partition vector storage – we only need the HNSW graph.
+        // Search uses shared_flat via RemappedDistanceComputer.
+        static_cast<IndexFlat*>(part->storage)->reset();
 
         partitions[p] = part;
     }
@@ -205,18 +285,36 @@ void IndexCSPG::search(
     if (cur_ef2 < (int)k)
         cur_ef2 = (int)k;
 
-    // Candidate tuple: (distance, partition_id, local_id)
-    using Candidate = std::tuple<float, int, int>;
+    // ---- Precompute encoding stride for MinimaxHeap ----
+    // Encode (partition_id, local_id) into a single storage_idx_t:
+    //   encoded = partition_id * stride + local_id
+    // This lets us use FAISS's SIMD-optimized MinimaxHeap (single heap)
+    // instead of dual std::priority_queue (halves heap operations).
+    HNSW::storage_idx_t stride = 0;
+    for (int p = 0; p < num_partitions; p++) {
+        stride = std::max(
+                stride,
+                static_cast<HNSW::storage_idx_t>(partitions[p]->ntotal));
+    }
 
 #pragma omp parallel
     {
-        // Per-thread visited arrays (allocated once, reset per query)
-        std::vector<std::vector<char>> visited(num_partitions);
+        // Per-thread VisitedTables (O(1) reset via generation counter)
+        std::vector<VisitedTable> visited;
+        visited.reserve(num_partitions);
         for (int p = 0; p < num_partitions; p++) {
-            visited[p].resize(partitions[p]->ntotal, 0);
+            visited.emplace_back(partitions[p]->hnsw.nb_neighbors(0) > 0
+                                         ? partitions[p]->ntotal
+                                         : 0);
         }
 
-#pragma omp for schedule(dynamic)
+        // Single shared DistanceComputer from shared_flat per thread,
+        // wrapped in RemappedDistanceComputer with switchable mapping.
+        std::unique_ptr<DistanceComputer> base_dc(
+                shared_flat->get_distance_computer());
+        RemappedDistanceComputer rdc(base_dc.get(), refunction[0].data());
+
+#pragma omp for schedule(dynamic, 64)
         for (idx_t q = 0; q < n; q++) {
             const float* query = x + q * d;
             float* res_dis = distances + q * k;
@@ -235,178 +333,175 @@ void IndexCSPG::search(
             const HNSW& hnsw0 = partitions[0]->hnsw;
             HNSW::storage_idx_t nearest = hnsw0.entry_point;
             if (nearest < 0)
-                continue; // empty partition (shouldn't happen)
+                continue; // empty partition
 
-            float d_nearest = fvec_L2sqr(query, get_vec(0, nearest), d);
+            rdc.set_query(query);
+            rdc.set_mapping(refunction[0].data());
 
-            // Greedy descent through upper HNSW levels in partition 0.
-            // For ef1 <= 1, also descend through level 0 (= GetClosestPoint).
-            // For ef1 > 1, stop at level 1 (level 0 handled by beam search).
-            int stop_level = (cur_ef1 <= 1) ? 0 : 1;
+            float d_nearest = rdc(nearest);
 
-            for (int level = hnsw0.max_level; level >= stop_level; level--) {
-                bool changed = true;
-                while (changed) {
-                    changed = false;
-                    size_t begin, end;
-                    hnsw0.neighbor_range(nearest, level, &begin, &end);
-                    for (size_t j = begin; j < end; j++) {
-                        HNSW::storage_idx_t v = hnsw0.neighbors[j];
-                        if (v < 0)
-                            continue;
-                        float dv = fvec_L2sqr(query, get_vec(0, v), d);
-                        if (dv < d_nearest) {
-                            nearest = v;
-                            d_nearest = dv;
-                            changed = true;
-                        }
-                    }
-                }
+            for (int level = hnsw0.max_level; level >= 1; level--) {
+                greedy_update_nearest(hnsw0, rdc, level, nearest, d_nearest);
             }
 
             // If ef1 > 1: beam search at level 0 in partition 0.
-            // This matches the original CSPG's hnsw_s_[0]->Search(q, 1, ef1).
             if (cur_ef1 > 1) {
-                memset(visited[0].data(), 0, visited[0].size());
-                visited[0][nearest] = 1;
+                visited[0].advance();
+                HNSWStats stats_s1;
+                auto top_cands = search_from_candidate_unbounded(
+                        hnsw0,
+                        HNSW::Node(d_nearest, nearest),
+                        rdc,
+                        cur_ef1,
+                        &visited[0],
+                        stats_s1);
 
-                std::priority_queue<Candidate> s1_max; // candidate set L
-                std::priority_queue<Candidate> s1_min; // exploration queue
-                s1_max.emplace(d_nearest, 0, static_cast<int>(nearest));
-                s1_min.emplace(-d_nearest, 0, static_cast<int>(nearest));
-                float s1_bound = d_nearest;
-
-                while (!s1_min.empty()) {
-                    auto [neg_d, gid, vid] = s1_min.top();
-                    s1_min.pop();
-
-                    if (-neg_d > s1_bound &&
-                        static_cast<int>(s1_max.size()) >= cur_ef1)
-                        break;
-
-                    size_t begin, end;
-                    hnsw0.neighbor_range(vid, 0, &begin, &end);
-                    for (size_t j = begin; j < end; j++) {
-                        HNSW::storage_idx_t nid = hnsw0.neighbors[j];
-                        if (nid < 0 || visited[0][nid])
-                            continue;
-                        visited[0][nid] = 1;
-
-                        float dn = fvec_L2sqr(query, get_vec(0, nid), d);
-                        if (s1_max.empty() ||
-                            std::get<0>(s1_max.top()) > dn ||
-                            static_cast<int>(s1_max.size()) < cur_ef1) {
-                            s1_max.emplace(dn, 0, static_cast<int>(nid));
-                            s1_min.emplace(-dn, 0, static_cast<int>(nid));
-                        }
-                        while (static_cast<int>(s1_max.size()) > cur_ef1)
-                            s1_max.pop();
-                        if (!s1_max.empty())
-                            s1_bound = std::get<0>(s1_max.top());
-                    }
-                }
-
-                // Paper line 7: p ← closest vector in visited
-                while (s1_max.size() > 1)
-                    s1_max.pop();
-                if (!s1_max.empty()) {
-                    nearest = std::get<2>(s1_max.top());
-                    d_nearest = std::get<0>(s1_max.top());
+                while (top_cands.size() > 1)
+                    top_cands.pop();
+                if (!top_cands.empty()) {
+                    d_nearest = top_cands.top().first;
+                    nearest = top_cands.top().second;
                 }
             }
 
             // ==============================================================
             // Stage 2: Cross-partition expansion (Algorithm 1 lines 8-14)
+            // Uses FAISS MinimaxHeap (SIMD-optimized, single heap) instead
+            // of dual std::priority_queue.
             // ==============================================================
 
-            // Paper line 8: L ← {(p,1)}, visited ← {p}
-            // Reset visited for all partitions
             for (int p = 0; p < num_partitions; p++) {
-                memset(visited[p].data(), 0, visited[p].size());
+                visited[p].advance();
             }
+            visited[0].set(nearest);
 
-            visited[0][nearest] = 1;
+            HNSW::MinimaxHeap candidates(cur_ef2);
+            HNSW::storage_idx_t enc_seed =
+                    0 * stride + static_cast<HNSW::storage_idx_t>(nearest);
+            candidates.push(enc_seed, d_nearest);
 
-            // maxheap = candidate set L (bounded by ef2, max-heap by distance)
-            // minheap = exploration queue (min-heap via negated distances)
-            std::priority_queue<Candidate> maxheap;
-            std::priority_queue<Candidate> minheap;
-            maxheap.emplace(d_nearest, 0, static_cast<int>(nearest));
-            minheap.emplace(-d_nearest, 0, static_cast<int>(nearest));
-            float bound = d_nearest;
+            const int num_routing_int = static_cast<int>(num_routing);
 
-            // Paper lines 9-14: main search loop
-            while (!minheap.empty()) {
-                // Line 10: (r, h) ← closest vector w.r.t. q in L
-                auto [neg_d, gid, vid] = minheap.top();
-                minheap.pop();
-
-                // Termination: if the closest candidate's distance exceeds
-                // the bound and we have enough candidates, stop.
-                if (-neg_d > bound &&
-                    static_cast<int>(maxheap.size()) >= cur_ef2)
+            while (candidates.size() > 0) {
+                float cur_d;
+                HNSW::storage_idx_t enc = candidates.pop_min(&cur_d);
+                if (enc < 0)
                     break;
 
-                // Line 11: for all unvisited neighbor u of r in G_h
-                const HNSW& hnsw = partitions[gid]->hnsw;
+                if (cur_d > candidates.max())
+                    break;
+
+                // Decode (partition_id, local_id)
+                int cur_gid = static_cast<int>(enc / stride);
+                int vid = static_cast<int>(enc % stride);
+
+                const HNSW& hnsw = partitions[cur_gid]->hnsw;
+                rdc.set_mapping(refunction[cur_gid].data());
                 size_t begin, end;
                 hnsw.neighbor_range(vid, 0, &begin, &end);
 
-                for (size_t j = begin; j < end; j++) {
-                    HNSW::storage_idx_t nid = hnsw.neighbors[j];
-                    if (nid < 0 || visited[gid][nid])
-                        continue;
+                // Process neighbor: accept into heap + cross-expand.
+                auto process_neighbor = [&](int nid, float dn) {
+                    if (candidates.max() > dn ||
+                        candidates.size() < cur_ef2) {
+                        HNSW::storage_idx_t enc_n =
+                                static_cast<HNSW::storage_idx_t>(cur_gid) *
+                                        stride +
+                                nid;
+                        candidates.push(enc_n, dn);
 
-                    // Line 12: L ← L ∪ {(u, h)}, visited ← visited ∪ {u}
-                    visited[gid][nid] = 1;
-                    float dn = fvec_L2sqr(query, get_vec(gid, nid), d);
-
-                    if (maxheap.empty() ||
-                        std::get<0>(maxheap.top()) > dn ||
-                        static_cast<int>(maxheap.size()) < cur_ef2) {
-                        maxheap.emplace(dn, gid, static_cast<int>(nid));
-                        minheap.emplace(-dn, gid, static_cast<int>(nid));
-
-                        // Line 13: if u is a routing vector then
-                        //   L ← L ∪ {(u,i) | i ∈ {1,...,m} ∧ i ≠ h}
-                        if (nid < static_cast<HNSW::storage_idx_t>(
-                                          num_routing)) {
+                        // Cross-partition expansion for routing vectors.
+                        if (nid < num_routing_int) {
                             for (int p = 0; p < num_partitions; p++) {
-                                if (p == gid)
+                                if (p == cur_gid)
                                     continue;
-                                visited[p][nid] = 1;
-                                maxheap.emplace(
-                                        dn, p, static_cast<int>(nid));
-                                minheap.emplace(
-                                        -dn, p, static_cast<int>(nid));
+                                visited[p].set(nid);
+                                HNSW::storage_idx_t enc_p =
+                                        static_cast<HNSW::storage_idx_t>(p) *
+                                                stride +
+                                        nid;
+                                candidates.push(enc_p, dn);
                             }
                         }
                     }
+                };
 
-                    // Line 14: keep |L| = ef2
-                    while (static_cast<int>(maxheap.size()) > cur_ef2)
-                        maxheap.pop();
-                    if (!maxheap.empty())
-                        bound = std::get<0>(maxheap.top());
+                // Pass 1: collect valid neighbors, prefetch visited table.
+                size_t jmax = begin;
+                for (size_t j = begin; j < end; j++) {
+                    int v1 = hnsw.neighbors[j];
+                    if (v1 < 0)
+                        break;
+                    visited[cur_gid].prefetch(v1);
+                    jmax++;
+                }
+
+                // Pass 2: batch-4 distance computation (SIMD-friendly).
+                int counter = 0;
+                size_t saved_j[4];
+
+                for (size_t j = begin; j < jmax; j++) {
+                    int v1 = hnsw.neighbors[j];
+                    saved_j[counter] = v1;
+                    counter += visited[cur_gid].set(v1) ? 1 : 0;
+
+                    if (counter == 4) {
+                        float dis[4];
+                        rdc.distances_batch_4(
+                                saved_j[0],
+                                saved_j[1],
+                                saved_j[2],
+                                saved_j[3],
+                                dis[0],
+                                dis[1],
+                                dis[2],
+                                dis[3]);
+                        for (int id4 = 0; id4 < 4; id4++) {
+                            process_neighbor(saved_j[id4], dis[id4]);
+                        }
+                        counter = 0;
+                    }
+                }
+
+                // Handle remaining neighbors (< 4).
+                for (int icnt = 0; icnt < counter; icnt++) {
+                    float dis = rdc(saved_j[icnt]);
+                    process_neighbor(saved_j[icnt], dis);
                 }
             }
 
             // ==============================================================
-            // Line 15: return top-k closest vectors in L
+            // Line 15: return top-k from MinimaxHeap.
+            // Pop min repeatedly to get results in ascending distance order.
+            // Lightweight dedup for routing vectors seen from multiple
+            // partitions.
             // ==============================================================
-            while (static_cast<int>(maxheap.size()) > static_cast<int>(k))
-                maxheap.pop();
+            {
+                int ri = 0;
+                while (candidates.size() > 0 &&
+                       ri < static_cast<int>(k)) {
+                    float dist;
+                    HNSW::storage_idx_t enc = candidates.pop_min(&dist);
+                    if (enc < 0)
+                        break;
 
-            // maxheap pops in descending distance order → fill from back
-            int ri = static_cast<int>(maxheap.size()) - 1;
-            while (!maxheap.empty()) {
-                auto [dist, gid, vid] = maxheap.top();
-                maxheap.pop();
-                if (ri >= 0 && ri < static_cast<int>(k)) {
-                    res_dis[ri] = dist;
-                    res_lab[ri] = refunction[gid][vid];
+                    int gid = static_cast<int>(enc / stride);
+                    int vid = static_cast<int>(enc % stride);
+                    idx_t global_id = refunction[gid][vid];
+
+                    bool dup = false;
+                    for (int s = 0; s < ri; s++) {
+                        if (res_lab[s] == global_id) {
+                            dup = true;
+                            break;
+                        }
+                    }
+                    if (!dup) {
+                        res_dis[ri] = dist;
+                        res_lab[ri] = global_id;
+                        ri++;
+                    }
                 }
-                ri--;
             }
         }
     }

@@ -5,7 +5,7 @@
   "nq": 200,
   "construction": {
     "SHG": {
-      "build_time_s": 26.51,
+      "build_time_s": 24.22,
       "memory_mb": 697.89
     },
     "HNSW": {

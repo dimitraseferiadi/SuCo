@@ -21,6 +21,7 @@
 #   INDEX_DIR   — path for saved indices  (default: /Users/dhm/Documents/indices)
 #   OUTPUT_DIR  — path for result JSON    (default: benchs/results_cspg)
 #   BENCHMARKS  — space-separated list    (default: all)
+#   INDEX_TYPES — index families to run   (default: "cspg hnsw")
 #   CSPG_M      — num_partitions          (default: 2)
 #   CSPG_LAMBDA — routing ratio           (default: 0.5)
 #   CSPG_M_ARG  — M (HNSW degree)         (default: 32)
@@ -35,6 +36,7 @@ DATA_DIR="${DATA_DIR:-/Users/dhm/Documents/data}"
 INDEX_DIR="${INDEX_DIR:-/Users/dhm/Documents/indices}"
 OUTPUT_DIR="${OUTPUT_DIR:-${SCRIPT_DIR}/results_cspg}"
 BENCHMARKS="${BENCHMARKS:-all}"
+INDEX_TYPES="${INDEX_TYPES:-cspg hnsw}"
 CSPG_M="${CSPG_M:-2}"
 CSPG_LAMBDA="${CSPG_LAMBDA:-0.5}"
 CSPG_M_ARG="${CSPG_M_ARG:-32}"
@@ -44,6 +46,16 @@ BENCH_SCRIPT="${SCRIPT_DIR}/bench_cspg_paper.py"
 PLOT_SCRIPT="${SCRIPT_DIR}/plot_cspg_paper.py"
 
 ALL_DATASETS=(sift1m deep1m gist1m sift10m)
+
+read -r -a BENCHMARK_ARGS <<< "${BENCHMARKS}"
+if [ ${#BENCHMARK_ARGS[@]} -eq 0 ]; then
+    BENCHMARK_ARGS=(all)
+fi
+
+read -r -a INDEX_TYPE_ARGS <<< "${INDEX_TYPES}"
+if [ ${#INDEX_TYPE_ARGS[@]} -eq 0 ]; then
+    INDEX_TYPE_ARGS=(cspg hnsw)
+fi
 
 if [ $# -gt 0 ]; then
     DATASETS=("$@")
@@ -58,7 +70,8 @@ echo "  Data dir:    ${DATA_DIR}"
 echo "  Index dir:   ${INDEX_DIR}"
 echo "  Output dir:  ${OUTPUT_DIR}"
 echo "  Datasets:    ${DATASETS[*]}"
-echo "  Benchmarks:  ${BENCHMARKS}"
+echo "  Benchmarks:  ${BENCHMARK_ARGS[*]}"
+echo "  Index types: ${INDEX_TYPE_ARGS[*]}"
 echo "  CSPG params: M=${CSPG_M_ARG}, efC=${CSPG_EFC}, m=${CSPG_M}, λ=${CSPG_LAMBDA}"
 echo "============================================================"
 
@@ -72,13 +85,13 @@ for ds in "${DATASETS[@]}"; do
 
     LOG_FILE="${OUTPUT_DIR}/log_cspg_${ds}.txt"
 
-    # shellcheck disable=SC2086
     python3 "${BENCH_SCRIPT}" \
         --data-dir   "${DATA_DIR}" \
         --index-dir  "${INDEX_DIR}" \
         --output-dir "${OUTPUT_DIR}" \
         --dataset    "${ds}" \
-        --benchmark  ${BENCHMARKS} \
+        --benchmark  "${BENCHMARK_ARGS[@]}" \
+        --index-type "${INDEX_TYPE_ARGS[@]}" \
         --M          "${CSPG_M_ARG}" \
         --efc        "${CSPG_EFC}" \
         --m          "${CSPG_M}" \

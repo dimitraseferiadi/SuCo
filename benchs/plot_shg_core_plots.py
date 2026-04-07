@@ -9,8 +9,8 @@ This script produces:
   - fig6_recall_vs_time_k50_shg_hnsw_panorama
   - fig9_ablation_shg_hnsw_no_shortcut_no_lb
 
-The recall-vs-time figures include only SHG, HNSW, and Panorama.
-The ablation figure includes SHG, HNSW, SHG-no-shortcut, and SHG-no-lb.
+The recall-vs-time figures include SHG, HNSW, Panorama, and IVFFlat.
+The ablation figure includes SHG, HNSW, IVFFlat, SHG-no-shortcut, and SHG-no-lb.
 
 Color palette is aligned with benchs/plot_benchmarks_from_logs.py:
   - HNSW: #e63946
@@ -36,7 +36,64 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 import numpy as np
+
+# ---------------------------------------------------------------------------
+# Paper-quality global style
+# ---------------------------------------------------------------------------
+plt.rcParams.update(
+    {
+        # Paper-like typography and compact layout (style only).
+        "font.family": "serif",
+        "font.serif": ["Times New Roman", "Times", "Linux Libertine O", "DejaVu Serif"],
+        "mathtext.fontset": "dejavuserif",
+        "font.size": 8.5,
+        "axes.titlesize": 10,
+        "axes.labelsize": 8.5,
+        "xtick.labelsize": 8,
+        "ytick.labelsize": 8,
+        "legend.fontsize": 7,
+        "legend.frameon": True,
+        "legend.framealpha": 0.95,
+        "legend.fancybox": False,
+        "legend.edgecolor": "0.65",
+        "legend.borderpad": 0.35,
+        "axes.spines.top": False,
+        "axes.spines.right": False,
+        "axes.linewidth": 0.7,
+        "xtick.major.width": 0.7,
+        "ytick.major.width": 0.7,
+        "xtick.minor.width": 0.5,
+        "ytick.minor.width": 0.5,
+        "xtick.major.size": 3.0,
+        "ytick.major.size": 3.0,
+        "xtick.minor.size": 2.0,
+        "ytick.minor.size": 2.0,
+        "lines.linewidth": 1.5,
+        "lines.markersize": 4.8,
+        "patch.linewidth": 0.5,
+        "figure.facecolor": "white",
+        "axes.facecolor": "white",
+        "savefig.facecolor": "white",
+        "grid.linewidth": 0.4,
+        "grid.linestyle": "--",
+        "grid.alpha": 0.35,
+        "figure.dpi": 150,
+        "savefig.bbox": "tight",
+        "savefig.pad_inches": 0.04,
+    }
+)
+
+
+def _clean_ax(ax: plt.Axes) -> None:
+    """Remove top/right spines, set subtle y-grid, put grid behind data."""
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["left"].set_color("0.2")
+    ax.spines["bottom"].set_color("0.2")
+    ax.yaxis.grid(True)
+    ax.set_axisbelow(True)
 
 
 DATASETS_ORDER = ["openai", "enron", "gist1m", "msong", "uqv", "msturing10m"]
@@ -51,9 +108,10 @@ DATASET_LABELS = {
 
 # Colors borrowed from benchs/plot_benchmarks_from_logs.py
 COLORS = {
-    "HNSW": "#a8dadc" ,
+    "HNSW": "#a8dadc",
     "SHG": "#457b9d",
     "PANORAMA": "#6ab187",
+    "IVFFLAT": "#2f2f2f",
     "SHG_NO_SHORTCUT": "#e63946",
     "SHG_NO_LB": "#f4a261",
 }
@@ -62,8 +120,18 @@ MARKERS = {
     "SHG": "o",
     "HNSW": "^",
     "PANORAMA": "P",
+    "IVFFLAT": "X",
     "SHG_NO_SHORTCUT": "s",
     "SHG_NO_LB": "D",
+}
+
+CURVE_ZORDER = {
+    "SHG": 10,
+    "HNSW": 6,
+    "PANORAMA": 5,
+    "IVFFLAT": 4,
+    "SHG_NO_SHORTCUT": 3,
+    "SHG_NO_LB": 2,
 }
 
 
@@ -122,17 +190,17 @@ def set_recall_ylim(ax: plt.Axes, recall_values: list[float]) -> None:
 
 
 def plot_construction_core(results: dict[str, dict], output_dir: Path) -> None:
-    """Plot Fig 4a/4b bars for SHG, HNSW, Panorama only."""
+    """Plot Fig 4a/4b bars for SHG, HNSW, Panorama, and IVFFlat."""
     datasets = [ds for ds in DATASETS_ORDER if ds in results]
     if not datasets:
         return
 
-    indices = ["SHG", "HNSW", "Panorama"]
+    indices = ["SHG", "HNSW", "Panorama", "IVFFlat"]
     x = np.arange(len(datasets))
-    width = 0.24
+    width = 0.18
 
     # Fig 4a: construction time
-    fig, ax = plt.subplots(figsize=(11, 5))
+    fig, ax = plt.subplots(figsize=(7, 3))
     for i, idx_name in enumerate(indices):
         vals = []
         for ds in datasets:
@@ -145,24 +213,22 @@ def plot_construction_core(results: dict[str, dict], output_dir: Path) -> None:
             width,
             label=idx_name,
             color=COLORS.get(idx_name.upper(), "#333333"),
-            edgecolor="black",
-            linewidth=0.6,
+            edgecolor="white",
+            linewidth=0.5,
         )
     ax.set_yscale("log")
-    ax.set_ylabel("Construction Time (s)")
-    ax.set_xticks(x + width)
-    ax.set_xticklabels([DATASET_LABELS.get(ds, ds) for ds in datasets], rotation=15)
-    ax.set_title("Index Construction Time (SHG, HNSW, Panorama)")
-    ax.grid(True, axis="y", linestyle="--", linewidth=0.4, alpha=0.45)
-    ax.legend()
-    fig.tight_layout()
-    fig.savefig(output_dir / "fig4a_construction_time_shg_hnsw_panorama.pdf", dpi=150)
-    fig.savefig(output_dir / "fig4a_construction_time_shg_hnsw_panorama.png", dpi=150)
+    ax.set_ylabel("Construction time (s)")
+    ax.set_xticks(x + width * (len(indices) - 1) / 2)
+    ax.set_xticklabels([DATASET_LABELS.get(ds, ds) for ds in datasets], rotation=20, ha="right")
+    ax.legend(loc="upper left", ncol=2)
+    _clean_ax(ax)
+    fig.savefig(output_dir / "fig4a_construction_time_shg_hnsw_panorama.pdf")
+    fig.savefig(output_dir / "fig4a_construction_time_shg_hnsw_panorama.png")
     plt.close(fig)
     print("  Saved fig4a_construction_time_shg_hnsw_panorama")
 
     # Fig 4b: memory cost
-    fig, ax = plt.subplots(figsize=(11, 5))
+    fig, ax = plt.subplots(figsize=(7, 3))
     for i, idx_name in enumerate(indices):
         vals = []
         for ds in datasets:
@@ -175,33 +241,31 @@ def plot_construction_core(results: dict[str, dict], output_dir: Path) -> None:
             width,
             label=idx_name,
             color=COLORS.get(idx_name.upper(), "#333333"),
-            edgecolor="black",
-            linewidth=0.6,
+            edgecolor="white",
+            linewidth=0.5,
         )
     ax.set_yscale("log")
-    ax.set_ylabel("Memory Cost (MB)")
-    ax.set_xticks(x + width)
-    ax.set_xticklabels([DATASET_LABELS.get(ds, ds) for ds in datasets], rotation=15)
-    ax.set_title("Index Memory Cost (SHG, HNSW, Panorama)")
-    ax.grid(True, axis="y", linestyle="--", linewidth=0.4, alpha=0.45)
-    ax.legend()
-    fig.tight_layout()
-    fig.savefig(output_dir / "fig4b_memory_cost_shg_hnsw_panorama.pdf", dpi=150)
-    fig.savefig(output_dir / "fig4b_memory_cost_shg_hnsw_panorama.png", dpi=150)
+    ax.set_ylabel("Memory (MB)")
+    ax.set_xticks(x + width * (len(indices) - 1) / 2)
+    ax.set_xticklabels([DATASET_LABELS.get(ds, ds) for ds in datasets], rotation=20, ha="right")
+    ax.legend(loc="upper left", ncol=2)
+    _clean_ax(ax)
+    fig.savefig(output_dir / "fig4b_memory_cost_shg_hnsw_panorama.pdf")
+    fig.savefig(output_dir / "fig4b_memory_cost_shg_hnsw_panorama.png")
     plt.close(fig)
     print("  Saved fig4b_memory_cost_shg_hnsw_panorama")
 
 
 def plot_recall_vs_time_core(results: dict[str, dict], output_dir: Path, k_key: str, k_val: int) -> None:
-    """Plot fig5/fig6 style curves with SHG, HNSW, and Panorama only."""
+    """Plot fig5/fig6 style curves with SHG, HNSW, Panorama, and IVFFlat."""
     datasets = [ds for ds in DATASETS_ORDER if ds in results and k_key in results[ds]]
     if not datasets:
         return
 
     n_ds = len(datasets)
-    cols = min(4, n_ds)
+    cols = min(3, n_ds)
     rows = (n_ds + cols - 1) // cols
-    fig, axes = plt.subplots(rows, cols, figsize=(5 * cols, 4 * rows))
+    fig, axes = plt.subplots(rows, cols, figsize=(3.5 * cols, 3.0 * rows), constrained_layout=True)
     if n_ds == 1:
         axes = np.array([axes])
     axes = axes.flatten()
@@ -210,6 +274,7 @@ def plot_recall_vs_time_core(results: dict[str, dict], output_dir: Path, k_key: 
         ("SHG", ["SHG"]),
         ("HNSW", ["HNSW"]),
         ("Panorama", ["Panorama", "PANORAMA"]),
+        ("IVFFlat", ["IVFFlat", "IVF-Flat", "IVF_FLAT"]),
     ]
 
     for idx, ds in enumerate(datasets):
@@ -232,36 +297,34 @@ def plot_recall_vs_time_core(results: dict[str, dict], output_dir: Path, k_key: 
                 marker=MARKERS.get(palette_key, "o"),
                 color=COLORS.get(palette_key, "#333333"),
                 label=display_name,
-                markersize=5,
-                linewidth=1.8,
+                zorder=CURVE_ZORDER.get(palette_key, 1),
             )
 
+        ax.set_xscale("log")
+        ax.xaxis.set_major_formatter(mticker.FuncFormatter(lambda v, _: f"{v:g}"))
         ax.set_xlabel("Time (ms/query)")
         ax.set_ylabel(f"Recall@{k_val}")
         ax.set_title(DATASET_LABELS.get(ds, ds))
-        ax.legend(fontsize=8, loc="lower right")
+        ax.legend(loc="lower right")
         set_recall_ylim(ax, plotted_recalls)
-        ax.grid(True, alpha=0.3)
+        _clean_ax(ax)
 
     for idx in range(n_ds, len(axes)):
         axes[idx].set_visible(False)
-
-    fig.suptitle(f"Recall vs Query Time (k={k_val})", fontsize=14)
-    fig.tight_layout()
 
     fig_name = (
         "fig5_recall_vs_time_k20_shg_hnsw_panorama"
         if k_val == 20
         else "fig6_recall_vs_time_k50_shg_hnsw_panorama"
     )
-    fig.savefig(output_dir / f"{fig_name}.pdf", dpi=150)
-    fig.savefig(output_dir / f"{fig_name}.png", dpi=150)
+    fig.savefig(output_dir / f"{fig_name}.pdf")
+    fig.savefig(output_dir / f"{fig_name}.png")
     plt.close(fig)
     print(f"  Saved {fig_name}")
 
 
 def plot_ablation_core(results: dict[str, dict], output_dir: Path) -> None:
-    """Plot ablation with SHG, HNSW, SHG-no-shortcut, and SHG-no-lb."""
+    """Plot ablation with SHG, HNSW, IVFFlat, SHG-no-shortcut, and SHG-no-lb."""
     datasets = [
         ds
         for ds in DATASETS_ORDER
@@ -271,9 +334,9 @@ def plot_ablation_core(results: dict[str, dict], output_dir: Path) -> None:
         return
 
     n_ds = len(datasets)
-    cols = min(4, n_ds)
+    cols = min(3, n_ds)
     rows = (n_ds + cols - 1) // cols
-    fig, axes = plt.subplots(rows, cols, figsize=(5 * cols, 4 * rows))
+    fig, axes = plt.subplots(rows, cols, figsize=(3.5 * cols, 3.0 * rows), constrained_layout=True)
     if n_ds == 1:
         axes = np.array([axes])
     axes = axes.flatten()
@@ -281,8 +344,9 @@ def plot_ablation_core(results: dict[str, dict], output_dir: Path) -> None:
     ablation_spec = [
         ("SHG", ["SHG"], "SHG", "-"),
         ("HNSW", ["HNSW"], "HNSW", "-"),
+        ("IVFFlat", ["IVFFlat", "IVF-Flat", "IVF_FLAT"], "IVFFLAT", ":"),
         ("SHG (no shortcut)", ["SHG-no-shortcut", "SHG-NO-SHORTCUT"], "SHG_NO_SHORTCUT", "--"),
-        ("SHG (no LB pruning)", ["SHG-no-lb", "SHG-NO-LB"], "SHG_NO_LB", "-.")
+        ("SHG (no LB pruning)", ["SHG-no-lb", "SHG-NO-LB"], "SHG_NO_LB", "-."),
     ]
 
     for idx, ds in enumerate(datasets):
@@ -306,28 +370,26 @@ def plot_ablation_core(results: dict[str, dict], output_dir: Path) -> None:
                 marker=MARKERS.get(style_key, "o"),
                 color=COLORS.get(style_key, "#333333"),
                 label=display_name,
-                markersize=5.5,
-                linewidth=2.0,
                 linestyle=line_style,
                 alpha=0.95,
+                zorder=CURVE_ZORDER.get(style_key, 1),
             )
 
+        ax.set_xscale("log")
+        ax.xaxis.set_major_formatter(mticker.FuncFormatter(lambda v, _: f"{v:g}"))
         ax.set_xlabel("Time (ms/query)")
         ax.set_ylabel("Recall@20")
         ax.set_title(DATASET_LABELS.get(ds, ds))
-        ax.legend(fontsize=7, loc="lower right")
+        ax.legend(loc="lower right")
         set_recall_ylim(ax, plotted_recalls)
-        ax.grid(True, alpha=0.3)
+        _clean_ax(ax)
 
     for idx in range(n_ds, len(axes)):
         axes[idx].set_visible(False)
 
-    fig.suptitle("Ablation: SHG/HNSW and SHG Variants (k=20)", fontsize=14)
-    fig.tight_layout()
-
     fig_name = "fig9_ablation_shg_hnsw_no_shortcut_no_lb"
-    fig.savefig(output_dir / f"{fig_name}.pdf", dpi=150)
-    fig.savefig(output_dir / f"{fig_name}.png", dpi=150)
+    fig.savefig(output_dir / f"{fig_name}.pdf")
+    fig.savefig(output_dir / f"{fig_name}.png")
     plt.close(fig)
     print(f"  Saved {fig_name}")
 
@@ -373,16 +435,16 @@ def main() -> None:
     print(f"Found results for: {list(results.keys())}")
     print(f"Plots will be saved to {output_dir}\n")
 
-    print("Plotting construction/memory bars (Fig 4a/4b): SHG, HNSW, Panorama...")
+    print("Plotting construction/memory bars (Fig 4a/4b): SHG, HNSW, Panorama, IVFFlat...")
     plot_construction_core(results, output_dir)
 
-    print("Plotting recall vs time (k=20): SHG, HNSW, Panorama...")
+    print("Plotting recall vs time (k=20): SHG, HNSW, Panorama, IVFFlat...")
     plot_recall_vs_time_core(results, output_dir, "recall_k20", 20)
 
-    print("Plotting recall vs time (k=50): SHG, HNSW, Panorama...")
+    print("Plotting recall vs time (k=50): SHG, HNSW, Panorama, IVFFlat...")
     plot_recall_vs_time_core(results, output_dir, "recall_k50", 50)
 
-    print("Plotting ablation: SHG, HNSW, SHG-no-shortcut, SHG-no-lb...")
+    print("Plotting ablation: SHG, HNSW, IVFFlat, SHG-no-shortcut, SHG-no-lb...")
     plot_ablation_core(results, output_dir)
 
     print(f"\nAll requested plots saved to {output_dir}")
