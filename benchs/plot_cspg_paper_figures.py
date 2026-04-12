@@ -50,11 +50,12 @@ plt.rcParams.update({
     "savefig.bbox": "tight",
 })
 
-DATASETS_ORDER = ["sift1m", "deep1m", "gist1m", "sift10m"]
+DATASETS_ORDER = ["sift1m", "deep1m", "gist1m", "uqv1m", "sift10m"]
 DATASET_LABELS = {
     "sift1m":  "SIFT1M",
     "deep1m":  "DEEP1M",
     "gist1m":  "GIST1M",
+    "uqv1m":   "UQV1M",
     "sift10m": "SIFT10M",
 }
 

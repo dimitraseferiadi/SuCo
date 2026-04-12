@@ -45,7 +45,7 @@ CSPG_EFC="${CSPG_EFC:-128}"
 BENCH_SCRIPT="${SCRIPT_DIR}/bench_cspg_paper.py"
 PLOT_SCRIPT="${SCRIPT_DIR}/plot_cspg_paper.py"
 
-ALL_DATASETS=(sift1m deep1m gist1m sift10m)
+ALL_DATASETS=(sift1m deep1m gist1m uqv1m sift10m)
 
 read -r -a BENCHMARK_ARGS <<< "${BENCHMARKS}"
 if [ ${#BENCHMARK_ARGS[@]} -eq 0 ]; then

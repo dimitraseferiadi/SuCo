@@ -1,0 +1,29 @@
+Traceback (most recent call last):
+  File "/Users/dhm/Documents/SuCo/benchs/bench_cspg_paper.py", line 1345, in main
+    run_benchmarks(ds, benchmarks, index_types,
+  File "/Users/dhm/Documents/SuCo/benchs/bench_cspg_paper.py", line 746, in run_benchmarks
+    xq, gt = load_dataset_queries_only(dataset_name, data_dir)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/dhm/Documents/SuCo/benchs/bench_cspg_paper.py", line 426, in load_dataset_queries_only
+    raise FileNotFoundError("sift10m ground truth not found and xb not loaded")
+FileNotFoundError: sift10m ground truth not found and xb not loaded
+========================================================================
+CSPG Paper Benchmark Suite
+========================================================================
+  Data dir:         /Users/dhm/Documents/data
+  Index dir:        /Users/dhm/Documents/indices
+  Output dir:       /Users/dhm/Documents/SuCo/benchs/results_cspg
+  Datasets:         ['sift10m']
+  Benchmarks:       ['construction', 'recall_k10', 'recall_k20', 'recall_k50', 'ablation_m', 'ablation_lam', 'ablation_ef1', 'robustness']
+  Index types:      ['cspg', 'hnsw']
+  CSPG params:      M=32, efC=128, m=2, λ=0.5
+  SearchParamsCSPG: available
+========================================================================
+
+########################################################################
+# Dataset: SIFT10M
+########################################################################
+
+Loading sift10m…
+
+ERROR on dataset 'sift10m': sift10m ground truth not found and xb not loaded

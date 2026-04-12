@@ -303,9 +303,7 @@ void IndexCSPG::search(
         std::vector<VisitedTable> visited;
         visited.reserve(num_partitions);
         for (int p = 0; p < num_partitions; p++) {
-            visited.emplace_back(partitions[p]->hnsw.nb_neighbors(0) > 0
-                                         ? partitions[p]->ntotal
-                                         : 0);
+            visited.emplace_back(partitions[p]->ntotal);
         }
 
         // Single shared DistanceComputer from shared_flat per thread,
@@ -366,9 +364,11 @@ void IndexCSPG::search(
 
             // ==============================================================
             // Stage 2: Cross-partition expansion (Algorithm 1 lines 8-14)
-            // Uses FAISS MinimaxHeap (SIMD-optimized, single heap) instead
-            // of dual std::priority_queue.
+            // Uses direct fvec_L2sqr_batch_4 calls (no virtual dispatch)
+            // with vector-data prefetching for cache-friendly random access.
             // ==============================================================
+
+            const float* xb = shared_flat->get_xb();
 
             for (int p = 0; p < num_partitions; p++) {
                 visited[p].advance();
@@ -396,7 +396,7 @@ void IndexCSPG::search(
                 int vid = static_cast<int>(enc % stride);
 
                 const HNSW& hnsw = partitions[cur_gid]->hnsw;
-                rdc.set_mapping(refunction[cur_gid].data());
+                const idx_t* map = refunction[cur_gid].data();
                 size_t begin, end;
                 hnsw.neighbor_range(vid, 0, &begin, &end);
 
@@ -426,7 +426,7 @@ void IndexCSPG::search(
                     }
                 };
 
-                // Pass 1: collect valid neighbors, prefetch visited table.
+                // Pass 1: prefetch visited table entries for valid neighbors.
                 size_t jmax = begin;
                 for (size_t j = begin; j < end; j++) {
                     int v1 = hnsw.neighbors[j];
@@ -436,37 +436,44 @@ void IndexCSPG::search(
                     jmax++;
                 }
 
-                // Pass 2: batch-4 distance computation (SIMD-friendly).
-                int counter = 0;
-                size_t saved_j[4];
-
+                // Pass 2: collect unvisited neighbors + prefetch their
+                // vector data from shared_flat (hide DRAM latency).
+                int n_unvis = 0;
+                int unvis[128]; // max 2*M neighbors at level 0
                 for (size_t j = begin; j < jmax; j++) {
                     int v1 = hnsw.neighbors[j];
-                    saved_j[counter] = v1;
-                    counter += visited[cur_gid].set(v1) ? 1 : 0;
-
-                    if (counter == 4) {
-                        float dis[4];
-                        rdc.distances_batch_4(
-                                saved_j[0],
-                                saved_j[1],
-                                saved_j[2],
-                                saved_j[3],
-                                dis[0],
-                                dis[1],
-                                dis[2],
-                                dis[3]);
-                        for (int id4 = 0; id4 < 4; id4++) {
-                            process_neighbor(saved_j[id4], dis[id4]);
-                        }
-                        counter = 0;
+                    if (visited[cur_gid].set(v1)) {
+                        unvis[n_unvis++] = v1;
+                        prefetch_L2(xb + map[v1] * d);
                     }
                 }
 
+                // Pass 3: batch-4 distance computation.
+                // By now, prefetched vector data should be in cache.
+                // Call fvec_L2sqr_batch_4 directly (no virtual dispatch).
+                int i4;
+                for (i4 = 0; i4 + 4 <= n_unvis; i4 += 4) {
+                    float dis[4];
+                    fvec_L2sqr_batch_4(
+                            query,
+                            xb + map[unvis[i4 + 0]] * d,
+                            xb + map[unvis[i4 + 1]] * d,
+                            xb + map[unvis[i4 + 2]] * d,
+                            xb + map[unvis[i4 + 3]] * d,
+                            d,
+                            dis[0],
+                            dis[1],
+                            dis[2],
+                            dis[3]);
+                    for (int id4 = 0; id4 < 4; id4++) {
+                        process_neighbor(unvis[i4 + id4], dis[id4]);
+                    }
+                }
                 // Handle remaining neighbors (< 4).
-                for (int icnt = 0; icnt < counter; icnt++) {
-                    float dis = rdc(saved_j[icnt]);
-                    process_neighbor(saved_j[icnt], dis);
+                for (; i4 < n_unvis; i4++) {
+                    float dis = fvec_L2sqr(
+                            query, xb + map[unvis[i4]] * d, d);
+                    process_neighbor(unvis[i4], dis);
                 }
             }
 

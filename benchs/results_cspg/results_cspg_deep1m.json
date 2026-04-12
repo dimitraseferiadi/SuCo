@@ -1,0 +1,1588 @@
+{
+  "dataset": "deep1m",
+  "n": 1000000,
+  "d": 96,
+  "nq": 10000,
+  "construction": {
+    "CSPG(m=2, \u03bb=0.5)": {
+      "build_time_s": 66.0,
+      "memory_mb": 961.5
+    },
+    "HNSW": {
+      "build_time_s": 47.66,
+      "memory_mb": 625.73
+    }
+  },
+  "recall_k10": {
+    "CSPG(m=2,\u03bb=0.5)": [
+      {
+        "param": 10,
+        "recall": 0.59,
+        "ms_per_query": 0.051802
+      },
+      {
+        "param": 20,
+        "recall": 0.83716,
+        "ms_per_query": 0.081835
+      },
+      {
+        "param": 30,
+        "recall": 0.89069,
+        "ms_per_query": 0.106695
+      },
+      {
+        "param": 40,
+        "recall": 0.92199,
+        "ms_per_query": 0.133231
+      },
+      {
+        "param": 60,
+        "recall": 0.95406,
+        "ms_per_query": 0.193132
+      },
+      {
+        "param": 80,
+        "recall": 0.96914,
+        "ms_per_query": 0.234447
+      },
+      {
+        "param": 100,
+        "recall": 0.97816,
+        "ms_per_query": 0.280557
+      },
+      {
+        "param": 150,
+        "recall": 0.9887,
+        "ms_per_query": 0.397775
+      },
+      {
+        "param": 200,
+        "recall": 0.9932,
+        "ms_per_query": 0.494856
+      },
+      {
+        "param": 300,
+        "recall": 0.9966,
+        "ms_per_query": 0.708611
+      },
+      {
+        "param": 400,
+        "recall": 0.99798,
+        "ms_per_query": 0.895138
+      },
+      {
+        "param": 600,
+        "recall": 0.99904,
+        "ms_per_query": 1.249193
+      },
+      {
+        "param": 800,
+        "recall": 0.99943,
+        "ms_per_query": 1.614386
+      },
+      {
+        "param": 1000,
+        "recall": 0.99958,
+        "ms_per_query": 1.885417
+      },
+      {
+        "param": 1500,
+        "recall": 0.99976,
+        "ms_per_query": 2.690197
+      }
+    ],
+    "HNSW": [
+      {
+        "param": 10,
+        "recall": 0.76182,
+        "ms_per_query": 0.045937
+      },
+      {
+        "param": 20,
+        "recall": 0.8725,
+        "ms_per_query": 0.068588
+      },
+      {
+        "param": 30,
+        "recall": 0.91829,
+        "ms_per_query": 0.094873
+      },
+      {
+        "param": 40,
+        "recall": 0.94351,
+        "ms_per_query": 0.118508
+      },
+      {
+        "param": 60,
+        "recall": 0.96799,
+        "ms_per_query": 0.164845
+      },
+      {
+        "param": 80,
+        "recall": 0.97887,
+        "ms_per_query": 0.210695
+      },
+      {
+        "param": 100,
+        "recall": 0.98478,
+        "ms_per_query": 0.252731
+      },
+      {
+        "param": 150,
+        "recall": 0.99222,
+        "ms_per_query": 0.362261
+      },
+      {
+        "param": 200,
+        "recall": 0.99532,
+        "ms_per_query": 0.473658
+      },
+      {
+        "param": 300,
+        "recall": 0.99785,
+        "ms_per_query": 0.669865
+      },
+      {
+        "param": 400,
+        "recall": 0.99861,
+        "ms_per_query": 0.887748
+      },
+      {
+        "param": 600,
+        "recall": 0.99929,
+        "ms_per_query": 1.289221
+      },
+      {
+        "param": 800,
+        "recall": 0.99953,
+        "ms_per_query": 1.745285
+      },
+      {
+        "param": 1000,
+        "recall": 0.99962,
+        "ms_per_query": 2.233201
+      },
+      {
+        "param": 1500,
+        "recall": 0.99974,
+        "ms_per_query": 3.481254
+      }
+    ]
+  },
+  "recall_k20": {
+    "CSPG(m=2,\u03bb=0.5)": [
+      {
+        "param": 10,
+        "recall": 0.634225,
+        "ms_per_query": 0.077793
+      },
+      {
+        "param": 20,
+        "recall": 0.634225,
+        "ms_per_query": 0.080174
+      },
+      {
+        "param": 30,
+        "recall": 0.85129,
+        "ms_per_query": 0.10753
+      },
+      {
+        "param": 40,
+        "recall": 0.89765,
+        "ms_per_query": 0.133596
+      },
+      {
+        "param": 60,
+        "recall": 0.93834,
+        "ms_per_query": 0.184003
+      },
+      {
+        "param": 80,
+        "recall": 0.958025,
+        "ms_per_query": 0.230353
+      },
+      {
+        "param": 100,
+        "recall": 0.96978,
+        "ms_per_query": 0.276601
+      },
+      {
+        "param": 150,
+        "recall": 0.983655,
+        "ms_per_query": 0.395219
+      },
+      {
+        "param": 200,
+        "recall": 0.989955,
+        "ms_per_query": 0.48866
+      },
+      {
+        "param": 300,
+        "recall": 0.99507,
+        "ms_per_query": 0.698988
+      },
+      {
+        "param": 400,
+        "recall": 0.99705,
+        "ms_per_query": 0.884964
+      },
+      {
+        "param": 600,
+        "recall": 0.99861,
+        "ms_per_query": 1.247695
+      },
+      {
+        "param": 800,
+        "recall": 0.9992,
+        "ms_per_query": 1.610405
+      },
+      {
+        "param": 1000,
+        "recall": 0.999515,
+        "ms_per_query": 1.882453
+      },
+      {
+        "param": 1500,
+        "recall": 0.99976,
+        "ms_per_query": 2.672208
+      }
+    ],
+    "HNSW": [
+      {
+        "param": 10,
+        "recall": 0.7131,
+        "ms_per_query": 0.044912
+      },
+      {
+        "param": 20,
+        "recall": 0.8391,
+        "ms_per_query": 0.071673
+      },
+      {
+        "param": 30,
+        "recall": 0.893725,
+        "ms_per_query": 0.095025
+      },
+      {
+        "param": 40,
+        "recall": 0.925015,
+        "ms_per_query": 0.118317
+      },
+      {
+        "param": 60,
+        "recall": 0.95589,
+        "ms_per_query": 0.164739
+      },
+      {
+        "param": 80,
+        "recall": 0.970595,
+        "ms_per_query": 0.212519
+      },
+      {
+        "param": 100,
+        "recall": 0.978865,
+        "ms_per_query": 0.252832
+      },
+      {
+        "param": 150,
+        "recall": 0.98892,
+        "ms_per_query": 0.362892
+      },
+      {
+        "param": 200,
+        "recall": 0.99322,
+        "ms_per_query": 0.474239
+      },
+      {
+        "param": 300,
+        "recall": 0.996885,
+        "ms_per_query": 0.669685
+      },
+      {
+        "param": 400,
+        "recall": 0.99801,
+        "ms_per_query": 0.894636
+      },
+      {
+        "param": 600,
+        "recall": 0.99913,
+        "ms_per_query": 1.290599
+      },
+      {
+        "param": 800,
+        "recall": 0.99946,
+        "ms_per_query": 1.747803
+      },
+      {
+        "param": 1000,
+        "recall": 0.999615,
+        "ms_per_query": 2.235495
+      },
+      {
+        "param": 1500,
+        "recall": 0.999815,
+        "ms_per_query": 3.482581
+      }
+    ]
+  },
+  "recall_k50": {
+    "CSPG(m=2,\u03bb=0.5)": [
+      {
+        "param": 10,
+        "recall": 0.65546,
+        "ms_per_query": 0.16147
+      },
+      {
+        "param": 20,
+        "recall": 0.65546,
+        "ms_per_query": 0.159666
+      },
+      {
+        "param": 30,
+        "recall": 0.65546,
+        "ms_per_query": 0.161324
+      },
+      {
+        "param": 40,
+        "recall": 0.65546,
+        "ms_per_query": 0.159626
+      },
+      {
+        "param": 60,
+        "recall": 0.780464,
+        "ms_per_query": 0.186566
+      },
+      {
+        "param": 80,
+        "recall": 0.930788,
+        "ms_per_query": 0.233544
+      },
+      {
+        "param": 100,
+        "recall": 0.949482,
+        "ms_per_query": 0.279546
+      },
+      {
+        "param": 150,
+        "recall": 0.972232,
+        "ms_per_query": 0.397718
+      },
+      {
+        "param": 200,
+        "recall": 0.982508,
+        "ms_per_query": 0.49305
+      },
+      {
+        "param": 300,
+        "recall": 0.991146,
+        "ms_per_query": 0.714294
+      },
+      {
+        "param": 400,
+        "recall": 0.994656,
+        "ms_per_query": 0.900538
+      },
+      {
+        "param": 600,
+        "recall": 0.997478,
+        "ms_per_query": 1.248461
+      },
+      {
+        "param": 800,
+        "recall": 0.998476,
+        "ms_per_query": 1.585855
+      },
+      {
+        "param": 1000,
+        "recall": 0.999036,
+        "ms_per_query": 1.854439
+      },
+      {
+        "param": 1500,
+        "recall": 0.999576,
+        "ms_per_query": 2.651692
+      }
+    ],
+    "HNSW": [
+      {
+        "param": 10,
+        "recall": 0.61701,
+        "ms_per_query": 0.052375
+      },
+      {
+        "param": 20,
+        "recall": 0.765234,
+        "ms_per_query": 0.075729
+      },
+      {
+        "param": 30,
+        "recall": 0.838918,
+        "ms_per_query": 0.097497
+      },
+      {
+        "param": 40,
+        "recall": 0.88218,
+        "ms_per_query": 0.120435
+      },
+      {
+        "param": 60,
+        "recall": 0.927602,
+        "ms_per_query": 0.166448
+      },
+      {
+        "param": 80,
+        "recall": 0.950944,
+        "ms_per_query": 0.210395
+      },
+      {
+        "param": 100,
+        "recall": 0.96416,
+        "ms_per_query": 0.252427
+      },
+      {
+        "param": 150,
+        "recall": 0.980632,
+        "ms_per_query": 0.361575
+      },
+      {
+        "param": 200,
+        "recall": 0.987834,
+        "ms_per_query": 0.476687
+      },
+      {
+        "param": 300,
+        "recall": 0.994016,
+        "ms_per_query": 0.664368
+      },
+      {
+        "param": 400,
+        "recall": 0.996352,
+        "ms_per_query": 0.881332
+      },
+      {
+        "param": 600,
+        "recall": 0.998278,
+        "ms_per_query": 1.286187
+      },
+      {
+        "param": 800,
+        "recall": 0.998972,
+        "ms_per_query": 1.729152
+      },
+      {
+        "param": 1000,
+        "recall": 0.999326,
+        "ms_per_query": 2.210605
+      },
+      {
+        "param": 1500,
+        "recall": 0.999688,
+        "ms_per_query": 3.449454
+      }
+    ]
+  },
+  "ablation_m": {
+    "CSPG(m=1,\u03bb=0.5)": [
+      {
+        "param": 10,
+        "recall": 0.76238,
+        "ms_per_query": 0.051866
+      },
+      {
+        "param": 20,
+        "recall": 0.8724,
+        "ms_per_query": 0.072794
+      },
+      {
+        "param": 30,
+        "recall": 0.91901,
+        "ms_per_query": 0.099081
+      },
+      {
+        "param": 40,
+        "recall": 0.94404,
+        "ms_per_query": 0.123733
+      },
+      {
+        "param": 60,
+        "recall": 0.96815,
+        "ms_per_query": 0.170369
+      },
+      {
+        "param": 80,
+        "recall": 0.97892,
+        "ms_per_query": 0.212258
+      },
+      {
+        "param": 100,
+        "recall": 0.98487,
+        "ms_per_query": 0.255268
+      },
+      {
+        "param": 150,
+        "recall": 0.9923,
+        "ms_per_query": 0.361966
+      },
+      {
+        "param": 200,
+        "recall": 0.99535,
+        "ms_per_query": 0.456849
+      },
+      {
+        "param": 300,
+        "recall": 0.9979,
+        "ms_per_query": 0.636892
+      },
+      {
+        "param": 400,
+        "recall": 0.99864,
+        "ms_per_query": 0.822999
+      },
+      {
+        "param": 600,
+        "recall": 0.99936,
+        "ms_per_query": 1.131548
+      },
+      {
+        "param": 800,
+        "recall": 0.99957,
+        "ms_per_query": 1.454342
+      },
+      {
+        "param": 1000,
+        "recall": 0.99967,
+        "ms_per_query": 1.776946
+      },
+      {
+        "param": 1500,
+        "recall": 0.99977,
+        "ms_per_query": 2.42982
+      }
+    ],
+    "CSPG(m=2,\u03bb=0.5)": [
+      {
+        "param": 10,
+        "recall": 0.59011,
+        "ms_per_query": 0.053794
+      },
+      {
+        "param": 20,
+        "recall": 0.83739,
+        "ms_per_query": 0.081424
+      },
+      {
+        "param": 30,
+        "recall": 0.89103,
+        "ms_per_query": 0.106406
+      },
+      {
+        "param": 40,
+        "recall": 0.92242,
+        "ms_per_query": 0.136377
+      },
+      {
+        "param": 60,
+        "recall": 0.95417,
+        "ms_per_query": 0.188215
+      },
+      {
+        "param": 80,
+        "recall": 0.96917,
+        "ms_per_query": 0.233471
+      },
+      {
+        "param": 100,
+        "recall": 0.97838,
+        "ms_per_query": 0.280877
+      },
+      {
+        "param": 150,
+        "recall": 0.9889,
+        "ms_per_query": 0.401446
+      },
+      {
+        "param": 200,
+        "recall": 0.99335,
+        "ms_per_query": 0.497486
+      },
+      {
+        "param": 300,
+        "recall": 0.99667,
+        "ms_per_query": 0.709704
+      },
+      {
+        "param": 400,
+        "recall": 0.99804,
+        "ms_per_query": 0.886139
+      },
+      {
+        "param": 600,
+        "recall": 0.99902,
+        "ms_per_query": 1.261375
+      },
+      {
+        "param": 800,
+        "recall": 0.99943,
+        "ms_per_query": 1.628103
+      },
+      {
+        "param": 1000,
+        "recall": 0.99959,
+        "ms_per_query": 1.904287
+      },
+      {
+        "param": 1500,
+        "recall": 0.99977,
+        "ms_per_query": 2.706474
+      }
+    ],
+    "CSPG(m=4,\u03bb=0.5)": [
+      {
+        "param": 10,
+        "recall": 0.37947,
+        "ms_per_query": 0.060729
+      },
+      {
+        "param": 20,
+        "recall": 0.68287,
+        "ms_per_query": 0.092356
+      },
+      {
+        "param": 30,
+        "recall": 0.83025,
+        "ms_per_query": 0.1219
+      },
+      {
+        "param": 40,
+        "recall": 0.87414,
+        "ms_per_query": 0.150761
+      },
+      {
+        "param": 60,
+        "recall": 0.91981,
+        "ms_per_query": 0.207588
+      },
+      {
+        "param": 80,
+        "recall": 0.94323,
+        "ms_per_query": 0.259369
+      },
+      {
+        "param": 100,
+        "recall": 0.95714,
+        "ms_per_query": 0.314143
+      },
+      {
+        "param": 150,
+        "recall": 0.97641,
+        "ms_per_query": 0.432005
+      },
+      {
+        "param": 200,
+        "recall": 0.98495,
+        "ms_per_query": 0.552538
+      },
+      {
+        "param": 300,
+        "recall": 0.99233,
+        "ms_per_query": 0.792603
+      },
+      {
+        "param": 400,
+        "recall": 0.99523,
+        "ms_per_query": 0.986111
+      },
+      {
+        "param": 600,
+        "recall": 0.99766,
+        "ms_per_query": 1.408703
+      },
+      {
+        "param": 800,
+        "recall": 0.99861,
+        "ms_per_query": 1.783353
+      },
+      {
+        "param": 1000,
+        "recall": 0.99907,
+        "ms_per_query": 2.117661
+      },
+      {
+        "param": 1500,
+        "recall": 0.9995,
+        "ms_per_query": 3.046522
+      }
+    ],
+    "CSPG(m=8,\u03bb=0.5)": [
+      {
+        "param": 10,
+        "recall": 0.25177,
+        "ms_per_query": 0.077999
+      },
+      {
+        "param": 20,
+        "recall": 0.43976,
+        "ms_per_query": 0.118937
+      },
+      {
+        "param": 30,
+        "recall": 0.60132,
+        "ms_per_query": 0.148135
+      },
+      {
+        "param": 40,
+        "recall": 0.71971,
+        "ms_per_query": 0.177371
+      },
+      {
+        "param": 60,
+        "recall": 0.85572,
+        "ms_per_query": 0.245142
+      },
+      {
+        "param": 80,
+        "recall": 0.89344,
+        "ms_per_query": 0.306718
+      },
+      {
+        "param": 100,
+        "recall": 0.91613,
+        "ms_per_query": 0.366359
+      },
+      {
+        "param": 150,
+        "recall": 0.94869,
+        "ms_per_query": 0.50392
+      },
+      {
+        "param": 200,
+        "recall": 0.965,
+        "ms_per_query": 0.64622
+      },
+      {
+        "param": 300,
+        "recall": 0.98082,
+        "ms_per_query": 0.904632
+      },
+      {
+        "param": 400,
+        "recall": 0.98765,
+        "ms_per_query": 1.158775
+      },
+      {
+        "param": 600,
+        "recall": 0.99365,
+        "ms_per_query": 1.660857
+      },
+      {
+        "param": 800,
+        "recall": 0.99617,
+        "ms_per_query": 2.060872
+      },
+      {
+        "param": 1000,
+        "recall": 0.99734,
+        "ms_per_query": 2.503117
+      },
+      {
+        "param": 1500,
+        "recall": 0.99878,
+        "ms_per_query": 3.572997
+      }
+    ]
+  },
+  "ablation_lam": {
+    "CSPG(m=2,\u03bb=0.1)": [
+      {
+        "param": 10,
+        "recall": 0.62638,
+        "ms_per_query": 0.050589
+      },
+      {
+        "param": 20,
+        "recall": 0.79957,
+        "ms_per_query": 0.077546
+      },
+      {
+        "param": 30,
+        "recall": 0.87143,
+        "ms_per_query": 0.105742
+      },
+      {
+        "param": 40,
+        "recall": 0.90973,
+        "ms_per_query": 0.130757
+      },
+      {
+        "param": 60,
+        "recall": 0.94689,
+        "ms_per_query": 0.180448
+      },
+      {
+        "param": 80,
+        "recall": 0.96506,
+        "ms_per_query": 0.225391
+      },
+      {
+        "param": 100,
+        "recall": 0.97561,
+        "ms_per_query": 0.272601
+      },
+      {
+        "param": 150,
+        "recall": 0.98763,
+        "ms_per_query": 0.386377
+      },
+      {
+        "param": 200,
+        "recall": 0.99241,
+        "ms_per_query": 0.481125
+      },
+      {
+        "param": 300,
+        "recall": 0.99626,
+        "ms_per_query": 0.685516
+      },
+      {
+        "param": 400,
+        "recall": 0.99776,
+        "ms_per_query": 0.877115
+      },
+      {
+        "param": 600,
+        "recall": 0.99882,
+        "ms_per_query": 1.222414
+      },
+      {
+        "param": 800,
+        "recall": 0.99932,
+        "ms_per_query": 1.578106
+      },
+      {
+        "param": 1000,
+        "recall": 0.99948,
+        "ms_per_query": 1.836565
+      },
+      {
+        "param": 1500,
+        "recall": 0.99969,
+        "ms_per_query": 2.545151
+      }
+    ],
+    "CSPG(m=2,\u03bb=0.2)": [
+      {
+        "param": 10,
+        "recall": 0.64373,
+        "ms_per_query": 0.050954
+      },
+      {
+        "param": 20,
+        "recall": 0.82162,
+        "ms_per_query": 0.078369
+      },
+      {
+        "param": 30,
+        "recall": 0.88133,
+        "ms_per_query": 0.104631
+      },
+      {
+        "param": 40,
+        "recall": 0.91521,
+        "ms_per_query": 0.132364
+      },
+      {
+        "param": 60,
+        "recall": 0.95085,
+        "ms_per_query": 0.181758
+      },
+      {
+        "param": 80,
+        "recall": 0.96754,
+        "ms_per_query": 0.225727
+      },
+      {
+        "param": 100,
+        "recall": 0.97738,
+        "ms_per_query": 0.27184
+      },
+      {
+        "param": 150,
+        "recall": 0.98823,
+        "ms_per_query": 0.387436
+      },
+      {
+        "param": 200,
+        "recall": 0.9926,
+        "ms_per_query": 0.479908
+      },
+      {
+        "param": 300,
+        "recall": 0.99654,
+        "ms_per_query": 0.684977
+      },
+      {
+        "param": 400,
+        "recall": 0.9979,
+        "ms_per_query": 0.878127
+      },
+      {
+        "param": 600,
+        "recall": 0.99902,
+        "ms_per_query": 1.213214
+      },
+      {
+        "param": 800,
+        "recall": 0.99933,
+        "ms_per_query": 1.574992
+      },
+      {
+        "param": 1000,
+        "recall": 0.99953,
+        "ms_per_query": 1.849555
+      },
+      {
+        "param": 1500,
+        "recall": 0.99973,
+        "ms_per_query": 2.626744
+      }
+    ],
+    "CSPG(m=2,\u03bb=0.3)": [
+      {
+        "param": 10,
+        "recall": 0.63405,
+        "ms_per_query": 0.049902
+      },
+      {
+        "param": 20,
+        "recall": 0.82969,
+        "ms_per_query": 0.082585
+      },
+      {
+        "param": 30,
+        "recall": 0.88753,
+        "ms_per_query": 0.10451
+      },
+      {
+        "param": 40,
+        "recall": 0.91918,
+        "ms_per_query": 0.134613
+      },
+      {
+        "param": 60,
+        "recall": 0.9517,
+        "ms_per_query": 0.184137
+      },
+      {
+        "param": 80,
+        "recall": 0.96771,
+        "ms_per_query": 0.229447
+      },
+      {
+        "param": 100,
+        "recall": 0.97721,
+        "ms_per_query": 0.27845
+      },
+      {
+        "param": 150,
+        "recall": 0.98823,
+        "ms_per_query": 0.393696
+      },
+      {
+        "param": 200,
+        "recall": 0.99276,
+        "ms_per_query": 0.489873
+      },
+      {
+        "param": 300,
+        "recall": 0.99651,
+        "ms_per_query": 0.699098
+      },
+      {
+        "param": 400,
+        "recall": 0.99777,
+        "ms_per_query": 0.879404
+      },
+      {
+        "param": 600,
+        "recall": 0.99892,
+        "ms_per_query": 1.236743
+      },
+      {
+        "param": 800,
+        "recall": 0.99936,
+        "ms_per_query": 1.597715
+      },
+      {
+        "param": 1000,
+        "recall": 0.99952,
+        "ms_per_query": 1.875014
+      },
+      {
+        "param": 1500,
+        "recall": 0.99973,
+        "ms_per_query": 2.688893
+      }
+    ],
+    "CSPG(m=2,\u03bb=0.4)": [
+      {
+        "param": 10,
+        "recall": 0.61373,
+        "ms_per_query": 0.053291
+      },
+      {
+        "param": 20,
+        "recall": 0.83359,
+        "ms_per_query": 0.078163
+      },
+      {
+        "param": 30,
+        "recall": 0.8894,
+        "ms_per_query": 0.10935
+      },
+      {
+        "param": 40,
+        "recall": 0.92057,
+        "ms_per_query": 0.133194
+      },
+      {
+        "param": 60,
+        "recall": 0.95344,
+        "ms_per_query": 0.183686
+      },
+      {
+        "param": 80,
+        "recall": 0.96873,
+        "ms_per_query": 0.231502
+      },
+      {
+        "param": 100,
+        "recall": 0.97784,
+        "ms_per_query": 0.280197
+      },
+      {
+        "param": 150,
+        "recall": 0.98843,
+        "ms_per_query": 0.397103
+      },
+      {
+        "param": 200,
+        "recall": 0.99305,
+        "ms_per_query": 0.494591
+      },
+      {
+        "param": 300,
+        "recall": 0.99673,
+        "ms_per_query": 0.707123
+      },
+      {
+        "param": 400,
+        "recall": 0.99801,
+        "ms_per_query": 0.900419
+      },
+      {
+        "param": 600,
+        "recall": 0.99898,
+        "ms_per_query": 1.255339
+      },
+      {
+        "param": 800,
+        "recall": 0.99941,
+        "ms_per_query": 1.618489
+      },
+      {
+        "param": 1000,
+        "recall": 0.99957,
+        "ms_per_query": 1.914381
+      },
+      {
+        "param": 1500,
+        "recall": 0.99973,
+        "ms_per_query": 2.667298
+      }
+    ],
+    "CSPG(m=2,\u03bb=0.5)": [
+      {
+        "param": 10,
+        "recall": 0.59011,
+        "ms_per_query": 0.051894
+      },
+      {
+        "param": 20,
+        "recall": 0.83739,
+        "ms_per_query": 0.079322
+      },
+      {
+        "param": 30,
+        "recall": 0.89103,
+        "ms_per_query": 0.108311
+      },
+      {
+        "param": 40,
+        "recall": 0.92242,
+        "ms_per_query": 0.133275
+      },
+      {
+        "param": 60,
+        "recall": 0.95417,
+        "ms_per_query": 0.184472
+      },
+      {
+        "param": 80,
+        "recall": 0.96917,
+        "ms_per_query": 0.229718
+      },
+      {
+        "param": 100,
+        "recall": 0.97838,
+        "ms_per_query": 0.278306
+      },
+      {
+        "param": 150,
+        "recall": 0.9889,
+        "ms_per_query": 0.393448
+      },
+      {
+        "param": 200,
+        "recall": 0.99335,
+        "ms_per_query": 0.489874
+      },
+      {
+        "param": 300,
+        "recall": 0.99667,
+        "ms_per_query": 0.719633
+      },
+      {
+        "param": 400,
+        "recall": 0.99804,
+        "ms_per_query": 0.885305
+      },
+      {
+        "param": 600,
+        "recall": 0.99902,
+        "ms_per_query": 1.2621
+      },
+      {
+        "param": 800,
+        "recall": 0.99943,
+        "ms_per_query": 1.609985
+      },
+      {
+        "param": 1000,
+        "recall": 0.99959,
+        "ms_per_query": 1.8807
+      },
+      {
+        "param": 1500,
+        "recall": 0.99977,
+        "ms_per_query": 2.699588
+      }
+    ]
+  },
+  "ablation_ef1": {
+    "CSPG(ef1=1)": [
+      {
+        "param": 10,
+        "recall": 0.59,
+        "ms_per_query": 0.051033
+      },
+      {
+        "param": 20,
+        "recall": 0.83716,
+        "ms_per_query": 0.080837
+      },
+      {
+        "param": 30,
+        "recall": 0.89069,
+        "ms_per_query": 0.1074
+      },
+      {
+        "param": 40,
+        "recall": 0.92199,
+        "ms_per_query": 0.135542
+      },
+      {
+        "param": 60,
+        "recall": 0.95406,
+        "ms_per_query": 0.185257
+      },
+      {
+        "param": 80,
+        "recall": 0.96914,
+        "ms_per_query": 0.231959
+      },
+      {
+        "param": 100,
+        "recall": 0.97816,
+        "ms_per_query": 0.280935
+      },
+      {
+        "param": 150,
+        "recall": 0.9887,
+        "ms_per_query": 0.396744
+      },
+      {
+        "param": 200,
+        "recall": 0.9932,
+        "ms_per_query": 0.493479
+      },
+      {
+        "param": 300,
+        "recall": 0.9966,
+        "ms_per_query": 0.705638
+      },
+      {
+        "param": 400,
+        "recall": 0.99798,
+        "ms_per_query": 0.895761
+      },
+      {
+        "param": 600,
+        "recall": 0.99904,
+        "ms_per_query": 1.257545
+      },
+      {
+        "param": 800,
+        "recall": 0.99943,
+        "ms_per_query": 1.623931
+      },
+      {
+        "param": 1000,
+        "recall": 0.99958,
+        "ms_per_query": 1.897993
+      },
+      {
+        "param": 1500,
+        "recall": 0.99976,
+        "ms_per_query": 2.699186
+      }
+    ],
+    "CSPG(ef1=2)": [
+      {
+        "param": 10,
+        "recall": 0.57053,
+        "ms_per_query": 0.057877
+      },
+      {
+        "param": 20,
+        "recall": 0.83198,
+        "ms_per_query": 0.082162
+      },
+      {
+        "param": 30,
+        "recall": 0.88796,
+        "ms_per_query": 0.112719
+      },
+      {
+        "param": 40,
+        "recall": 0.92049,
+        "ms_per_query": 0.136872
+      },
+      {
+        "param": 60,
+        "recall": 0.9531,
+        "ms_per_query": 0.189809
+      },
+      {
+        "param": 80,
+        "recall": 0.9687,
+        "ms_per_query": 0.236027
+      },
+      {
+        "param": 100,
+        "recall": 0.97786,
+        "ms_per_query": 0.2834
+      },
+      {
+        "param": 150,
+        "recall": 0.98857,
+        "ms_per_query": 0.401883
+      },
+      {
+        "param": 200,
+        "recall": 0.99316,
+        "ms_per_query": 0.500085
+      },
+      {
+        "param": 300,
+        "recall": 0.99658,
+        "ms_per_query": 0.710424
+      },
+      {
+        "param": 400,
+        "recall": 0.99797,
+        "ms_per_query": 0.900943
+      },
+      {
+        "param": 600,
+        "recall": 0.99902,
+        "ms_per_query": 1.263444
+      },
+      {
+        "param": 800,
+        "recall": 0.99941,
+        "ms_per_query": 1.636065
+      },
+      {
+        "param": 1000,
+        "recall": 0.99956,
+        "ms_per_query": 1.907324
+      },
+      {
+        "param": 1500,
+        "recall": 0.99974,
+        "ms_per_query": 2.710231
+      }
+    ],
+    "CSPG(ef1=4)": [
+      {
+        "param": 10,
+        "recall": 0.56738,
+        "ms_per_query": 0.058146
+      },
+      {
+        "param": 20,
+        "recall": 0.82917,
+        "ms_per_query": 0.090187
+      },
+      {
+        "param": 30,
+        "recall": 0.88701,
+        "ms_per_query": 0.115779
+      },
+      {
+        "param": 40,
+        "recall": 0.91977,
+        "ms_per_query": 0.141337
+      },
+      {
+        "param": 60,
+        "recall": 0.95285,
+        "ms_per_query": 0.194554
+      },
+      {
+        "param": 80,
+        "recall": 0.96861,
+        "ms_per_query": 0.240222
+      },
+      {
+        "param": 100,
+        "recall": 0.97773,
+        "ms_per_query": 0.28829
+      },
+      {
+        "param": 150,
+        "recall": 0.98856,
+        "ms_per_query": 0.408115
+      },
+      {
+        "param": 200,
+        "recall": 0.99314,
+        "ms_per_query": 0.503323
+      },
+      {
+        "param": 300,
+        "recall": 0.99656,
+        "ms_per_query": 0.715802
+      },
+      {
+        "param": 400,
+        "recall": 0.99796,
+        "ms_per_query": 0.904973
+      },
+      {
+        "param": 600,
+        "recall": 0.99902,
+        "ms_per_query": 1.268892
+      },
+      {
+        "param": 800,
+        "recall": 0.99941,
+        "ms_per_query": 1.634296
+      },
+      {
+        "param": 1000,
+        "recall": 0.99956,
+        "ms_per_query": 1.9118
+      },
+      {
+        "param": 1500,
+        "recall": 0.99974,
+        "ms_per_query": 2.710574
+      }
+    ],
+    "CSPG(ef1=8)": [
+      {
+        "param": 10,
+        "recall": 0.57001,
+        "ms_per_query": 0.06703
+      },
+      {
+        "param": 20,
+        "recall": 0.82734,
+        "ms_per_query": 0.096821
+      },
+      {
+        "param": 30,
+        "recall": 0.88622,
+        "ms_per_query": 0.12017
+      },
+      {
+        "param": 40,
+        "recall": 0.91935,
+        "ms_per_query": 0.150153
+      },
+      {
+        "param": 60,
+        "recall": 0.95276,
+        "ms_per_query": 0.19938
+      },
+      {
+        "param": 80,
+        "recall": 0.96847,
+        "ms_per_query": 0.247311
+      },
+      {
+        "param": 100,
+        "recall": 0.97776,
+        "ms_per_query": 0.295268
+      },
+      {
+        "param": 150,
+        "recall": 0.98857,
+        "ms_per_query": 0.413115
+      },
+      {
+        "param": 200,
+        "recall": 0.99314,
+        "ms_per_query": 0.510669
+      },
+      {
+        "param": 300,
+        "recall": 0.99657,
+        "ms_per_query": 0.721785
+      },
+      {
+        "param": 400,
+        "recall": 0.99796,
+        "ms_per_query": 0.900008
+      },
+      {
+        "param": 600,
+        "recall": 0.99902,
+        "ms_per_query": 1.274958
+      },
+      {
+        "param": 800,
+        "recall": 0.99941,
+        "ms_per_query": 1.642611
+      },
+      {
+        "param": 1000,
+        "recall": 0.99956,
+        "ms_per_query": 1.920475
+      },
+      {
+        "param": 1500,
+        "recall": 0.99974,
+        "ms_per_query": 2.722482
+      }
+    ],
+    "CSPG(ef1=16)": [
+      {
+        "param": 10,
+        "recall": 0.57458,
+        "ms_per_query": 0.090828
+      },
+      {
+        "param": 20,
+        "recall": 0.83065,
+        "ms_per_query": 0.11407
+      },
+      {
+        "param": 30,
+        "recall": 0.88671,
+        "ms_per_query": 0.136973
+      },
+      {
+        "param": 40,
+        "recall": 0.91908,
+        "ms_per_query": 0.163537
+      },
+      {
+        "param": 60,
+        "recall": 0.95248,
+        "ms_per_query": 0.215685
+      },
+      {
+        "param": 80,
+        "recall": 0.96828,
+        "ms_per_query": 0.260301
+      },
+      {
+        "param": 100,
+        "recall": 0.97763,
+        "ms_per_query": 0.308885
+      },
+      {
+        "param": 150,
+        "recall": 0.98856,
+        "ms_per_query": 0.427549
+      },
+      {
+        "param": 200,
+        "recall": 0.99313,
+        "ms_per_query": 0.525496
+      },
+      {
+        "param": 300,
+        "recall": 0.99657,
+        "ms_per_query": 0.743598
+      },
+      {
+        "param": 400,
+        "recall": 0.99796,
+        "ms_per_query": 0.915658
+      },
+      {
+        "param": 600,
+        "recall": 0.99902,
+        "ms_per_query": 1.594408
+      },
+      {
+        "param": 800,
+        "recall": 0.99941,
+        "ms_per_query": 1.810094
+      },
+      {
+        "param": 1000,
+        "recall": 0.99956,
+        "ms_per_query": 2.120922
+      },
+      {
+        "param": 1500,
+        "recall": 0.99974,
+        "ms_per_query": 2.980842
+      }
+    ]
+  },
+  "robustness": {
+    "CSPG(m=2,\u03bb=0.5)": {
+      "mean_recall": 0.9926,
+      "median_recall": 1.0,
+      "min_recall": 0.75,
+      "max_recall": 1.0,
+      "q25_recall": 1.0,
+      "q75_recall": 1.0,
+      "ms_per_query": 0.1176
+    },
+    "HNSW": {
+      "mean_recall": 0.995,
+      "median_recall": 1.0,
+      "min_recall": 0.75,
+      "max_recall": 1.0,
+      "q25_recall": 1.0,
+      "q75_recall": 1.0,
+      "ms_per_query": 0.097
+    }
+  }
+}

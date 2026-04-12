@@ -92,7 +92,7 @@ ABLATION_EF1_VALUES = [1, 2, 4, 8, 16]
 # Skip exact Flat search for datasets larger than this
 FLAT_MAX_VECTORS = 2_000_000
 
-ALL_DATASETS = ["sift1m", "deep1m", "gist1m", "sift10m"]
+ALL_DATASETS = ["sift1m", "deep1m", "gist1m", "uqv1m", "sift10m"]
 ALL_BENCHMARKS = [
     "construction",
     "recall_k10",
@@ -246,7 +246,8 @@ def _load_sift10m(data_dir, nb=10_000_000, nq=10_000):
         key = next((k for k in data.keys() if not k.startswith("_")), None)
         if key is None:
             raise RuntimeError(f"No feature matrix found in {mat_path}")
-        raw = data[key]
+        raw = np.asarray(data[key])
+        del data
     except NotImplementedError:
         try:
             import h5py
@@ -262,15 +263,25 @@ def _load_sift10m(data_dir, nb=10_000_000, nq=10_000):
                 key = next((k for k in f.keys() if getattr(f[k], "ndim", 0) == 2), None)
             if key is None:
                 raise RuntimeError(f"Could not find 2D feature dataset in {mat_path}")
-            raw = f[key][()]
+            dset = f[key]
+            # Only read the rows we need (nb + nq) to avoid loading full dataset
+            need = nb + nq
+            if dset.ndim != 2:
+                raise RuntimeError(f"Expected 2D feature dataset in {mat_path}, got shape {dset.shape}")
+            if dset.shape[1] == 128:
+                raw = np.empty((need, 128), dtype=np.float32)
+                dset.read_direct(raw, np.s_[:need, :])
+            elif dset.shape[0] == 128:
+                raw = np.ascontiguousarray(dset[:, :need].T.astype(np.float32))
+            else:
+                raise RuntimeError(f"Cannot infer SIFT10M matrix layout from shape {dset.shape}")
 
-    raw = np.asarray(raw)
     if raw.ndim != 2:
         raise RuntimeError(f"Expected 2D feature matrix in {mat_path}, got {raw.shape}")
     if raw.shape[1] == 128:
-        x = np.ascontiguousarray(raw.astype(np.float32))
+        x = np.ascontiguousarray(raw, dtype=np.float32)
     elif raw.shape[0] == 128:
-        x = np.ascontiguousarray(raw.T.astype(np.float32))
+        x = np.ascontiguousarray(raw.T, dtype=np.float32)
     else:
         raise RuntimeError(f"Cannot infer SIFT10M matrix layout from shape {raw.shape}")
 
@@ -346,11 +357,106 @@ def load_dataset(name, data_dir):
         gt = read_ivecs(os.path.join(p, "gist_groundtruth.ivecs"))
         return xb, xq, gt
 
+    elif name == "uqv1m":
+        p = _find_dataset_dir(data_dir, ["uqv", "uqv1m", "UQV"], "uqv_base.fvecs")
+        if p is None:
+            raise FileNotFoundError(
+                "Could not find UQV under data_dir. Expected one of "
+                "uqv/, uqv1m/, or UQV/ with uqv_base.fvecs"
+            )
+        xb = _read_fvecs_mmap(os.path.join(p, "uqv_base.fvecs"))
+        xq = _read_fvecs_mmap(os.path.join(p, "uqv_query.fvecs"))
+        gt = read_ivecs(os.path.join(p, "uqv_groundtruth.ivecs"))
+        return xb, xq, gt
+
     elif name == "sift10m":
         return _load_sift10m(data_dir)
 
     else:
         raise ValueError(f"Unknown dataset: {name!r}")
+
+
+def _get_dataset_size(name):
+    """Return n (number of base vectors) without loading them."""
+    sizes = {"sift1m": 1_000_000, "deep1m": 1_000_000, "gist1m": 1_000_000,
+             "uqv1m": 1_000_000, "sift10m": 10_000_000}
+    name = name.lower()
+    if name in sizes:
+        return sizes[name]
+    raise ValueError(f"Unknown dataset size for {name!r}")
+
+
+def load_dataset_queries_only(name, data_dir):
+    """Load only xq and gt (no base vectors). Used when all indices are cached."""
+    name = name.lower()
+
+    if name == "sift1m":
+        p = _find_dataset_dir(data_dir, ["sift1M", "sift1m", "sift"], "sift_base.fvecs")
+        xq = _read_fvecs_mmap(os.path.join(p, "sift_query.fvecs"))
+        gt = read_ivecs(os.path.join(p, "sift_groundtruth.ivecs"))
+
+    elif name == "deep1m":
+        p = os.path.join(data_dir, "deep1b")
+        xq = _read_fvecs_mmap(os.path.join(p, "deep1B_queries.fvecs"), n=10_000)
+        gt_path = _first_existing_path([
+            os.path.join(p, "deep1M_groundtruth.ivecs"),
+            os.path.join(p, "deep1M_groundtruth.npy"),
+        ])
+        if gt_path is None:
+            raise FileNotFoundError("deep1m ground truth not found and xb not loaded")
+        gt = np.load(gt_path) if gt_path.endswith(".npy") else read_ivecs(gt_path)
+        if gt.shape[0] > xq.shape[0]:
+            gt = gt[:xq.shape[0]]
+
+    elif name == "gist1m":
+        p = _find_dataset_dir(data_dir, ["gist1M", "gist1m", "gist"], "gist_base.fvecs")
+        xq = _read_fvecs_mmap(os.path.join(p, "gist_query.fvecs"))
+        gt = read_ivecs(os.path.join(p, "gist_groundtruth.ivecs"))
+
+    elif name == "sift10m":
+        # Queries were split from the .mat file at offset 10M; load from cache
+        gt_path = _first_existing_path([
+            os.path.join(data_dir, "sift10m_gt.npy"),
+            os.path.join(data_dir, "SIFT10M", "sift10m_gt.npy"),
+            os.path.join(data_dir, "sift10m", "sift10m_gt.npy"),
+            os.path.join(data_dir, "SIFT10M", "sift_groundtruth.ivecs"),
+            os.path.join(data_dir, "sift10m", "sift_groundtruth.ivecs"),
+        ])
+        if gt_path is None:
+            raise FileNotFoundError("sift10m ground truth not found and xb not loaded")
+        gt = np.load(gt_path) if gt_path.endswith(".npy") else read_ivecs(gt_path)
+
+        # Load only query vectors from the .mat file (rows 10M..10M+10K)
+        nb, nq = 10_000_000, 10_000
+        mat_path = _first_existing_path([
+            os.path.join(data_dir, "SIFT10M", "SIFT10Mfeatures.mat"),
+            os.path.join(data_dir, "sift10m", "SIFT10Mfeatures.mat"),
+            os.path.join(data_dir, "SIFT10Mfeatures.mat"),
+        ])
+        try:
+            import h5py
+            with h5py.File(mat_path, "r") as f:
+                preferred = ["fea", "features", "X", "data"]
+                key = next((k for k in preferred if k in f), None)
+                if key is None:
+                    key = next((k for k in f.keys() if getattr(f[k], "ndim", 0) == 2), None)
+                dset = f[key]
+                if dset.shape[1] == 128:
+                    xq = np.ascontiguousarray(dset[nb:nb+nq, :], dtype=np.float32)
+                else:
+                    xq = np.ascontiguousarray(dset[:, nb:nb+nq].T, dtype=np.float32)
+        except Exception:
+            # Fallback: load full dataset (shouldn't normally happen)
+            xb_full, xq, _ = _load_sift10m(data_dir)
+            del xb_full
+
+        if gt.shape[0] > xq.shape[0]:
+            gt = gt[:xq.shape[0]]
+
+    else:
+        raise ValueError(f"Unknown dataset: {name!r}")
+
+    return xq, gt
 
 
 def compute_ground_truth(xb, xq, k=100):
@@ -590,20 +696,58 @@ def run_benchmarks(dataset_name, benchmarks, index_types, data_dir, index_dir, o
     print(f"{'#'*72}")
 
     # ------------------------------------------------------------------
-    # Load dataset
+    # Load dataset (defer xb if all indices are already cached)
     # ------------------------------------------------------------------
+
+    # Collect all cache keys we'll need so we can check if xb is required
+    _needed_keys = set()
+    if "cspg" in index_types:
+        _needed_keys.add("cspg_default")
+    if "hnsw" in index_types:
+        _needed_keys.add("hnsw")
+    if "ivfflat" in index_types:
+        _needed_keys.add("ivfflat")
+    if "ivfpq" in index_types:
+        _needed_keys.add("ivfpq")
+    if "ablation_m" in benchmarks:
+        for _m in ABLATION_M_VALUES:
+            _needed_keys.add(f"cspg_m{_m}_l{int(DEFAULT_LAMBDA*100)}")
+    if "ablation_lam" in benchmarks:
+        for _lam in ABLATION_LAMBDA_VALUES:
+            _needed_keys.add(f"cspg_m{DEFAULT_NUM_PARTITIONS}_l{int(round(_lam*100))}")
+
+    _all_cached = all(
+        os.path.exists(os.path.join(index_dir, f"{dataset_name}_{ck}.idx"))
+        for ck in _needed_keys
+    )
+    # Also check robustness cache
+    _rob_cached = True
+    if "robustness" in benchmarks:
+        _rob_cached = (
+            os.path.exists(os.path.join(index_dir, f"{dataset_name}_cspg_rob_q.npy")) and
+            os.path.exists(os.path.join(index_dir, f"{dataset_name}_cspg_rob_gt.npy"))
+        )
+
+    _need_xb = not (_all_cached and _rob_cached)
+
     print(f"\nLoading {dataset_name}…")
     t0 = time.time()
-    xb, xq, gt = load_dataset(dataset_name, data_dir)
-    print(f"  Done in {time.time()-t0:.1f}s | "
-          f"xb={xb.shape}  xq={xq.shape}  gt={gt.shape}")
-
-    if gt.max() >= xb.shape[0]:
-        print(f"  GT IDs out of range — recomputing…")
-        gt = compute_ground_truth(xb, xq, gt.shape[1])
-
-    d = xb.shape[1]
-    n = int(xb.shape[0])
+    if _need_xb:
+        xb, xq, gt = load_dataset(dataset_name, data_dir)
+        print(f"  Done in {time.time()-t0:.1f}s | "
+              f"xb={xb.shape}  xq={xq.shape}  gt={gt.shape}")
+        if gt.max() >= xb.shape[0]:
+            print(f"  GT IDs out of range — recomputing…")
+            gt = compute_ground_truth(xb, xq, gt.shape[1])
+        d = xb.shape[1]
+        n = int(xb.shape[0])
+    else:
+        xb = None
+        xq, gt = load_dataset_queries_only(dataset_name, data_dir)
+        print(f"  Queries only in {time.time()-t0:.1f}s | "
+              f"xq={xq.shape}  gt={gt.shape}  (xb skipped — all indices cached)")
+        d = xq.shape[1]
+        n = _get_dataset_size(dataset_name)
 
     all_results = {"dataset": dataset_name, "n": n, "d": d, "nq": int(xq.shape[0])}
 
@@ -645,24 +789,24 @@ def run_benchmarks(dataset_name, benchmarks, index_types, data_dir, index_dir, o
     def _get_index(cache_key, builder_fn, label):
         """Return (idx, build_time_s, mem_mb) — loads from disk if cached."""
         idx_path = os.path.join(index_dir, f"{dataset_name}_{cache_key}.idx")
-        idx, build_time = None, -1.0
 
         cached = try_load_index(idx_path, label)
         if cached is not None:
-            idx        = cached
-            build_time = -1.0   # was loaded from cache
-        else:
-            if xb is None:
-                print(f"  {label}: no cache and xb was freed — skip")
-                return None, -1.0, -1.0
-            print(f"\n--- Building {label} ---")
-            try:
-                idx, build_time = builder_fn(xb, d)
-                try_save_index(idx, idx_path, label)
-            except Exception as e:
-                print(f"  {label}: BUILD FAILED — {e}")
-                traceback.print_exc()
-                return None, -1.0, -1.0
+            build_time = prebuild_times.get(cache_key, -1.0)
+            mem_mb = index_size_mb(cached)
+            return cached, build_time, mem_mb
+
+        if xb is None:
+            print(f"  {label}: no cache and xb was freed — skip")
+            return None, -1.0, -1.0
+        print(f"\n--- Building {label} ---")
+        try:
+            idx, build_time = builder_fn(xb, d)
+            try_save_index(idx, idx_path, label)
+        except Exception as e:
+            print(f"  {label}: BUILD FAILED — {e}")
+            traceback.print_exc()
+            return None, -1.0, -1.0
 
         mem_mb = index_size_mb(idx)
         return idx, build_time, mem_mb
@@ -678,6 +822,76 @@ def run_benchmarks(dataset_name, benchmarks, index_types, data_dir, index_dir, o
                 prev_construction = json.load(fp).get("construction", {})
         except Exception:
             pass
+
+    # ------------------------------------------------------------------
+    # Pre-build pass: ensure every index variant is cached on disk so
+    # that we can free xb before the memory-intensive benchmark loops.
+    # Each index is built, saved, and immediately freed.
+    # ------------------------------------------------------------------
+    prebuild_times = {}  # cache_key -> build_time_s
+
+    def _ensure_cached(cache_key, builder_fn, label):
+        idx_path = os.path.join(index_dir, f"{dataset_name}_{cache_key}.idx")
+        if os.path.exists(idx_path):
+            return
+        print(f"\n--- Pre-building {label} ---")
+        idx, build_time = builder_fn(xb, d)
+        try_save_index(idx, idx_path, label)
+        prebuild_times[cache_key] = build_time
+        del idx
+        gc.collect()
+
+    prebuild_plan = []
+    if "cspg" in index_types:
+        prebuild_plan.append(
+            ("cspg_default", lambda xb, d: build_cspg(xb, d),
+             f"CSPG(m={DEFAULT_NUM_PARTITIONS}, λ={DEFAULT_LAMBDA})"))
+    if "hnsw" in index_types:
+        prebuild_plan.append(
+            ("hnsw", lambda xb, d: build_hnsw(xb, d), "HNSW"))
+    if "ivfflat" in index_types:
+        prebuild_plan.append(
+            ("ivfflat", lambda xb, d: build_ivfflat(xb, d), "IVFFlat"))
+    if "ivfpq" in index_types:
+        prebuild_plan.append(
+            ("ivfpq", lambda xb, d: build_ivfpq(xb, d), "IVFPQ"))
+    if "flat" in index_types and n <= FLAT_MAX_VECTORS:
+        prebuild_plan.append(
+            ("flat", lambda xb, d: build_flat(xb, d), "Flat"))
+
+    # Ablation m variants
+    if "ablation_m" in benchmarks:
+        for m in ABLATION_M_VALUES:
+            ck = f"cspg_m{m}_l{int(DEFAULT_LAMBDA*100)}"
+            prebuild_plan.append(
+                (ck, lambda xb, d, _m=m: build_cspg(xb, d, num_partitions=_m, lam=DEFAULT_LAMBDA),
+                 f"CSPG(m={m},λ={DEFAULT_LAMBDA})"))
+
+    # Ablation lambda variants
+    if "ablation_lam" in benchmarks:
+        for lam in ABLATION_LAMBDA_VALUES:
+            lam_pct = int(round(lam * 100))
+            ck = f"cspg_m{DEFAULT_NUM_PARTITIONS}_l{lam_pct}"
+            prebuild_plan.append(
+                (ck, lambda xb, d, _lam=lam: build_cspg(xb, d, num_partitions=DEFAULT_NUM_PARTITIONS, lam=_lam),
+                 f"CSPG(m={DEFAULT_NUM_PARTITIONS},λ={lam})"))
+
+    seen_keys = set()
+    for cache_key, builder, label in prebuild_plan:
+        if cache_key in seen_keys:
+            continue
+        seen_keys.add(cache_key)
+        try:
+            _ensure_cached(cache_key, builder, label)
+        except Exception as e:
+            print(f"  Pre-build {label} FAILED: {e}")
+            traceback.print_exc()
+
+    # Free base vectors — all indices are now cached on disk
+    del xb
+    xb = None
+    gc.collect()
+    print(f"\n  Base vectors freed — all indices cached to disk.")
 
     # ==================================================================
     # 1. CONSTRUCTION benchmark
