@@ -386,7 +386,7 @@ def _get_dataset_size(name):
     raise ValueError(f"Unknown dataset size for {name!r}")
 
 
-def load_dataset_queries_only(name, data_dir):
+def load_dataset_queries_only(name, data_dir, index_dir=None):
     """Load only xq and gt (no base vectors). Used when all indices are cached."""
     name = name.lower()
 
@@ -415,13 +415,16 @@ def load_dataset_queries_only(name, data_dir):
 
     elif name == "sift10m":
         # Queries were split from the .mat file at offset 10M; load from cache
-        gt_path = _first_existing_path([
+        _gt_candidates = [
             os.path.join(data_dir, "sift10m_gt.npy"),
             os.path.join(data_dir, "SIFT10M", "sift10m_gt.npy"),
             os.path.join(data_dir, "sift10m", "sift10m_gt.npy"),
             os.path.join(data_dir, "SIFT10M", "sift_groundtruth.ivecs"),
             os.path.join(data_dir, "sift10m", "sift_groundtruth.ivecs"),
-        ])
+        ]
+        if index_dir:
+            _gt_candidates.insert(0, os.path.join(index_dir, "sift10m_gt.npy"))
+        gt_path = _first_existing_path(_gt_candidates)
         if gt_path is None:
             raise FileNotFoundError("sift10m ground truth not found and xb not loaded")
         gt = np.load(gt_path) if gt_path.endswith(".npy") else read_ivecs(gt_path)
@@ -743,7 +746,7 @@ def run_benchmarks(dataset_name, benchmarks, index_types, data_dir, index_dir, o
         n = int(xb.shape[0])
     else:
         xb = None
-        xq, gt = load_dataset_queries_only(dataset_name, data_dir)
+        xq, gt = load_dataset_queries_only(dataset_name, data_dir, index_dir)
         print(f"  Queries only in {time.time()-t0:.1f}s | "
               f"xq={xq.shape}  gt={gt.shape}  (xb skipped — all indices cached)")
         d = xq.shape[1]

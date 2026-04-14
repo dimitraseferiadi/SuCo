@@ -1,0 +1,7 @@
+usage: bench_cspg_paper.py [-h] [--data-dir DATA_DIR] [--index-dir INDEX_DIR]
+                           [--output-dir OUTPUT_DIR]
+                           [--dataset {sift1m,deep1m,gist1m,uqv1m,sift10m,all}]
+                           [--benchmark {construction,recall_k10,recall_k20,recall_k50,ablation_m,ablation_lam,ablation_ef1,robustness,all} [{construction,recall_k10,recall_k20,recall_k50,ablation_m,ablation_lam,ablation_ef1,robustness,all} ...]]
+                           [--index-type {cspg,hnsw,ivfflat,ivfpq,flat,all} [{cspg,hnsw,ivfflat,ivfpq,flat,all} ...]]
+                           [--M M] [--efc EFC] [--m M] [--lam LAM]
+bench_cspg_paper.py: error: argument --dataset: invalid choice: 'uvq1m' (choose from sift1m, deep1m, gist1m, uqv1m, sift10m, all)

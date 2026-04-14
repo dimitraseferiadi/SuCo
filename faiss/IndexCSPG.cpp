@@ -49,6 +49,7 @@
 #include <cstring>
 #include <limits>
 #include <memory>
+#include <numeric>
 #include <random>
 #include <vector>
 
@@ -187,22 +188,42 @@ void IndexCSPG::add(idx_t n, const float* x) {
         num_routing = n - 1;
 
     // ---- Build refunction mapping (Algorithm 2 lines 1-4) ----
-    refunction.resize(num_partitions);
-    for (int p = 0; p < num_partitions; p++) {
-        refunction[p].clear();
-    }
+    // Paper Definition 5 / Algorithm 2: routing vectors are RANDOMLY
+    // sampled from D (not a deterministic prefix by ID), so that no
+    // structural ordering of the input biases the routing set.
+    refunction.assign(num_partitions, {});
 
-    // Routing vectors (global IDs 0..num_routing-1) go to ALL partitions.
-    // They get local IDs 0..num_routing-1 in every partition.
-    for (idx_t id = 0; id < num_routing; id++) {
-        for (int p = 0; p < num_partitions; p++) {
-            refunction[p].push_back(id);
-        }
-    }
-
-    // Non-routing vectors are randomly assigned to exactly one partition.
     std::mt19937 rng(1234); // fixed seed for reproducibility
-    for (idx_t id = num_routing; id < n; id++) {
+
+    // Sample num_routing IDs uniformly at random without replacement.
+    std::vector<idx_t> shuffled(n);
+    std::iota(shuffled.begin(), shuffled.end(), 0);
+    std::shuffle(shuffled.begin(), shuffled.end(), rng);
+
+    std::vector<idx_t> routing_ids(
+            shuffled.begin(), shuffled.begin() + num_routing);
+    // Sort to preserve sequential access patterns when gathering vector data.
+    std::sort(routing_ids.begin(), routing_ids.end());
+
+    // Routing vectors: local IDs 0..num_routing-1 in every partition,
+    // holding the SAME sequence of sorted global IDs so that
+    // refunction[p1][lid] == refunction[p2][lid] for lid < num_routing.
+    for (int p = 0; p < num_partitions; p++) {
+        refunction[p] = routing_ids;
+        refunction[p].reserve(
+                num_routing + (n - num_routing) / num_partitions + 16);
+    }
+
+    // Mark routing vectors so we can skip them when assigning the rest.
+    std::vector<char> is_routing(n, 0);
+    for (idx_t id : routing_ids) {
+        is_routing[id] = 1;
+    }
+
+    // Non-routing vectors: randomly assign each to exactly one partition.
+    for (idx_t id = 0; id < n; id++) {
+        if (is_routing[id])
+            continue;
         int p = static_cast<int>(rng() % num_partitions);
         refunction[p].push_back(id);
     }
@@ -366,6 +387,16 @@ void IndexCSPG::search(
             // Stage 2: Cross-partition expansion (Algorithm 1 lines 8-14)
             // Uses direct fvec_L2sqr_batch_4 calls (no virtual dispatch)
             // with vector-data prefetching for cache-friendly random access.
+            //
+            // Two heaps are maintained:
+            //   * candidates (MinimaxHeap, cap = ef2 * m): the BFS frontier,
+            //     oversized so that cross-partition expansion (up to m copies
+            //     of each routing vector) does not crowd out good candidates.
+            //   * top_results (std::vector as a binary max-heap, cap = ef2):
+            //     the ef2 best (distance, partition, local_id) triples seen.
+            //     Its max supplies the early-termination threshold AND
+            //     provides the final result set (per paper line 15:
+            //     top-k comes from the "visited" pool, not the candidate queue).
             // ==============================================================
 
             const float* xb = shared_flat->get_xb();
@@ -375,12 +406,56 @@ void IndexCSPG::search(
             }
             visited[0].set(nearest);
 
-            HNSW::MinimaxHeap candidates(cur_ef2);
-            HNSW::storage_idx_t enc_seed =
-                    0 * stride + static_cast<HNSW::storage_idx_t>(nearest);
-            candidates.push(enc_seed, d_nearest);
+            // Candidates heap — oversized for cross-partition expansion.
+            HNSW::MinimaxHeap candidates(cur_ef2 * num_partitions);
+
+            // top-ef2 results: max-heap on distance.
+            struct TopResult {
+                float dist;
+                int32_t gid;
+                int32_t lid;
+                bool operator<(const TopResult& o) const {
+                    return dist < o.dist; // max-heap on dist
+                }
+            };
+            std::vector<TopResult> top_results;
+            top_results.reserve(cur_ef2 + 1);
+
+            auto try_add_result = [&](float dist, int gid, int lid) {
+                if (static_cast<int>(top_results.size()) < cur_ef2) {
+                    top_results.push_back({dist, gid, lid});
+                    std::push_heap(top_results.begin(), top_results.end());
+                } else if (dist < top_results.front().dist) {
+                    std::pop_heap(top_results.begin(), top_results.end());
+                    top_results.back() = {dist, gid, lid};
+                    std::push_heap(top_results.begin(), top_results.end());
+                }
+            };
 
             const int num_routing_int = static_cast<int>(num_routing);
+
+            // Seed.
+            try_add_result(d_nearest, 0, static_cast<int>(nearest));
+            {
+                HNSW::storage_idx_t enc_seed =
+                        0 * stride +
+                        static_cast<HNSW::storage_idx_t>(nearest);
+                candidates.push(enc_seed, d_nearest);
+
+                // Fix 4: if the Stage 1 result is itself a routing vector,
+                // broadcast the seed to every partition so Stage 2 can
+                // enter each partition's graph directly (no need to walk
+                // to a gateway via partition 0 first).
+                if (static_cast<int>(nearest) < num_routing_int) {
+                    for (int p = 1; p < num_partitions; p++) {
+                        visited[p].set(static_cast<int>(nearest));
+                        HNSW::storage_idx_t enc_p =
+                                static_cast<HNSW::storage_idx_t>(p) * stride +
+                                static_cast<HNSW::storage_idx_t>(nearest);
+                        candidates.push(enc_p, d_nearest);
+                    }
+                }
+            }
 
             while (candidates.size() > 0) {
                 float cur_d;
@@ -388,8 +463,17 @@ void IndexCSPG::search(
                 if (enc < 0)
                     break;
 
-                if (cur_d > candidates.max())
+                // Fix 2: early termination. Once top_results is saturated,
+                // the candidate we are about to expand cannot improve the
+                // top-ef2 set if its own distance already exceeds the
+                // worst kept result — standard HNSW termination, with the
+                // threshold provided by an explicit top-ef2 accumulator
+                // (candidates.max() is no longer a faithful proxy now
+                //  that candidates is oversized by a factor of m).
+                if (static_cast<int>(top_results.size()) >= cur_ef2 &&
+                    cur_d > top_results.front().dist) {
                     break;
+                }
 
                 // Decode (partition_id, local_id)
                 int cur_gid = static_cast<int>(enc / stride);
@@ -400,28 +484,42 @@ void IndexCSPG::search(
                 size_t begin, end;
                 hnsw.neighbor_range(vid, 0, &begin, &end);
 
-                // Process neighbor: accept into heap + cross-expand.
+                // Acceptance predicate: push into candidates if the
+                // neighbor could still be useful to expand. We gate on
+                // top_results.max() (the true top-ef2 threshold) rather
+                // than candidates.max().
                 auto process_neighbor = [&](int nid, float dn) {
-                    if (candidates.max() > dn ||
-                        candidates.size() < cur_ef2) {
-                        HNSW::storage_idx_t enc_n =
-                                static_cast<HNSW::storage_idx_t>(cur_gid) *
-                                        stride +
-                                nid;
-                        candidates.push(enc_n, dn);
+                    bool tr_full =
+                            static_cast<int>(top_results.size()) >= cur_ef2;
+                    if (tr_full && dn >= top_results.front().dist) {
+                        // Neither a candidate worth expanding nor a
+                        // result worth keeping.
+                        return;
+                    }
 
-                        // Cross-partition expansion for routing vectors.
-                        if (nid < num_routing_int) {
-                            for (int p = 0; p < num_partitions; p++) {
-                                if (p == cur_gid)
-                                    continue;
-                                visited[p].set(nid);
-                                HNSW::storage_idx_t enc_p =
-                                        static_cast<HNSW::storage_idx_t>(p) *
-                                                stride +
-                                        nid;
-                                candidates.push(enc_p, dn);
-                            }
+                    // Add to top-ef2 results (single add per neighbor —
+                    // same routing vector reached via a different gid
+                    // in a later iteration may add again; deduped at
+                    // final extraction).
+                    try_add_result(dn, cur_gid, nid);
+
+                    HNSW::storage_idx_t enc_n =
+                            static_cast<HNSW::storage_idx_t>(cur_gid) *
+                                    stride +
+                            nid;
+                    candidates.push(enc_n, dn);
+
+                    // Cross-partition expansion for routing vectors.
+                    if (nid < num_routing_int) {
+                        for (int p = 0; p < num_partitions; p++) {
+                            if (p == cur_gid)
+                                continue;
+                            visited[p].set(nid);
+                            HNSW::storage_idx_t enc_p =
+                                    static_cast<HNSW::storage_idx_t>(p) *
+                                            stride +
+                                    nid;
+                            candidates.push(enc_p, dn);
                         }
                     }
                 };
@@ -439,7 +537,7 @@ void IndexCSPG::search(
                 // Pass 2: collect unvisited neighbors + prefetch their
                 // vector data from shared_flat (hide DRAM latency).
                 int n_unvis = 0;
-                int unvis[128]; // max 2*M neighbors at level 0
+                int unvis[128]; // max 2*M neighbors at level 0 (M <= 64)
                 for (size_t j = begin; j < jmax; j++) {
                     int v1 = hnsw.neighbors[j];
                     if (visited[cur_gid].set(v1)) {
@@ -449,8 +547,6 @@ void IndexCSPG::search(
                 }
 
                 // Pass 3: batch-4 distance computation.
-                // By now, prefetched vector data should be in cache.
-                // Call fvec_L2sqr_batch_4 directly (no virtual dispatch).
                 int i4;
                 for (i4 = 0; i4 + 4 <= n_unvis; i4 += 4) {
                     float dis[4];
@@ -478,24 +574,22 @@ void IndexCSPG::search(
             }
 
             // ==============================================================
-            // Line 15: return top-k from MinimaxHeap.
-            // Pop min repeatedly to get results in ascending distance order.
-            // Lightweight dedup for routing vectors seen from multiple
-            // partitions.
+            // Line 15 (paper): return top-k from the pool of visited vectors,
+            // not from the candidate queue. We sort top_results ascending
+            // and dedup by global_id (routing vectors may appear under
+            // multiple (gid, lid) entries with the same distance).
             // ==============================================================
+            std::sort(top_results.begin(),
+                      top_results.end(),
+                      [](const TopResult& a, const TopResult& b) {
+                          return a.dist < b.dist;
+                      });
             {
                 int ri = 0;
-                while (candidates.size() > 0 &&
-                       ri < static_cast<int>(k)) {
-                    float dist;
-                    HNSW::storage_idx_t enc = candidates.pop_min(&dist);
-                    if (enc < 0)
+                for (const auto& r : top_results) {
+                    if (ri >= static_cast<int>(k))
                         break;
-
-                    int gid = static_cast<int>(enc / stride);
-                    int vid = static_cast<int>(enc % stride);
-                    idx_t global_id = refunction[gid][vid];
-
+                    idx_t global_id = refunction[r.gid][r.lid];
                     bool dup = false;
                     for (int s = 0; s < ri; s++) {
                         if (res_lab[s] == global_id) {
@@ -504,7 +598,7 @@ void IndexCSPG::search(
                         }
                     }
                     if (!dup) {
-                        res_dis[ri] = dist;
+                        res_dis[ri] = r.dist;
                         res_lab[ri] = global_id;
                         ri++;
                     }
