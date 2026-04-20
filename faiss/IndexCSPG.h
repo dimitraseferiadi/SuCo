@@ -112,12 +112,14 @@ struct IndexCSPG : Index {
 
     // --- ID mapping ---
 
-    /// refunction[partition_id][local_id] = global_id.
-    /// Routing vectors occupy local IDs 0..num_routing-1 in every partition.
+    /// refunction[partition_id][local_id] = original global ID.
+    /// Routing vectors occupy local IDs 0..num_routing-1 in every partition,
+    /// mapped to the same (sorted) sequence of global IDs.
     std::vector<std::vector<idx_t>> refunction;
 
     /// Reverse mapping: global_id -> (partition_id, local_id).
-    /// For routing vectors (present in all partitions), stores partition 0.
+    /// For routing vectors (present in all partitions), stores the first
+    /// partition encountered during construction.
     std::vector<std::pair<int, idx_t>> global_to_local;
 
     /// Number of routing vectors (= floor(ntotal * lambda)).
@@ -154,10 +156,10 @@ struct IndexCSPG : Index {
     // --- Helpers ---
 
     /// Pointer to vector data for a given (partition, local_id) pair.
-    /// Uses shared_flat: maps local_id → global_id → shared storage.
+    /// Uses shared_flat: maps local_id → flat position → shared storage.
     const float* get_vec(int pid, idx_t local_id) const {
-        idx_t global_id = refunction[pid][local_id];
-        return shared_flat->get_xb() + global_id * d;
+        idx_t flat_pos = refunction[pid][local_id];
+        return shared_flat->get_xb() + flat_pos * d;
     }
 };
 

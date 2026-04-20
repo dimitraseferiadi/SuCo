@@ -815,6 +815,26 @@ def run_benchmarks(dataset_name, benchmarks, index_types, data_dir, index_dir, o
         return idx, build_time, mem_mb
 
     # ------------------------------------------------------------------
+    # Persist build times across runs in a sidecar JSON in index_dir
+    # ------------------------------------------------------------------
+    _build_times_path = os.path.join(index_dir, f"{dataset_name}_build_times.json")
+
+    def _load_persisted_build_times():
+        if os.path.exists(_build_times_path):
+            try:
+                with open(_build_times_path) as fp:
+                    return json.load(fp)
+            except Exception:
+                pass
+        return {}
+
+    def _save_persisted_build_time(cache_key, build_time):
+        times = _load_persisted_build_times()
+        times[cache_key] = build_time
+        with open(_build_times_path, "w") as fp:
+            json.dump(times, fp, indent=2)
+
+    # ------------------------------------------------------------------
     # Load cached construction times from a prior run (carry-forward)
     # ------------------------------------------------------------------
     prev_construction = {}
@@ -831,7 +851,7 @@ def run_benchmarks(dataset_name, benchmarks, index_types, data_dir, index_dir, o
     # that we can free xb before the memory-intensive benchmark loops.
     # Each index is built, saved, and immediately freed.
     # ------------------------------------------------------------------
-    prebuild_times = {}  # cache_key -> build_time_s
+    prebuild_times = _load_persisted_build_times()  # cache_key -> build_time_s
 
     def _ensure_cached(cache_key, builder_fn, label):
         idx_path = os.path.join(index_dir, f"{dataset_name}_{cache_key}.idx")
@@ -841,6 +861,7 @@ def run_benchmarks(dataset_name, benchmarks, index_types, data_dir, index_dir, o
         idx, build_time = builder_fn(xb, d)
         try_save_index(idx, idx_path, label)
         prebuild_times[cache_key] = build_time
+        _save_persisted_build_time(cache_key, build_time)
         del idx
         gc.collect()
 
@@ -1241,12 +1262,20 @@ def run_benchmarks(dataset_name, benchmarks, index_types, data_dir, index_dir, o
             print(f"  {lbl:45s} time={bt:8.2f}s  mem={mem:8.1f}MB")
 
     # ==================================================================
-    # Persist results
+    # Persist results — merge with existing file to preserve untouched keys
     # ==================================================================
     os.makedirs(output_dir, exist_ok=True)
     out_path = os.path.join(output_dir, f"results_cspg_{dataset_name}.json")
+    merged = {}
+    if os.path.exists(out_path):
+        try:
+            with open(out_path) as fp:
+                merged = json.load(fp)
+        except Exception:
+            pass
+    merged.update(all_results)
     with open(out_path, "w") as fp:
-        json.dump(all_results, fp, indent=2, default=str)
+        json.dump(merged, fp, indent=2, default=str)
     print(f"\nResults → {out_path}")
     return all_results
 
