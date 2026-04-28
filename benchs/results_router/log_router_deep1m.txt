@@ -1,0 +1,22 @@
+  Verification failed: [Errno 2] No such file or directory: '/Users/dhm/Documents/datadeep1b/base.fvecs'
+
+Chunk inventory:
+  base00          27,397,020 vectors  (9.90 GiB)
+  learn00         27,397,020 vectors  (9.90 GiB)
+
+Requested:  nb=1,000,000  nt=500,000
+
+Extracting 1,000,000 base vectors …
+  Writing 1,000,000 base vectors to base.fvecs …
+    base00        [0 … 1,000,000)  of  27,397,020  available
+  Done → /Users/dhm/Documents/data/deep1b/base.fvecs
+         370.0 MB, 1,000,000 vectors
+
+Extracting 500,000 training vectors …
+  Writing 500,000 training vectors to learn.fvecs …
+    learn00       [0 … 500,000)  of  27,397,020  available
+  Done → /Users/dhm/Documents/data/deep1b/learn.fvecs
+         185.0 MB, 500,000 vectors
+
+Verifying with FAISS loader …
+  Files were written but FAISS loader check failed.

@@ -564,6 +564,13 @@ void gpu_sync_all_devices()
 %include  <faiss/IndexHNSW.h>
 %include  <faiss/IndexCSPG.h>
 
+// Expose the global cspg_stats accumulator to Python as simple helpers
+// (SWIG does not wrap FAISS_API extern globals reliably).
+%inline %{
+faiss::CSPGStats cspg_stats_get() { return faiss::cspg_stats; }
+void cspg_stats_reset() { faiss::cspg_stats.reset(); }
+%}
+
 // IndexSHG: ignore the std::map member that SWIG cannot wrap automatically
 %ignore faiss::ShortcutMap::entries;
 %include  <faiss/IndexSHG.h>

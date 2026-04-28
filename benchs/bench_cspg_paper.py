@@ -92,7 +92,19 @@ ABLATION_EF1_VALUES = [1, 2, 4, 8, 16]
 # Skip exact Flat search for datasets larger than this
 FLAT_MAX_VECTORS = 2_000_000
 
-ALL_DATASETS = ["sift1m", "deep1m", "gist1m", "uqv1m", "sift10m"]
+# SIFT10M sub-samples used for Fig 4 (varying n) and Fig 8 (detour factor)
+VARYING_N_SCALES = {
+    "sift0.1m": 100_000,
+    "sift0.2m": 200_000,
+    "sift0.5m": 500_000,
+    "sift2m":  2_000_000,
+    "sift5m":  5_000_000,
+}
+
+ALL_DATASETS = [
+    "sift1m", "deep1m", "gist1m", "uqv1m", "openai1m", "sift10m",
+    "sift0.1m", "sift0.2m", "sift0.5m", "sift2m", "sift5m",
+]
 ALL_BENCHMARKS = [
     "construction",
     "recall_k10",
@@ -102,7 +114,11 @@ ALL_BENCHMARKS = [
     "ablation_lam",
     "ablation_ef1",
     "robustness",
+    "detour_factor",   # Fig 8: detour factor w vs Recall, run on sift10m
 ]
+
+# ef2 sweep used when measuring detour factor
+DETOUR_EF2_SWEEP = [10, 20, 30, 50, 80, 100, 150, 200, 300, 500, 800, 1000]
 
 ALL_INDEX_TYPES = ["cspg", "hnsw", "ivfflat", "ivfpq", "flat"]
 DEFAULT_INDEX_TYPES = ["cspg", "hnsw"]
@@ -369,8 +385,41 @@ def load_dataset(name, data_dir):
         gt = read_ivecs(os.path.join(p, "uqv_groundtruth.ivecs"))
         return xb, xq, gt
 
+    elif name == "openai1m":
+        p = os.path.join(data_dir, "openai1m")
+        xb = np.load(os.path.join(p, "openai_xb.npy"), mmap_mode="r")
+        xb = np.ascontiguousarray(xb, dtype=np.float32)
+        xq = np.load(os.path.join(p, "openai_xq.npy"), mmap_mode="r")
+        xq = np.ascontiguousarray(xq, dtype=np.float32)
+        gt = np.load(os.path.join(p, "openai_gt100.npy")).astype(np.int32)
+        return xb, xq, gt
+
     elif name == "sift10m":
         return _load_sift10m(data_dir)
+
+    elif name in VARYING_N_SCALES:
+        nb = VARYING_N_SCALES[name]
+        xb, xq, _ = _load_sift10m(data_dir, nb=nb, nq=10_000)
+        # Find or compute ground truth for this sub-sample
+        gt_fname = f"gt_{name}_k100.npy"
+        gt_dirs = [data_dir]
+        for sub in ("SIFT10M", "sift10m", "sift"):
+            p = os.path.join(data_dir, sub)
+            if os.path.isdir(p):
+                gt_dirs.append(p)
+        gt_cached = _first_existing_path([os.path.join(d, gt_fname) for d in gt_dirs])
+        if gt_cached:
+            gt = np.load(gt_cached).astype(np.int32)
+            print(f"  GT loaded from {gt_cached}")
+        else:
+            gt = compute_ground_truth(xb, xq, k=100)
+            save_to = os.path.join(gt_dirs[-1], gt_fname)
+            try:
+                np.save(save_to, gt)
+                print(f"  GT saved to {save_to}")
+            except Exception as e:
+                print(f"  Could not cache GT: {e}")
+        return xb, xq, gt
 
     else:
         raise ValueError(f"Unknown dataset: {name!r}")
@@ -379,10 +428,12 @@ def load_dataset(name, data_dir):
 def _get_dataset_size(name):
     """Return n (number of base vectors) without loading them."""
     sizes = {"sift1m": 1_000_000, "deep1m": 1_000_000, "gist1m": 1_000_000,
-             "uqv1m": 1_000_000, "sift10m": 10_000_000}
+             "uqv1m": 1_000_000, "openai1m": 990_000, "sift10m": 10_000_000}
     name = name.lower()
     if name in sizes:
         return sizes[name]
+    if name in VARYING_N_SCALES:
+        return VARYING_N_SCALES[name]
     raise ValueError(f"Unknown dataset size for {name!r}")
 
 
@@ -412,6 +463,12 @@ def load_dataset_queries_only(name, data_dir, index_dir=None):
         p = _find_dataset_dir(data_dir, ["gist1M", "gist1m", "gist"], "gist_base.fvecs")
         xq = _read_fvecs_mmap(os.path.join(p, "gist_query.fvecs"))
         gt = read_ivecs(os.path.join(p, "gist_groundtruth.ivecs"))
+
+    elif name == "openai1m":
+        p = os.path.join(data_dir, "openai1m")
+        xq = np.ascontiguousarray(
+            np.load(os.path.join(p, "openai_xq.npy"), mmap_mode="r"), dtype=np.float32)
+        gt = np.load(os.path.join(p, "openai_gt100.npy")).astype(np.int32)
 
     elif name == "sift10m":
         # Queries were split from the .mat file at offset 10M; load from cache
@@ -455,6 +512,26 @@ def load_dataset_queries_only(name, data_dir, index_dir=None):
 
         if gt.shape[0] > xq.shape[0]:
             gt = gt[:xq.shape[0]]
+
+    elif name in VARYING_N_SCALES:
+        # Queries are the same as sift10m; GT is scale-specific.
+        xq, _ = load_dataset_queries_only("sift10m", data_dir, index_dir)
+        gt_fname = f"gt_{name}_k100.npy"
+        gt_candidates = []
+        if index_dir:
+            gt_candidates.append(os.path.join(index_dir, gt_fname))
+        gt_candidates += [
+            os.path.join(data_dir, gt_fname),
+            os.path.join(data_dir, "SIFT10M", gt_fname),
+            os.path.join(data_dir, "sift10m", gt_fname),
+        ]
+        gt_path = _first_existing_path(gt_candidates)
+        if gt_path is None:
+            raise FileNotFoundError(
+                f"GT for {name} not found. Run once without cached indices "
+                f"so the base vectors are loaded and GT is computed."
+            )
+        gt = np.load(gt_path).astype(np.int32)
 
     else:
         raise ValueError(f"Unknown dataset: {name!r}")
@@ -689,6 +766,95 @@ def recall_time_curve(idx, label, xq, gt, k, search_fn_factory,
 
 
 # ===========================================================================
+# Detour factor helpers  (Figure 8)
+# ===========================================================================
+
+def _get_hnsw_stats(idx):
+    """Return the FAISS HNSWStats object from an index, or None if unavailable."""
+    for attr in ("hnsw", "index", "sub_index"):
+        try:
+            sub = getattr(idx, attr, None)
+            if sub is not None and hasattr(sub, "stats"):
+                return sub.stats
+        except Exception:
+            pass
+    if hasattr(idx, "stats"):
+        return idx.stats
+    return None
+
+
+def detour_factor_curve(idx, xq, gt, k=10, ef2_sweep=None, ef1=1,
+                         n_timing_runs=1):
+    """
+    Detour factor w vs Recall@k by sweeping ef2 (paper Fig 8).
+
+    Exact paper metric:
+        w = search_seq_len / (search_seq_len - n_backtracks)
+
+    where both counters come from the C++ `faiss::cspg_stats` global:
+      * search_seq_len: total Stage-2 pops across all queries
+      * n_backtracks:   pops whose distance exceeds the previous pop's
+                        (MSNET definition, paper §3).
+
+    Requires FAISS built with CSPGStats instrumentation (see IndexCSPG.cpp).
+    Runs single-threaded to keep the counters clean.
+    """
+    if ef2_sweep is None:
+        ef2_sweep = DETOUR_EF2_SWEEP
+
+    stats_get = getattr(faiss, "cspg_stats_get", None)
+    stats_reset = getattr(faiss, "cspg_stats_reset", None)
+    if stats_get is None or stats_reset is None:
+        print("    [detour_factor] faiss.cspg_stats_{get,reset} not found — "
+              "rebuild FAISS with CSPGStats instrumentation.")
+        return []
+
+    nq = xq.shape[0]
+    k_gt = min(k, gt.shape[1])
+
+    prev_threads = faiss.omp_get_max_threads()
+    faiss.omp_set_num_threads(1)
+
+    points = []
+    for ef2 in ef2_sweep:
+        search_fn = _cspg_search_fn(ef2, ef1)
+
+        stats_reset()
+        t0 = time.perf_counter()
+        _, I = search_fn(idx, xq, k)
+        dt = time.perf_counter() - t0
+        s = stats_get()
+        L = int(s.search_seq_len)
+        B = int(s.n_backtracks)
+
+        recalls_q = np.zeros(nq)
+        for i in range(nq):
+            gt_s = set(gt[i, :k_gt].tolist()) - {-1}
+            rt_s = set(I[i].tolist()) - {-1}
+            recalls_q[i] = len(gt_s & rt_s) / k_gt if k_gt else 0.0
+        mean_r = float(recalls_q.mean())
+
+        denom = L - B
+        w = (L / denom) if denom > 0 else float("nan")
+        ms_q = dt / nq * 1000.0
+
+        points.append({
+            "ef2": ef2,
+            "recall": round(mean_r, 6),
+            "w": round(w, 4),
+            "search_seq_len": L,
+            "n_backtracks": B,
+            "ms_per_query": round(ms_q, 6),
+        })
+        print(f"    ef2={ef2:5d}: recall={mean_r:.4f}  w={w:.3f}  "
+              f"L={L} B={B}  ({ms_q:.4f} ms/q)")
+
+    faiss.omp_set_num_threads(prev_threads)
+    points.sort(key=lambda x: x["recall"])
+    return points
+
+
+# ===========================================================================
 # Main benchmark runner (one dataset)
 # ===========================================================================
 
@@ -702,16 +868,20 @@ def run_benchmarks(dataset_name, benchmarks, index_types, data_dir, index_dir, o
     # Load dataset (defer xb if all indices are already cached)
     # ------------------------------------------------------------------
 
-    # Collect all cache keys we'll need so we can check if xb is required
+    # Collect all cache keys we'll need so we can check if xb is required.
+    # detour_factor loads scale-specific sub-datasets internally and does not
+    # need the main dataset's CSPG/HNSW indices.
+    _main_benchmarks = [b for b in benchmarks if b != "detour_factor"]
     _needed_keys = set()
-    if "cspg" in index_types:
-        _needed_keys.add("cspg_default")
-    if "hnsw" in index_types:
-        _needed_keys.add("hnsw")
-    if "ivfflat" in index_types:
-        _needed_keys.add("ivfflat")
-    if "ivfpq" in index_types:
-        _needed_keys.add("ivfpq")
+    if _main_benchmarks:
+        if "cspg" in index_types:
+            _needed_keys.add("cspg_default")
+        if "hnsw" in index_types:
+            _needed_keys.add("hnsw")
+        if "ivfflat" in index_types:
+            _needed_keys.add("ivfflat")
+        if "ivfpq" in index_types:
+            _needed_keys.add("ivfpq")
     if "ablation_m" in benchmarks:
         for _m in ABLATION_M_VALUES:
             _needed_keys.add(f"cspg_m{_m}_l{int(DEFAULT_LAMBDA*100)}")
@@ -731,11 +901,34 @@ def run_benchmarks(dataset_name, benchmarks, index_types, data_dir, index_dir, o
             os.path.exists(os.path.join(index_dir, f"{dataset_name}_cspg_rob_gt.npy"))
         )
 
-    _need_xb = not (_all_cached and _rob_cached)
+    # For varying-n datasets, GT is scale-specific and must be cached separately
+    _vn_gt_cached = True
+    if dataset_name in VARYING_N_SCALES:
+        _vn_gt_fname = f"gt_{dataset_name}_k100.npy"
+        _vn_gt_candidates = [
+            os.path.join(index_dir, _vn_gt_fname),
+            os.path.join(data_dir, _vn_gt_fname),
+            os.path.join(data_dir, "SIFT10M", _vn_gt_fname),
+            os.path.join(data_dir, "sift10m", _vn_gt_fname),
+        ]
+        _vn_gt_cached = _first_existing_path(_vn_gt_candidates) is not None
+
+    _need_xb = not (_all_cached and _rob_cached and _vn_gt_cached)
+
+    # If only detour_factor is requested, we don't need the main dataset's
+    # xb/xq/gt at all — each scale sub-sample is loaded independently.
+    _skip_main_load = (not _main_benchmarks) and ("detour_factor" in benchmarks)
 
     print(f"\nLoading {dataset_name}…")
     t0 = time.time()
-    if _need_xb:
+    if _skip_main_load:
+        xb = None
+        xq = np.zeros((0, 0), dtype=np.float32)
+        gt = np.zeros((0, 0), dtype=np.int32)
+        d = 128  # placeholder; actual per-scale d used inside detour_factor loop
+        n = _get_dataset_size(dataset_name)
+        print(f"  (main load skipped — detour_factor only)")
+    elif _need_xb:
         xb, xq, gt = load_dataset(dataset_name, data_dir)
         print(f"  Done in {time.time()-t0:.1f}s | "
               f"xb={xb.shape}  xq={xq.shape}  gt={gt.shape}")
@@ -744,6 +937,12 @@ def run_benchmarks(dataset_name, benchmarks, index_types, data_dir, index_dir, o
             gt = compute_ground_truth(xb, xq, gt.shape[1])
         d = xb.shape[1]
         n = int(xb.shape[0])
+        # Cache varying-n GT in index_dir so future runs can skip xb loading
+        if dataset_name in VARYING_N_SCALES:
+            _vn_save = os.path.join(index_dir, f"gt_{dataset_name}_k100.npy")
+            if not os.path.exists(_vn_save):
+                np.save(_vn_save, gt)
+                print(f"  Varying-n GT cached → {_vn_save}")
     else:
         xb = None
         xq, gt = load_dataset_queries_only(dataset_name, data_dir, index_dir)
@@ -1250,6 +1449,92 @@ def run_benchmarks(dataset_name, benchmarks, index_types, data_dir, index_dir, o
         all_results["robustness"] = robustness_results
 
     # ==================================================================
+    # 9. DETOUR FACTOR: w vs Recall@10 for varying n  (Figure 8)
+    #    Only meaningful on sift10m (paper uses SIFT10M sub-samples).
+    #    Results are stored under the sift10m JSON so plot_fig8 finds them.
+    # ==================================================================
+    if "detour_factor" in benchmarks:
+        if dataset_name != "sift10m":
+            print(f"\n  detour_factor: skipped for {dataset_name} "
+                  f"(run on sift10m to reproduce Fig 8).")
+        else:
+            print(f"\n{'='*60}")
+            print(f"BENCHMARK: Detour Factor — varying n (SIFT10M sub-samples)")
+            print(f"{'='*60}")
+
+            detour_results = {}
+
+            for scale_name, nb_scale in VARYING_N_SCALES.items():
+                # Human-readable label matching paper Fig 8 legend
+                scale_label = "SIFT" + scale_name[4:].upper()   # sift0.1m → SIFT0.1M
+
+                print(f"\n  Scale: {scale_label} (n={nb_scale:,})")
+
+                # Build or load CSPG index for this sub-sample.
+                # Reuse the cache written by varying-n recall benchmarks if present.
+                scale_idx_path = os.path.join(index_dir, f"{scale_name}_cspg_default.idx")
+                scale_idx = try_load_index(scale_idx_path, f"CSPG/{scale_label}")
+
+                xb_scale = xq_scale = gt_scale = None
+                if scale_idx is None:
+                    print(f"    Loading SIFT10M sub-sample n={nb_scale:,}…")
+                    try:
+                        xb_scale, xq_scale, gt_scale = load_dataset(scale_name, data_dir)
+                    except Exception as e:
+                        print(f"    Skipping {scale_label}: {e}")
+                        continue
+                    d_scale = xb_scale.shape[1]
+                    print(f"    Building CSPG…")
+                    try:
+                        scale_idx, _ = build_cspg(xb_scale, d_scale)
+                        try_save_index(scale_idx, scale_idx_path, f"CSPG/{scale_label}")
+                    except Exception as e:
+                        print(f"    Build failed: {e}")
+                        traceback.print_exc()
+                        del xb_scale
+                        gc.collect()
+                        continue
+                    del xb_scale
+                    gc.collect()
+                else:
+                    # Load queries + GT for this scale
+                    try:
+                        xq_scale, gt_scale = load_dataset_queries_only(
+                            scale_name, data_dir, index_dir)
+                    except FileNotFoundError as e:
+                        print(f"    GT missing — building from scratch: {e}")
+                        try:
+                            xb_scale, xq_scale, gt_scale = load_dataset(scale_name, data_dir)
+                            del xb_scale
+                            gc.collect()
+                        except Exception as e2:
+                            print(f"    Skipping {scale_label}: {e2}")
+                            del scale_idx
+                            gc.collect()
+                            continue
+
+                print(f"    Running detour factor sweep…")
+                try:
+                    pts = detour_factor_curve(scale_idx, xq_scale, gt_scale, k=10)
+                    if pts:
+                        detour_results[scale_label] = pts
+                        print(f"    → {len(pts)} points stored")
+                    else:
+                        print(f"    → no points (HNSWStats unavailable for this index)")
+                except Exception as e:
+                    print(f"    FAILED: {e}")
+                    traceback.print_exc()
+
+                del scale_idx, xq_scale, gt_scale
+                gc.collect()
+
+            if detour_results:
+                all_results["detour_factor"] = detour_results
+            else:
+                print("  No detour_factor data collected "
+                      "(HNSWStats not exposed by IndexCSPG in this build).")
+
+    # ==================================================================
     # Summary print
     # ==================================================================
     if "construction" in benchmarks and construction_results:
@@ -1315,12 +1600,20 @@ def main():
     parser.add_argument(
         "--dataset", default="all",
         choices=ALL_DATASETS + ["all"],
-        help="Dataset to benchmark (default: all)",
+        help=(
+            "Dataset to benchmark (default: all). "
+            "For Fig 4 use: sift0.1m sift0.2m sift0.5m sift2m sift5m (each separately). "
+            "For Fig 8 use: sift10m with --benchmark detour_factor."
+        ),
     )
     parser.add_argument(
         "--benchmark", nargs="+", default=["all"],
         choices=ALL_BENCHMARKS + ["all"],
-        help="Which benchmarks to run (default: all)",
+        help=(
+            "Which benchmarks to run (default: all). "
+            "detour_factor: only meaningful on sift10m — produces Fig 8 data. "
+            "recall_k10 on sift0.1m…sift5m: produces Fig 4 data."
+        ),
     )
     parser.add_argument(
         "--index-type", nargs="+", default=DEFAULT_INDEX_TYPES,
@@ -1353,7 +1646,10 @@ def main():
 
     benchmarks = ALL_BENCHMARKS if "all" in args.benchmark else args.benchmark
     index_types = ALL_INDEX_TYPES if "all" in args.index_type else args.index_type
-    datasets   = ALL_DATASETS if args.dataset == "all" else [args.dataset]
+    # "all" expands only to the six standard datasets; varying-n scales must be
+    # requested explicitly (e.g. --dataset sift0.1m) to avoid unintended runs.
+    _BASE_DATASETS = ["sift1m", "deep1m", "gist1m", "uqv1m", "openai1m", "sift10m"]
+    datasets = _BASE_DATASETS if args.dataset == "all" else [args.dataset]
 
     os.makedirs(args.index_dir,  exist_ok=True)
     os.makedirs(args.output_dir, exist_ok=True)

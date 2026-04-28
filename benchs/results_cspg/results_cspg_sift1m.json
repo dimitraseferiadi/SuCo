@@ -4,12 +4,8 @@
   "d": 128,
   "nq": 10000,
   "construction": {
-    "CSPG(m=2, \u03bb=0.5)": {
-      "build_time_s": 74.66,
-      "memory_mb": 900.46
-    },
     "HNSW": {
-      "build_time_s": -1.0,
+      "build_time_s": 54.18,
       "memory_mb": 747.8
     }
   },

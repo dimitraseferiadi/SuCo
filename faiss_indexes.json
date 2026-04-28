@@ -1,0 +1,127 @@
+{
+  "meta": {
+    "description": "Meaningful FAISS indexes for learned index-selection over SuCo/SHG/CSPG + FAISS baselines",
+    "user_indexes": ["IndexSuCo", "IndexSHG", "IndexCSPG"],
+    "excluded_wrappers": [
+      "IndexIDMap", "IndexIDMap2", "IndexShards", "IndexShardsIVF",
+      "IndexReplicas", "IndexPreTransform", "IndexRefine", "IndexRefineFlat",
+      "IndexRowwiseMinMax", "IndexFlatCodes", "IndexBinary", "Index"
+    ]
+  },
+  "categories": {
+    "flat_exact": [
+      {"name": "IndexFlatL2", "factory": "Flat", "metric": "L2", "params": {}},
+      {"name": "IndexFlatIP", "factory": "Flat", "metric": "IP", "params": {}}
+    ],
+    "graph": [
+      {"name": "IndexHNSWFlat", "factory": "HNSW{M},Flat",
+       "params": {"M": [16, 32, 64], "efConstruction": [40, 200, 500], "efSearch": [16, 64, 128, 256]}},
+      {"name": "IndexHNSWPQ", "factory": "HNSW{M}_PQ{m}",
+       "params": {"M": [16, 32], "m": [8, 16, 32, 64], "efConstruction": [200], "efSearch": [64, 128]}},
+      {"name": "IndexHNSWSQ", "factory": "HNSW{M}_SQ{bits}",
+       "params": {"M": [32], "bits": ["8bit", "6bit", "4bit", "fp16"], "efSearch": [64, 128]}},
+      {"name": "IndexNSG", "factory": "NSG{R}",
+       "params": {"R": [32, 64], "search_L": [16, 64, 128]}},
+      {"name": "IndexNSGFlat", "factory": "NSG{R},Flat",
+       "params": {"R": [32, 64], "search_L": [16, 64, 128]}},
+      {"name": "IndexNNDescent", "factory": "NNDescent{K}",
+       "params": {"K": [32, 64]}}
+    ],
+    "ivf": [
+      {"name": "IndexIVFFlat", "factory": "IVF{nlist},Flat",
+       "params": {"nlist": [256, 1024, 4096, 16384], "nprobe": [1, 8, 32, 128]}},
+      {"name": "IndexIVFPQ", "factory": "IVF{nlist},PQ{m}x{bits}",
+       "params": {"nlist": [1024, 4096, 16384], "m": [8, 16, 32, 64], "bits": [8], "nprobe": [8, 32, 128]}},
+      {"name": "IndexIVFPQR", "factory": "IVF{nlist},PQ{m}+{r}",
+       "params": {"nlist": [4096], "m": [16, 32], "r": [8, 16], "nprobe": [32, 128]}},
+      {"name": "IndexIVFScalarQuantizer", "factory": "IVF{nlist},SQ{bits}",
+       "params": {"nlist": [1024, 4096], "bits": ["8bit", "6bit", "4bit", "fp16"], "nprobe": [8, 32]}},
+      {"name": "IndexIVFSpectralHash", "factory": null,
+       "params": {"nlist": [1024, 4096], "nbit": [64, 128, 256], "period": [0.5, 1.0]}},
+      {"name": "IndexIVFIndependentQuantizer", "factory": null,
+       "params": {"nlist": [1024, 4096]}},
+      {"name": "IndexIVFFlatPanorama", "factory": null,
+       "params": {"nlist": [1024, 4096], "nprobe": [8, 32]}},
+      {"name": "IndexIVF_HNSW_Quantizer", "factory": "IVF{nlist}_HNSW{M},Flat",
+       "params": {"nlist": [16384, 65536], "M": [32], "nprobe": [8, 32, 128]}}
+    ],
+    "ivf_fast_scan": [
+      {"name": "IndexIVFFastScan", "factory": null, "params": {}},
+      {"name": "IndexIVFPQFastScan", "factory": "IVF{nlist},PQ{m}x4fs",
+       "params": {"nlist": [1024, 4096, 16384], "m": [32, 64], "nprobe": [8, 32, 128]}},
+      {"name": "IndexIVFAdditiveQuantizerFastScan", "factory": "IVF{nlist},RQ{m}x4fs",
+       "params": {"nlist": [4096], "m": [32, 64], "nprobe": [16, 64]}},
+      {"name": "IndexIVFRaBitQFastScan", "factory": null,
+       "params": {"nlist": [1024, 4096], "nprobe": [8, 32, 128]}}
+    ],
+    "quantization_flat": [
+      {"name": "IndexPQ", "factory": "PQ{m}x{bits}",
+       "params": {"m": [8, 16, 32, 64], "bits": [8]}},
+      {"name": "IndexPQFastScan", "factory": "PQ{m}x4fs",
+       "params": {"m": [32, 64]}},
+      {"name": "IndexScalarQuantizer", "factory": "SQ{bits}",
+       "params": {"bits": ["8bit", "6bit", "4bit", "fp16"]}},
+      {"name": "IndexAdditiveQuantizer", "factory": null, "params": {}},
+      {"name": "IndexAdditiveQuantizerFastScan", "factory": null, "params": {}},
+      {"name": "IndexResidualQuantizer", "factory": "RQ{m}x{bits}",
+       "params": {"m": [8, 16, 32], "bits": [8]}},
+      {"name": "IndexLocalSearchQuantizer", "factory": "LSQ{m}x{bits}",
+       "params": {"m": [8, 16, 32], "bits": [8]}},
+      {"name": "IndexProductResidualQuantizer", "factory": null, "params": {}},
+      {"name": "IndexProductLocalSearchQuantizer", "factory": null, "params": {}},
+      {"name": "Index2Layer", "factory": null, "params": {}},
+      {"name": "IndexNeuralNetCodec", "factory": null, "params": {}},
+      {"name": "IndexLattice", "factory": null, "params": {}}
+    ],
+    "rabitq": [
+      {"name": "IndexRaBitQ", "factory": null, "params": {}},
+      {"name": "IndexRaBitQFastScan", "factory": null, "params": {}},
+      {"name": "IndexIVFRaBitQ", "factory": null,
+       "params": {"nlist": [1024, 4096], "nprobe": [8, 32, 128]}}
+    ],
+    "hashing": [
+      {"name": "IndexLSH", "factory": "LSH{nbits}",
+       "params": {"nbits": [64, 128, 256, 512]}}
+    ],
+    "ivf_additive": [
+      {"name": "IndexIVFAdditiveQuantizer", "factory": null,
+       "params": {"nlist": [1024, 4096], "nprobe": [8, 32]}}
+    ],
+    "binary": [
+      {"name": "IndexBinaryFlat", "factory": null, "params": {}},
+      {"name": "IndexBinaryIVF", "factory": null,
+       "params": {"nlist": [256, 1024, 4096], "nprobe": [1, 8, 32]}},
+      {"name": "IndexBinaryHNSW", "factory": null,
+       "params": {"M": [32, 64], "efConstruction": [200], "efSearch": [64, 128]}},
+      {"name": "IndexBinaryHash", "factory": null, "params": {"b": [4, 8, 16]}},
+      {"name": "IndexBinaryFromFloat", "factory": null, "params": {}}
+    ],
+    "custom_user": [
+      {"name": "IndexSuCo", "paper": "p3518-chen.pdf", "params": {}},
+      {"name": "IndexSHG", "paper": "2411.14754v2.pdf", "params": {}},
+      {"name": "IndexCSPG", "paper": "NeurIPS-2024-cspg", "params": {}}
+    ]
+  },
+  "factory_recipes": [
+    "Flat",
+    "IVF1024,Flat",
+    "IVF4096,Flat",
+    "IVF4096,PQ32x8",
+    "IVF4096,PQ64x4fs",
+    "IVF4096,PQ64x4fsr",
+    "IVF16384_HNSW32,Flat",
+    "OPQ32_128,IVF4096,PQ32",
+    "OPQ64_256,IVF16384,PQ64",
+    "PCA64,IVF4096,PQ32",
+    "HNSW32,Flat",
+    "HNSW32_PQ32",
+    "HNSW32_SQ8",
+    "NSG32,Flat",
+    "PQ32x8",
+    "PQ64x4fs",
+    "SQ8",
+    "RQ32x8",
+    "LSQ16x8",
+    "LSH256"
+  ]
+}

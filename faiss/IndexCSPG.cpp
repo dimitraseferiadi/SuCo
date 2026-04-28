@@ -59,6 +59,9 @@
 
 namespace faiss {
 
+// Global CSPG search statistics (see IndexCSPG.h).
+CSPGStats cspg_stats;
+
 // =========================================================================
 // RemappedDistanceComputer
 // =========================================================================
@@ -409,6 +412,15 @@ void IndexCSPG::search(
 
             HNSW::MinimaxHeap candidates(cur_ef2 * num_partitions);
 
+            // MSNET detour-factor counters (Fig 8 of the CSPG paper):
+            //   search_seq_len = number of Stage-2 pops for this query
+            //   n_backtracks   = pops whose distance exceeds the previous pop
+            size_t q_search_seq_len = 0;
+            size_t q_n_backtracks = 0;
+            // Initialise to +inf so the first pop is never counted as a
+            // backtrack (there is no "previous" distance to compare against).
+            float prev_pop_d = std::numeric_limits<float>::infinity();
+
             struct TopResult {
                 float dist;
                 int32_t gid;
@@ -460,6 +472,14 @@ void IndexCSPG::search(
                 HNSW::storage_idx_t enc = candidates.pop_min(&cur_d);
                 if (enc < 0)
                     break;
+
+                // MSNET bookkeeping: each accepted pop extends the search
+                // sequence; a pop whose distance rises vs. the previous pop
+                // is a backtrack (paper Definition 7).
+                q_search_seq_len++;
+                if (cur_d > prev_pop_d)
+                    q_n_backtracks++;
+                prev_pop_d = cur_d;
 
                 // Early termination: once top_results is saturated, a
                 // candidate whose own distance already exceeds the worst
@@ -575,6 +595,14 @@ void IndexCSPG::search(
                 res_dis[ri] = r.dist;
                 res_lab[ri] = refunction[r.gid][r.lid];
             }
+
+            // Accumulate MSNET counters into the global (OMP-safe).
+#pragma omp atomic
+            cspg_stats.search_seq_len += q_search_seq_len;
+#pragma omp atomic
+            cspg_stats.n_backtracks += q_n_backtracks;
+#pragma omp atomic
+            cspg_stats.n_queries += 1;
         }
     }
 }

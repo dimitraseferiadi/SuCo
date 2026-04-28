@@ -288,7 +288,8 @@ def main() -> None:
         import faiss   # noqa: F401
         from faiss.contrib.datasets import DatasetDeep1B, set_dataset_basedir
 
-        set_dataset_basedir(args.data_dir)
+        data_dir = os.path.join(os.path.abspath(args.data_dir), "")
+        set_dataset_basedir(data_dir)
 
         # Test all supported sizes that fit within what we extracted
         for nb_test, name in [
@@ -315,7 +316,7 @@ def main() -> None:
             if nb_test <= args.nb:
                 print(
                     f"  python benchs/bench_suco_deep1m.py "
-                    f"--data-dir {args.data_dir} --nb {nb_test}"
+                    f"--data-dir {data_dir} --nb {nb_test}"
                 )
     except Exception as e:
         print(f"  Verification failed: {e}", file=sys.stderr)

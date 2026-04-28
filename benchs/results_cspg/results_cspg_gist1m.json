@@ -4,13 +4,9 @@
   "d": 960,
   "nq": 1000,
   "construction": {
-    "CSPG(m=2, \u03bb=0.5)": {
-      "build_time_s": 369.08,
-      "memory_mb": 4074.29
-    },
     "HNSW": {
-      "build_time_s": -1.0,
-      "memory_mb": 4043.66
+      "build_time_s": 243.96,
+      "memory_mb": 3921.63
     }
   },
   "recall_k10": {

@@ -52,6 +52,33 @@
 namespace faiss {
 
 // ---------------------------------------------------------------------------
+// CSPG search statistics (for MSNET analysis / Fig 8 detour factor)
+// ---------------------------------------------------------------------------
+
+struct CSPGStats {
+    /// Total number of Stage-2 candidate pops (search sequence length L).
+    size_t search_seq_len = 0;
+    /// Number of pops where the popped distance exceeds the previous one
+    /// (distance backtracks B).  Detour factor w = L / (L - B).
+    size_t n_backtracks = 0;
+    /// Number of queries contributing to the accumulated counters.
+    size_t n_queries = 0;
+
+    void reset() {
+        search_seq_len = 0;
+        n_backtracks = 0;
+        n_queries = 0;
+    }
+    void combine(const CSPGStats& o) {
+        search_seq_len += o.search_seq_len;
+        n_backtracks += o.n_backtracks;
+        n_queries += o.n_queries;
+    }
+};
+
+FAISS_API extern CSPGStats cspg_stats;
+
+// ---------------------------------------------------------------------------
 // Search parameters
 // ---------------------------------------------------------------------------
 

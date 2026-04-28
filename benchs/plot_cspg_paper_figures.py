@@ -50,13 +50,15 @@ plt.rcParams.update({
     "savefig.bbox": "tight",
 })
 
-DATASETS_ORDER = ["sift1m", "deep1m", "gist1m", "uqv1m", "sift10m"]
+DATASETS_ORDER = ["sift1m", "deep1m", "gist1m", "uqv1m", "openai1m", "sift10m"]
+PAPER_CORE_DATASETS = ["sift1m", "deep1m", "gist1m", "sift10m"]
 DATASET_LABELS = {
-    "sift1m":  "SIFT1M",
-    "deep1m":  "DEEP1M",
-    "gist1m":  "GIST1M",
-    "uqv1m":   "UQV1M",
-    "sift10m": "SIFT10M",
+    "sift1m":   "SIFT1M",
+    "deep1m":   "DEEP1M",
+    "gist1m":   "GIST1M",
+    "uqv1m":    "UQV1M",
+    "openai1m": "OpenAI1M",
+    "sift10m":  "SIFT10M",
 }
 
 # Colors/markers for main comparison (Fig 3)
@@ -358,7 +360,7 @@ def plot_fig4(results, output_dir):
 def plot_fig5(results, output_dir):
     """QPS vs Recall@10 varying m (num_partitions)."""
     bm_key = "ablation_m"
-    datasets = [ds for ds in DATASETS_ORDER if ds in results
+    datasets = [ds for ds in PAPER_CORE_DATASETS if ds in results
                 and bm_key in results[ds] and results[ds][bm_key]]
     if not datasets:
         print("  No ablation_m data — skipping Figure 5.")
@@ -414,7 +416,7 @@ def plot_fig5(results, output_dir):
 def plot_fig6(results, output_dir):
     """QPS vs Recall@10 varying λ (routing ratio)."""
     bm_key = "ablation_lam"
-    datasets = [ds for ds in DATASETS_ORDER if ds in results
+    datasets = [ds for ds in PAPER_CORE_DATASETS if ds in results
                 and bm_key in results[ds] and results[ds][bm_key]]
     if not datasets:
         print("  No ablation_lam data — skipping Figure 6.")
@@ -464,7 +466,7 @@ def plot_fig6(results, output_dir):
 def plot_fig7(results, output_dir):
     """QPS vs Recall@10 varying ef1 (first-stage candidate set size)."""
     bm_key = "ablation_ef1"
-    datasets = [ds for ds in DATASETS_ORDER if ds in results
+    datasets = [ds for ds in PAPER_CORE_DATASETS if ds in results
                 and bm_key in results[ds] and results[ds][bm_key]]
     if not datasets:
         print("  No ablation_ef1 data — skipping Figure 7.")
@@ -572,7 +574,7 @@ def plot_fig8(results, output_dir):
 
 def plot_fig9(results, output_dir):
     """Robustness boxplots: per-query recall distribution on unseen queries."""
-    datasets = [ds for ds in DATASETS_ORDER if ds in results
+    datasets = [ds for ds in PAPER_CORE_DATASETS if ds in results
                 and "robustness" in results[ds] and results[ds]["robustness"]]
     if not datasets:
         print("  No robustness data — skipping Figure 9.")

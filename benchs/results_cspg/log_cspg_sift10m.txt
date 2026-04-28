@@ -1,0 +1,445 @@
+========================================================================
+CSPG Paper Benchmark Suite
+========================================================================
+  Data dir:         /Users/dhm/Documents/data
+  Index dir:        /Users/dhm/Documents/indices
+  Output dir:       /Users/dhm/Documents/SuCo/benchs/results_cspg
+  Datasets:         ['sift10m']
+  Benchmarks:       ['construction', 'recall_k10', 'recall_k20', 'recall_k50', 'ablation_m', 'ablation_lam', 'ablation_ef1', 'robustness']
+  Index types:      ['cspg', 'hnsw']
+  CSPG params:      M=32, efC=128, m=2, λ=0.5
+  SearchParamsCSPG: available
+========================================================================
+
+########################################################################
+# Dataset: SIFT10M
+########################################################################
+
+Loading sift10m…
+  Computing ground truth (n=10000000, nq=10000, k=100)…
+  Done in 41.8s | xb=(10000000, 128)  xq=(10000, 128)  gt=(10000, 100)
+  Robustness queries loaded from cache.
+
+--- Pre-building HNSW ---
+  HNSW(M=32): build=933.29s
+  Saved HNSW → /Users/dhm/Documents/indices/sift10m_hnsw.idx
+
+--- Pre-building CSPG(m=1,λ=0.5) ---
+  CSPG(m=1, λ=0.5): build=10001.10s
+  Saved CSPG(m=1,λ=0.5) → /Users/dhm/Documents/indices/sift10m_cspg_m1_l50.idx
+
+--- Pre-building CSPG(m=2,λ=0.5) ---
+  CSPG(m=2, λ=0.5): build=3432.25s
+  Saved CSPG(m=2,λ=0.5) → /Users/dhm/Documents/indices/sift10m_cspg_m2_l50.idx
+
+--- Pre-building CSPG(m=4,λ=0.5) ---
+  CSPG(m=4, λ=0.5): build=2899.41s
+  Saved CSPG(m=4,λ=0.5) → /Users/dhm/Documents/indices/sift10m_cspg_m4_l50.idx
+
+--- Pre-building CSPG(m=8,λ=0.5) ---
+  CSPG(m=8, λ=0.5): build=4614.72s
+  Saved CSPG(m=8,λ=0.5) → /Users/dhm/Documents/indices/sift10m_cspg_m8_l50.idx
+
+--- Pre-building CSPG(m=2,λ=0.1) ---
+  CSPG(m=2, λ=0.1): build=1187.82s
+  Saved CSPG(m=2,λ=0.1) → /Users/dhm/Documents/indices/sift10m_cspg_m2_l10.idx
+
+--- Pre-building CSPG(m=2,λ=0.2) ---
+  CSPG(m=2, λ=0.2): build=1490.80s
+  Saved CSPG(m=2,λ=0.2) → /Users/dhm/Documents/indices/sift10m_cspg_m2_l20.idx
+
+--- Pre-building CSPG(m=2,λ=0.3) ---
+  CSPG(m=2, λ=0.3): build=1979.52s
+  Saved CSPG(m=2,λ=0.3) → /Users/dhm/Documents/indices/sift10m_cspg_m2_l30.idx
+
+--- Pre-building CSPG(m=2,λ=0.4) ---
+  CSPG(m=2, λ=0.4): build=2303.94s
+  Saved CSPG(m=2,λ=0.4) → /Users/dhm/Documents/indices/sift10m_cspg_m2_l40.idx
+
+  Base vectors freed — all indices cached to disk.
+
+============================================================
+BENCHMARK: Construction — sift10m
+============================================================
+  Loaded CSPG(m=2, λ=0.5) from /Users/dhm/Documents/indices/sift10m_cspg_default.idx
+  CSPG(m=2, λ=0.5): time=2069.77s, memory=9004.57MB
+  Loaded HNSW from /Users/dhm/Documents/indices/sift10m_hnsw.idx
+  HNSW: time=933.29s, memory=7478.04MB
+
+============================================================
+BENCHMARK: Recall vs Time (k=10) — sift10m
+============================================================
+  Loaded CSPG(m=2,λ=0.5) from /Users/dhm/Documents/indices/sift10m_cspg_default.idx
+  → CSPG(m=2,λ=0.5)
+    CSPG(m=2,λ=0.5) (param=   10): recall=0.8099, time=0.8278 ms/q
+    CSPG(m=2,λ=0.5) (param=   20): recall=0.9034, time=0.1627 ms/q
+    CSPG(m=2,λ=0.5) (param=   30): recall=0.9401, time=0.2118 ms/q
+    CSPG(m=2,λ=0.5) (param=   40): recall=0.9594, time=0.2587 ms/q
+    CSPG(m=2,λ=0.5) (param=   60): recall=0.9776, time=0.3594 ms/q
+    CSPG(m=2,λ=0.5) (param=   80): recall=0.9859, time=0.4609 ms/q
+    CSPG(m=2,λ=0.5) (param=  100): recall=0.9900, time=0.5547 ms/q
+    CSPG(m=2,λ=0.5) (param=  150): recall=0.9949, time=0.8628 ms/q
+    CSPG(m=2,λ=0.5) (param=  200): recall=0.9967, time=1.0232 ms/q
+    CSPG(m=2,λ=0.5) (param=  300): recall=0.9984, time=1.5124 ms/q
+    CSPG(m=2,λ=0.5) (param=  400): recall=0.9989, time=2.0140 ms/q
+    CSPG(m=2,λ=0.5) (param=  600): recall=0.9994, time=3.0654 ms/q
+    CSPG(m=2,λ=0.5) (param=  800): recall=0.9996, time=4.2430 ms/q
+    CSPG(m=2,λ=0.5) (param= 1000): recall=0.9996, time=5.4665 ms/q
+    CSPG(m=2,λ=0.5) (param= 1500): recall=0.9998, time=9.2601 ms/q
+  Loaded HNSW from /Users/dhm/Documents/indices/sift10m_hnsw.idx
+  → HNSW
+    HNSW (param=   10): recall=0.7824, time=0.1531 ms/q
+    HNSW (param=   20): recall=0.8831, time=0.0869 ms/q
+    HNSW (param=   30): recall=0.9264, time=0.1165 ms/q
+    HNSW (param=   40): recall=0.9486, time=0.1386 ms/q
+    HNSW (param=   60): recall=0.9713, time=0.1972 ms/q
+    HNSW (param=   80): recall=0.9814, time=0.2467 ms/q
+    HNSW (param=  100): recall=0.9870, time=0.3004 ms/q
+    HNSW (param=  150): recall=0.9933, time=0.4329 ms/q
+    HNSW (param=  200): recall=0.9956, time=0.5598 ms/q
+    HNSW (param=  300): recall=0.9978, time=0.8255 ms/q
+    HNSW (param=  400): recall=0.9986, time=1.0731 ms/q
+    HNSW (param=  600): recall=0.9993, time=1.6150 ms/q
+    HNSW (param=  800): recall=0.9996, time=2.1800 ms/q
+    HNSW (param= 1000): recall=0.9997, time=2.7735 ms/q
+    HNSW (param= 1500): recall=0.9998, time=4.3083 ms/q
+
+============================================================
+BENCHMARK: Recall vs Time (k=20) — sift10m
+============================================================
+  Loaded CSPG(m=2,λ=0.5) from /Users/dhm/Documents/indices/sift10m_cspg_default.idx
+  → CSPG(m=2,λ=0.5)
+    CSPG(m=2,λ=0.5) (param=   10): recall=0.8762, time=0.7500 ms/q
+    CSPG(m=2,λ=0.5) (param=   20): recall=0.8762, time=0.1455 ms/q
+    CSPG(m=2,λ=0.5) (param=   30): recall=0.9216, time=0.2045 ms/q
+    CSPG(m=2,λ=0.5) (param=   40): recall=0.9462, time=0.2523 ms/q
+    CSPG(m=2,λ=0.5) (param=   60): recall=0.9692, time=0.3511 ms/q
+    CSPG(m=2,λ=0.5) (param=   80): recall=0.9802, time=0.4463 ms/q
+    CSPG(m=2,λ=0.5) (param=  100): recall=0.9861, time=0.5392 ms/q
+    CSPG(m=2,λ=0.5) (param=  150): recall=0.9930, time=0.7825 ms/q
+    CSPG(m=2,λ=0.5) (param=  200): recall=0.9957, time=1.0078 ms/q
+    CSPG(m=2,λ=0.5) (param=  300): recall=0.9979, time=1.5101 ms/q
+    CSPG(m=2,λ=0.5) (param=  400): recall=0.9987, time=1.9983 ms/q
+    CSPG(m=2,λ=0.5) (param=  600): recall=0.9993, time=3.0493 ms/q
+    CSPG(m=2,λ=0.5) (param=  800): recall=0.9995, time=4.2191 ms/q
+    CSPG(m=2,λ=0.5) (param= 1000): recall=0.9997, time=5.4476 ms/q
+    CSPG(m=2,λ=0.5) (param= 1500): recall=0.9998, time=9.2452 ms/q
+  Loaded HNSW from /Users/dhm/Documents/indices/sift10m_hnsw.idx
+  → HNSW
+    HNSW (param=   10): recall=0.7319, time=0.1543 ms/q
+    HNSW (param=   20): recall=0.8514, time=0.1073 ms/q
+    HNSW (param=   30): recall=0.9035, time=0.1179 ms/q
+    HNSW (param=   40): recall=0.9312, time=0.1410 ms/q
+    HNSW (param=   60): recall=0.9597, time=0.2806 ms/q
+    HNSW (param=   80): recall=0.9735, time=0.2536 ms/q
+    HNSW (param=  100): recall=0.9814, time=0.3058 ms/q
+    HNSW (param=  150): recall=0.9905, time=0.4401 ms/q
+    HNSW (param=  200): recall=0.9939, time=0.5629 ms/q
+    HNSW (param=  300): recall=0.9970, time=0.8421 ms/q
+    HNSW (param=  400): recall=0.9982, time=1.0718 ms/q
+    HNSW (param=  600): recall=0.9991, time=1.6092 ms/q
+    HNSW (param=  800): recall=0.9995, time=2.1823 ms/q
+    HNSW (param= 1000): recall=0.9997, time=2.7017 ms/q
+    HNSW (param= 1500): recall=0.9998, time=4.3050 ms/q
+
+============================================================
+BENCHMARK: Recall vs Time (k=50) — sift10m
+============================================================
+  Loaded CSPG(m=2,λ=0.5) from /Users/dhm/Documents/indices/sift10m_cspg_default.idx
+  → CSPG(m=2,λ=0.5)
+    CSPG(m=2,λ=0.5) (param=   10): recall=0.9344, time=1.0709 ms/q
+    CSPG(m=2,λ=0.5) (param=   20): recall=0.9344, time=0.2920 ms/q
+    CSPG(m=2,λ=0.5) (param=   30): recall=0.9344, time=0.2931 ms/q
+    CSPG(m=2,λ=0.5) (param=   40): recall=0.9344, time=0.2929 ms/q
+    CSPG(m=2,λ=0.5) (param=   60): recall=0.9487, time=0.3481 ms/q
+    CSPG(m=2,λ=0.5) (param=   80): recall=0.9659, time=0.4439 ms/q
+    CSPG(m=2,λ=0.5) (param=  100): recall=0.9757, time=0.5339 ms/q
+    CSPG(m=2,λ=0.5) (param=  150): recall=0.9873, time=0.7982 ms/q
+    CSPG(m=2,λ=0.5) (param=  200): recall=0.9922, time=1.0119 ms/q
+    CSPG(m=2,λ=0.5) (param=  300): recall=0.9962, time=1.5008 ms/q
+    CSPG(m=2,λ=0.5) (param=  400): recall=0.9976, time=1.9923 ms/q
+    CSPG(m=2,λ=0.5) (param=  600): recall=0.9988, time=3.0459 ms/q
+    CSPG(m=2,λ=0.5) (param=  800): recall=0.9993, time=4.2199 ms/q
+    CSPG(m=2,λ=0.5) (param= 1000): recall=0.9995, time=5.4494 ms/q
+    CSPG(m=2,λ=0.5) (param= 1500): recall=0.9997, time=9.2450 ms/q
+  Loaded HNSW from /Users/dhm/Documents/indices/sift10m_hnsw.idx
+  → HNSW
+    HNSW (param=   10): recall=0.6285, time=0.1626 ms/q
+    HNSW (param=   20): recall=0.7761, time=0.0964 ms/q
+    HNSW (param=   30): recall=0.8494, time=0.1181 ms/q
+    HNSW (param=   40): recall=0.8908, time=0.1459 ms/q
+    HNSW (param=   60): recall=0.9341, time=0.1980 ms/q
+    HNSW (param=   80): recall=0.9553, time=0.2488 ms/q
+    HNSW (param=  100): recall=0.9678, time=0.3020 ms/q
+    HNSW (param=  150): recall=0.9828, time=0.4352 ms/q
+    HNSW (param=  200): recall=0.9893, time=0.5608 ms/q
+    HNSW (param=  300): recall=0.9946, time=0.8291 ms/q
+    HNSW (param=  400): recall=0.9967, time=1.1344 ms/q
+    HNSW (param=  600): recall=0.9984, time=1.6558 ms/q
+    HNSW (param=  800): recall=0.9990, time=2.1449 ms/q
+    HNSW (param= 1000): recall=0.9994, time=2.6924 ms/q
+    HNSW (param= 1500): recall=0.9997, time=4.2873 ms/q
+
+============================================================
+BENCHMARK: Ablation — m (num_partitions) — sift10m
+============================================================
+  Loaded CSPG(m=1,λ=0.5) from /Users/dhm/Documents/indices/sift10m_cspg_m1_l50.idx
+  → CSPG(m=1,λ=0.5)
+    CSPG(m=1,λ=0.5) (param=   10): recall=0.7822, time=0.1682 ms/q
+    CSPG(m=1,λ=0.5) (param=   20): recall=0.8851, time=0.1055 ms/q
+    CSPG(m=1,λ=0.5) (param=   30): recall=0.9281, time=0.1377 ms/q
+    CSPG(m=1,λ=0.5) (param=   40): recall=0.9499, time=0.1676 ms/q
+    CSPG(m=1,λ=0.5) (param=   60): recall=0.9713, time=0.2330 ms/q
+    CSPG(m=1,λ=0.5) (param=   80): recall=0.9812, time=0.2915 ms/q
+    CSPG(m=1,λ=0.5) (param=  100): recall=0.9866, time=0.3524 ms/q
+    CSPG(m=1,λ=0.5) (param=  150): recall=0.9930, time=0.5012 ms/q
+    CSPG(m=1,λ=0.5) (param=  200): recall=0.9954, time=0.6495 ms/q
+    CSPG(m=1,λ=0.5) (param=  300): recall=0.9976, time=0.9681 ms/q
+    CSPG(m=1,λ=0.5) (param=  400): recall=0.9982, time=1.2520 ms/q
+    CSPG(m=1,λ=0.5) (param=  600): recall=0.9991, time=1.8549 ms/q
+    CSPG(m=1,λ=0.5) (param=  800): recall=0.9994, time=2.4447 ms/q
+    CSPG(m=1,λ=0.5) (param= 1000): recall=0.9996, time=3.0871 ms/q
+    CSPG(m=1,λ=0.5) (param= 1500): recall=0.9997, time=4.7826 ms/q
+  Loaded CSPG(m=2,λ=0.5) from /Users/dhm/Documents/indices/sift10m_cspg_m2_l50.idx
+  → CSPG(m=2,λ=0.5)
+    CSPG(m=2,λ=0.5) (param=   10): recall=0.8100, time=0.8874 ms/q
+    CSPG(m=2,λ=0.5) (param=   20): recall=0.9033, time=0.1603 ms/q
+    CSPG(m=2,λ=0.5) (param=   30): recall=0.9402, time=0.2137 ms/q
+    CSPG(m=2,λ=0.5) (param=   40): recall=0.9593, time=0.2543 ms/q
+    CSPG(m=2,λ=0.5) (param=   60): recall=0.9776, time=0.3576 ms/q
+    CSPG(m=2,λ=0.5) (param=   80): recall=0.9859, time=0.4474 ms/q
+    CSPG(m=2,λ=0.5) (param=  100): recall=0.9900, time=0.5470 ms/q
+    CSPG(m=2,λ=0.5) (param=  150): recall=0.9948, time=0.7882 ms/q
+    CSPG(m=2,λ=0.5) (param=  200): recall=0.9967, time=1.0163 ms/q
+    CSPG(m=2,λ=0.5) (param=  300): recall=0.9984, time=1.5068 ms/q
+    CSPG(m=2,λ=0.5) (param=  400): recall=0.9990, time=1.9975 ms/q
+    CSPG(m=2,λ=0.5) (param=  600): recall=0.9994, time=3.0521 ms/q
+    CSPG(m=2,λ=0.5) (param=  800): recall=0.9996, time=4.2208 ms/q
+    CSPG(m=2,λ=0.5) (param= 1000): recall=0.9996, time=5.4437 ms/q
+    CSPG(m=2,λ=0.5) (param= 1500): recall=0.9997, time=9.2464 ms/q
+  Loaded CSPG(m=4,λ=0.5) from /Users/dhm/Documents/indices/sift10m_cspg_m4_l50.idx
+  → CSPG(m=4,λ=0.5)
+    CSPG(m=4,λ=0.5) (param=   10): recall=0.8267, time=3.1049 ms/q
+    CSPG(m=4,λ=0.5) (param=   20): recall=0.9140, time=0.2665 ms/q
+    CSPG(m=4,λ=0.5) (param=   30): recall=0.9473, time=0.3382 ms/q
+    CSPG(m=4,λ=0.5) (param=   40): recall=0.9643, time=0.4146 ms/q
+    CSPG(m=4,λ=0.5) (param=   60): recall=0.9802, time=0.5935 ms/q
+    CSPG(m=4,λ=0.5) (param=   80): recall=0.9875, time=0.7529 ms/q
+    CSPG(m=4,λ=0.5) (param=  100): recall=0.9913, time=0.9097 ms/q
+    CSPG(m=4,λ=0.5) (param=  150): recall=0.9953, time=1.3410 ms/q
+    CSPG(m=4,λ=0.5) (param=  200): recall=0.9970, time=1.7727 ms/q
+    CSPG(m=4,λ=0.5) (param=  300): recall=0.9984, time=2.6934 ms/q
+    CSPG(m=4,λ=0.5) (param=  400): recall=0.9990, time=3.7227 ms/q
+    CSPG(m=4,λ=0.5) (param=  600): recall=0.9994, time=6.0558 ms/q
+    CSPG(m=4,λ=0.5) (param=  800): recall=0.9995, time=8.9355 ms/q
+    CSPG(m=4,λ=0.5) (param= 1000): recall=0.9996, time=12.0852 ms/q
+    CSPG(m=4,λ=0.5) (param= 1500): recall=0.9997, time=22.1135 ms/q
+  Loaded CSPG(m=8,λ=0.5) from /Users/dhm/Documents/indices/sift10m_cspg_m8_l50.idx
+  → CSPG(m=8,λ=0.5)
+    CSPG(m=8,λ=0.5) (param=   10): recall=0.8406, time=8.7743 ms/q
+    CSPG(m=8,λ=0.5) (param=   20): recall=0.9204, time=0.5745 ms/q
+    CSPG(m=8,λ=0.5) (param=   30): recall=0.9506, time=0.6452 ms/q
+    CSPG(m=8,λ=0.5) (param=   40): recall=0.9666, time=0.7654 ms/q
+    CSPG(m=8,λ=0.5) (param=   60): recall=0.9815, time=1.1182 ms/q
+    CSPG(m=8,λ=0.5) (param=   80): recall=0.9883, time=1.4009 ms/q
+    CSPG(m=8,λ=0.5) (param=  100): recall=0.9917, time=1.7638 ms/q
+    CSPG(m=8,λ=0.5) (param=  150): recall=0.9960, time=2.7569 ms/q
+    CSPG(m=8,λ=0.5) (param=  200): recall=0.9975, time=3.7118 ms/q
+    CSPG(m=8,λ=0.5) (param=  300): recall=0.9987, time=6.4824 ms/q
+    CSPG(m=8,λ=0.5) (param=  400): recall=0.9991, time=8.8856 ms/q
+    CSPG(m=8,λ=0.5) (param=  600): recall=0.9995, time=15.3639 ms/q
+    CSPG(m=8,λ=0.5) (param=  800): recall=0.9995, time=23.4651 ms/q
+    CSPG(m=8,λ=0.5) (param= 1000): recall=0.9997, time=37.6620 ms/q
+    CSPG(m=8,λ=0.5) (param= 1500): recall=0.9997, time=74.7816 ms/q
+
+============================================================
+BENCHMARK: Ablation — λ (routing ratio) — sift10m
+============================================================
+  Loaded CSPG(m=2,λ=0.1) from /Users/dhm/Documents/indices/sift10m_cspg_m2_l10.idx
+  → CSPG(m=2,λ=0.1)
+    CSPG(m=2,λ=0.1) (param=   10): recall=0.6835, time=0.3257 ms/q
+    CSPG(m=2,λ=0.1) (param=   20): recall=0.8315, time=0.1252 ms/q
+    CSPG(m=2,λ=0.1) (param=   30): recall=0.8962, time=0.1643 ms/q
+    CSPG(m=2,λ=0.1) (param=   40): recall=0.9272, time=0.1994 ms/q
+    CSPG(m=2,λ=0.1) (param=   60): recall=0.9579, time=0.2746 ms/q
+    CSPG(m=2,λ=0.1) (param=   80): recall=0.9731, time=0.3482 ms/q
+    CSPG(m=2,λ=0.1) (param=  100): recall=0.9810, time=0.4207 ms/q
+    CSPG(m=2,λ=0.1) (param=  150): recall=0.9900, time=0.6063 ms/q
+    CSPG(m=2,λ=0.1) (param=  200): recall=0.9936, time=0.7897 ms/q
+    CSPG(m=2,λ=0.1) (param=  300): recall=0.9968, time=1.1558 ms/q
+    CSPG(m=2,λ=0.1) (param=  400): recall=0.9980, time=1.5448 ms/q
+    CSPG(m=2,λ=0.1) (param=  600): recall=0.9990, time=2.3485 ms/q
+    CSPG(m=2,λ=0.1) (param=  800): recall=0.9993, time=3.2166 ms/q
+    CSPG(m=2,λ=0.1) (param= 1000): recall=0.9994, time=4.1940 ms/q
+    CSPG(m=2,λ=0.1) (param= 1500): recall=0.9995, time=7.0328 ms/q
+  Loaded CSPG(m=2,λ=0.2) from /Users/dhm/Documents/indices/sift10m_cspg_m2_l20.idx
+  → CSPG(m=2,λ=0.2)
+    CSPG(m=2,λ=0.2) (param=   10): recall=0.7488, time=0.2843 ms/q
+    CSPG(m=2,λ=0.2) (param=   20): recall=0.8666, time=0.1354 ms/q
+    CSPG(m=2,λ=0.2) (param=   30): recall=0.9155, time=0.1743 ms/q
+    CSPG(m=2,λ=0.2) (param=   40): recall=0.9405, time=0.2123 ms/q
+    CSPG(m=2,λ=0.2) (param=   60): recall=0.9665, time=0.2959 ms/q
+    CSPG(m=2,λ=0.2) (param=   80): recall=0.9784, time=0.3755 ms/q
+    CSPG(m=2,λ=0.2) (param=  100): recall=0.9852, time=0.4515 ms/q
+    CSPG(m=2,λ=0.2) (param=  150): recall=0.9924, time=0.6514 ms/q
+    CSPG(m=2,λ=0.2) (param=  200): recall=0.9952, time=0.8528 ms/q
+    CSPG(m=2,λ=0.2) (param=  300): recall=0.9974, time=1.2471 ms/q
+    CSPG(m=2,λ=0.2) (param=  400): recall=0.9983, time=1.6673 ms/q
+    CSPG(m=2,λ=0.2) (param=  600): recall=0.9989, time=2.5253 ms/q
+    CSPG(m=2,λ=0.2) (param=  800): recall=0.9992, time=3.4862 ms/q
+    CSPG(m=2,λ=0.2) (param= 1000): recall=0.9994, time=4.5505 ms/q
+    CSPG(m=2,λ=0.2) (param= 1500): recall=0.9996, time=7.6430 ms/q
+  Loaded CSPG(m=2,λ=0.3) from /Users/dhm/Documents/indices/sift10m_cspg_m2_l30.idx
+  → CSPG(m=2,λ=0.3)
+    CSPG(m=2,λ=0.3) (param=   10): recall=0.7751, time=0.3806 ms/q
+    CSPG(m=2,λ=0.3) (param=   20): recall=0.8822, time=0.1456 ms/q
+    CSPG(m=2,λ=0.3) (param=   30): recall=0.9268, time=0.1857 ms/q
+    CSPG(m=2,λ=0.3) (param=   40): recall=0.9486, time=0.2251 ms/q
+    CSPG(m=2,λ=0.3) (param=   60): recall=0.9709, time=0.3166 ms/q
+    CSPG(m=2,λ=0.3) (param=   80): recall=0.9814, time=0.4008 ms/q
+    CSPG(m=2,λ=0.3) (param=  100): recall=0.9868, time=0.4819 ms/q
+    CSPG(m=2,λ=0.3) (param=  150): recall=0.9931, time=0.6997 ms/q
+    CSPG(m=2,λ=0.3) (param=  200): recall=0.9958, time=0.9136 ms/q
+    CSPG(m=2,λ=0.3) (param=  300): recall=0.9976, time=1.3374 ms/q
+    CSPG(m=2,λ=0.3) (param=  400): recall=0.9984, time=1.7901 ms/q
+    CSPG(m=2,λ=0.3) (param=  600): recall=0.9992, time=2.7088 ms/q
+    CSPG(m=2,λ=0.3) (param=  800): recall=0.9994, time=3.7441 ms/q
+    CSPG(m=2,λ=0.3) (param= 1000): recall=0.9995, time=4.8865 ms/q
+    CSPG(m=2,λ=0.3) (param= 1500): recall=0.9997, time=8.2026 ms/q
+  Loaded CSPG(m=2,λ=0.4) from /Users/dhm/Documents/indices/sift10m_cspg_m2_l40.idx
+  → CSPG(m=2,λ=0.4)
+    CSPG(m=2,λ=0.4) (param=   10): recall=0.7946, time=0.6085 ms/q
+    CSPG(m=2,λ=0.4) (param=   20): recall=0.8953, time=0.1528 ms/q
+    CSPG(m=2,λ=0.4) (param=   30): recall=0.9345, time=0.1951 ms/q
+    CSPG(m=2,λ=0.4) (param=   40): recall=0.9549, time=0.2389 ms/q
+    CSPG(m=2,λ=0.4) (param=   60): recall=0.9752, time=0.3354 ms/q
+    CSPG(m=2,λ=0.4) (param=   80): recall=0.9842, time=0.4245 ms/q
+    CSPG(m=2,λ=0.4) (param=  100): recall=0.9887, time=0.5139 ms/q
+    CSPG(m=2,λ=0.4) (param=  150): recall=0.9942, time=0.7448 ms/q
+    CSPG(m=2,λ=0.4) (param=  200): recall=0.9961, time=0.9993 ms/q
+    CSPG(m=2,λ=0.4) (param=  300): recall=0.9979, time=1.4698 ms/q
+    CSPG(m=2,λ=0.4) (param=  400): recall=0.9986, time=1.8894 ms/q
+    CSPG(m=2,λ=0.4) (param=  600): recall=0.9991, time=2.9372 ms/q
+    CSPG(m=2,λ=0.4) (param=  800): recall=0.9994, time=4.1341 ms/q
+    CSPG(m=2,λ=0.4) (param= 1000): recall=0.9994, time=5.1647 ms/q
+    CSPG(m=2,λ=0.4) (param= 1500): recall=0.9996, time=8.7700 ms/q
+  Loaded CSPG(m=2,λ=0.5) from /Users/dhm/Documents/indices/sift10m_cspg_m2_l50.idx
+  → CSPG(m=2,λ=0.5)
+    CSPG(m=2,λ=0.5) (param=   10): recall=0.8100, time=0.6240 ms/q
+    CSPG(m=2,λ=0.5) (param=   20): recall=0.9033, time=0.1573 ms/q
+    CSPG(m=2,λ=0.5) (param=   30): recall=0.9402, time=0.2077 ms/q
+    CSPG(m=2,λ=0.5) (param=   40): recall=0.9593, time=0.2490 ms/q
+    CSPG(m=2,λ=0.5) (param=   60): recall=0.9776, time=0.3527 ms/q
+    CSPG(m=2,λ=0.5) (param=   80): recall=0.9859, time=0.4477 ms/q
+    CSPG(m=2,λ=0.5) (param=  100): recall=0.9900, time=0.5408 ms/q
+    CSPG(m=2,λ=0.5) (param=  150): recall=0.9948, time=0.7811 ms/q
+    CSPG(m=2,λ=0.5) (param=  200): recall=0.9967, time=1.0044 ms/q
+    CSPG(m=2,λ=0.5) (param=  300): recall=0.9984, time=1.4922 ms/q
+    CSPG(m=2,λ=0.5) (param=  400): recall=0.9990, time=1.9778 ms/q
+    CSPG(m=2,λ=0.5) (param=  600): recall=0.9994, time=3.0429 ms/q
+    CSPG(m=2,λ=0.5) (param=  800): recall=0.9996, time=4.2226 ms/q
+    CSPG(m=2,λ=0.5) (param= 1000): recall=0.9996, time=5.4395 ms/q
+    CSPG(m=2,λ=0.5) (param= 1500): recall=0.9997, time=9.3278 ms/q
+
+============================================================
+BENCHMARK: Ablation — ef1 — sift10m
+============================================================
+  Loaded CSPG(m=2,λ=0.5) from /Users/dhm/Documents/indices/sift10m_cspg_default.idx
+  → CSPG(ef1=1)
+    CSPG(ef1=1) (param=   10): recall=0.8099, time=0.8245 ms/q
+    CSPG(ef1=1) (param=   20): recall=0.9034, time=0.1592 ms/q
+    CSPG(ef1=1) (param=   30): recall=0.9401, time=0.2069 ms/q
+    CSPG(ef1=1) (param=   40): recall=0.9594, time=0.2489 ms/q
+    CSPG(ef1=1) (param=   60): recall=0.9776, time=0.3491 ms/q
+    CSPG(ef1=1) (param=   80): recall=0.9859, time=0.4422 ms/q
+    CSPG(ef1=1) (param=  100): recall=0.9900, time=0.5361 ms/q
+    CSPG(ef1=1) (param=  150): recall=0.9949, time=0.7781 ms/q
+    CSPG(ef1=1) (param=  200): recall=0.9967, time=1.0352 ms/q
+    CSPG(ef1=1) (param=  300): recall=0.9984, time=1.5091 ms/q
+    CSPG(ef1=1) (param=  400): recall=0.9989, time=2.0054 ms/q
+    CSPG(ef1=1) (param=  600): recall=0.9994, time=3.0573 ms/q
+    CSPG(ef1=1) (param=  800): recall=0.9996, time=4.2420 ms/q
+    CSPG(ef1=1) (param= 1000): recall=0.9996, time=5.4428 ms/q
+    CSPG(ef1=1) (param= 1500): recall=0.9998, time=9.2457 ms/q
+  → CSPG(ef1=2)
+    CSPG(ef1=2) (param=   10): recall=0.8058, time=0.0915 ms/q
+    CSPG(ef1=2) (param=   20): recall=0.9022, time=0.1433 ms/q
+    CSPG(ef1=2) (param=   30): recall=0.9399, time=0.1963 ms/q
+    CSPG(ef1=2) (param=   40): recall=0.9591, time=0.2462 ms/q
+    CSPG(ef1=2) (param=   60): recall=0.9774, time=0.3464 ms/q
+    CSPG(ef1=2) (param=   80): recall=0.9857, time=0.4451 ms/q
+    CSPG(ef1=2) (param=  100): recall=0.9899, time=0.5364 ms/q
+    CSPG(ef1=2) (param=  150): recall=0.9948, time=0.7791 ms/q
+    CSPG(ef1=2) (param=  200): recall=0.9968, time=1.0111 ms/q
+    CSPG(ef1=2) (param=  300): recall=0.9984, time=1.4979 ms/q
+    CSPG(ef1=2) (param=  400): recall=0.9990, time=1.9867 ms/q
+    CSPG(ef1=2) (param=  600): recall=0.9995, time=3.0755 ms/q
+    CSPG(ef1=2) (param=  800): recall=0.9996, time=4.2323 ms/q
+    CSPG(ef1=2) (param= 1000): recall=0.9996, time=5.4608 ms/q
+    CSPG(ef1=2) (param= 1500): recall=0.9998, time=9.2566 ms/q
+  → CSPG(ef1=4)
+    CSPG(ef1=4) (param=   10): recall=0.8038, time=0.0962 ms/q
+    CSPG(ef1=4) (param=   20): recall=0.9016, time=0.1487 ms/q
+    CSPG(ef1=4) (param=   30): recall=0.9396, time=0.2058 ms/q
+    CSPG(ef1=4) (param=   40): recall=0.9590, time=0.2516 ms/q
+    CSPG(ef1=4) (param=   60): recall=0.9775, time=0.3554 ms/q
+    CSPG(ef1=4) (param=   80): recall=0.9857, time=0.4547 ms/q
+    CSPG(ef1=4) (param=  100): recall=0.9899, time=0.5482 ms/q
+    CSPG(ef1=4) (param=  150): recall=0.9948, time=0.7930 ms/q
+    CSPG(ef1=4) (param=  200): recall=0.9967, time=1.0326 ms/q
+    CSPG(ef1=4) (param=  300): recall=0.9984, time=1.5211 ms/q
+    CSPG(ef1=4) (param=  400): recall=0.9990, time=2.0154 ms/q
+    CSPG(ef1=4) (param=  600): recall=0.9994, time=3.0644 ms/q
+    CSPG(ef1=4) (param=  800): recall=0.9996, time=4.2396 ms/q
+    CSPG(ef1=4) (param= 1000): recall=0.9996, time=5.4677 ms/q
+    CSPG(ef1=4) (param= 1500): recall=0.9998, time=9.2615 ms/q
+  → CSPG(ef1=8)
+    CSPG(ef1=8) (param=   10): recall=0.8038, time=0.1061 ms/q
+    CSPG(ef1=8) (param=   20): recall=0.9009, time=0.1604 ms/q
+    CSPG(ef1=8) (param=   30): recall=0.9392, time=0.2105 ms/q
+    CSPG(ef1=8) (param=   40): recall=0.9589, time=0.2620 ms/q
+    CSPG(ef1=8) (param=   60): recall=0.9774, time=0.3607 ms/q
+    CSPG(ef1=8) (param=   80): recall=0.9856, time=0.4630 ms/q
+    CSPG(ef1=8) (param=  100): recall=0.9899, time=0.5542 ms/q
+    CSPG(ef1=8) (param=  150): recall=0.9947, time=0.8036 ms/q
+    CSPG(ef1=8) (param=  200): recall=0.9967, time=1.0366 ms/q
+    CSPG(ef1=8) (param=  300): recall=0.9984, time=1.5285 ms/q
+    CSPG(ef1=8) (param=  400): recall=0.9989, time=2.0226 ms/q
+    CSPG(ef1=8) (param=  600): recall=0.9994, time=3.0770 ms/q
+    CSPG(ef1=8) (param=  800): recall=0.9996, time=4.2489 ms/q
+    CSPG(ef1=8) (param= 1000): recall=0.9997, time=5.4713 ms/q
+    CSPG(ef1=8) (param= 1500): recall=0.9998, time=9.2704 ms/q
+  → CSPG(ef1=16)
+    CSPG(ef1=16) (param=   10): recall=0.8081, time=0.1368 ms/q
+    CSPG(ef1=16) (param=   20): recall=0.9013, time=0.1772 ms/q
+    CSPG(ef1=16) (param=   30): recall=0.9391, time=0.2247 ms/q
+    CSPG(ef1=16) (param=   40): recall=0.9587, time=0.2776 ms/q
+    CSPG(ef1=16) (param=   60): recall=0.9773, time=0.3770 ms/q
+    CSPG(ef1=16) (param=   80): recall=0.9855, time=0.4794 ms/q
+    CSPG(ef1=16) (param=  100): recall=0.9898, time=0.5698 ms/q
+    CSPG(ef1=16) (param=  150): recall=0.9947, time=0.8196 ms/q
+    CSPG(ef1=16) (param=  200): recall=0.9967, time=1.0501 ms/q
+    CSPG(ef1=16) (param=  300): recall=0.9984, time=1.5432 ms/q
+    CSPG(ef1=16) (param=  400): recall=0.9990, time=2.0375 ms/q
+    CSPG(ef1=16) (param=  600): recall=0.9994, time=3.0904 ms/q
+    CSPG(ef1=16) (param=  800): recall=0.9996, time=4.2625 ms/q
+    CSPG(ef1=16) (param= 1000): recall=0.9996, time=5.4875 ms/q
+    CSPG(ef1=16) (param= 1500): recall=0.9997, time=9.2885 ms/q
+
+============================================================
+BENCHMARK: Robustness — sift10m
+============================================================
+  Loaded CSPG(m=2,λ=0.5) from /Users/dhm/Documents/indices/sift10m_cspg_default.idx
+  → CSPG(m=2,λ=0.5)
+    mean=0.9960  median=1.0000  [0.8000, 1.0000]
+  Loaded HNSW from /Users/dhm/Documents/indices/sift10m_hnsw.idx
+  → HNSW
+    mean=0.9946  median=1.0000  [0.7500, 1.0000]
+
+============================================================
+SUMMARY: Construction — sift10m
+============================================================
+  CSPG(m=2, λ=0.5)                              time= 2069.77s  mem=  9004.6MB
+  HNSW                                          time=  933.29s  mem=  7478.0MB
+
+Results → /Users/dhm/Documents/SuCo/benchs/results_cspg/results_cspg_sift10m.json

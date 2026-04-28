@@ -1,0 +1,170 @@
+========================================================================
+CSPG Paper Benchmark Suite
+========================================================================
+  Data dir:         /Users/dhm/Documents/data
+  Index dir:        /Users/dhm/Documents/indices
+  Output dir:       /Users/dhm/Documents/SuCo/benchs/results_cspg
+  Datasets:         ['openai1m']
+  Benchmarks:       ['construction', 'recall_k10', 'recall_k20', 'recall_k50', 'robustness']
+  Index types:      ['cspg', 'hnsw']
+  CSPG params:      M=32, efC=128, m=2, λ=0.5
+  SearchParamsCSPG: available
+========================================================================
+
+########################################################################
+# Dataset: OPENAI1M
+########################################################################
+
+Loading openai1m…
+  Done in 0.0s | xb=(990000, 1536)  xq=(10000, 1536)  gt=(10000, 100)
+  Robustness queries loaded from cache.
+
+--- Pre-building CSPG(m=2, λ=0.5) ---
+  CSPG(m=2, λ=0.5): build=612.17s
+  Saved CSPG(m=2, λ=0.5) → /Users/dhm/Documents/indices/openai1m_cspg_default.idx
+
+--- Pre-building HNSW ---
+  HNSW(M=32): build=471.26s
+  Saved HNSW → /Users/dhm/Documents/indices/openai1m_hnsw.idx
+
+  Base vectors freed — all indices cached to disk.
+
+============================================================
+BENCHMARK: Construction — openai1m
+============================================================
+  Loaded CSPG(m=2, λ=0.5) from /Users/dhm/Documents/indices/openai1m_cspg_default.idx
+  CSPG(m=2, λ=0.5): time=612.17s, memory=6208.85MB
+  Loaded HNSW from /Users/dhm/Documents/indices/openai1m_hnsw.idx
+  HNSW: time=471.26s, memory=6057.71MB
+
+============================================================
+BENCHMARK: Recall vs Time (k=10) — openai1m
+============================================================
+  Loaded CSPG(m=2,λ=0.5) from /Users/dhm/Documents/indices/openai1m_cspg_default.idx
+  → CSPG(m=2,λ=0.5)
+    CSPG(m=2,λ=0.5) (param=   10): recall=0.8225, time=0.8243 ms/q
+    CSPG(m=2,λ=0.5) (param=   20): recall=0.9079, time=0.3601 ms/q
+    CSPG(m=2,λ=0.5) (param=   30): recall=0.9402, time=0.4806 ms/q
+    CSPG(m=2,λ=0.5) (param=   40): recall=0.9564, time=0.5959 ms/q
+    CSPG(m=2,λ=0.5) (param=   60): recall=0.9715, time=0.8214 ms/q
+    CSPG(m=2,λ=0.5) (param=   80): recall=0.9789, time=1.0405 ms/q
+    CSPG(m=2,λ=0.5) (param=  100): recall=0.9835, time=1.2407 ms/q
+    CSPG(m=2,λ=0.5) (param=  150): recall=0.9890, time=1.7549 ms/q
+    CSPG(m=2,λ=0.5) (param=  200): recall=0.9919, time=2.2477 ms/q
+    CSPG(m=2,λ=0.5) (param=  300): recall=0.9946, time=3.1698 ms/q
+    CSPG(m=2,λ=0.5) (param=  400): recall=0.9960, time=4.1136 ms/q
+    CSPG(m=2,λ=0.5) (param=  600): recall=0.9975, time=5.9508 ms/q
+    CSPG(m=2,λ=0.5) (param=  800): recall=0.9981, time=7.8549 ms/q
+    CSPG(m=2,λ=0.5) (param= 1000): recall=0.9985, time=9.8661 ms/q
+    CSPG(m=2,λ=0.5) (param= 1500): recall=0.9990, time=15.3457 ms/q
+  Loaded HNSW from /Users/dhm/Documents/indices/openai1m_hnsw.idx
+  → HNSW
+    HNSW (param=   10): recall=0.7965, time=0.6466 ms/q
+    HNSW (param=   20): recall=0.8889, time=0.2295 ms/q
+    HNSW (param=   30): recall=0.9247, time=0.3002 ms/q
+    HNSW (param=   40): recall=0.9444, time=0.3682 ms/q
+    HNSW (param=   60): recall=0.9635, time=0.5045 ms/q
+    HNSW (param=   80): recall=0.9726, time=0.6274 ms/q
+    HNSW (param=  100): recall=0.9780, time=0.7500 ms/q
+    HNSW (param=  150): recall=0.9855, time=1.0557 ms/q
+    HNSW (param=  200): recall=0.9889, time=1.3305 ms/q
+    HNSW (param=  300): recall=0.9924, time=1.8863 ms/q
+    HNSW (param=  400): recall=0.9945, time=2.4319 ms/q
+    HNSW (param=  600): recall=0.9962, time=3.5138 ms/q
+    HNSW (param=  800): recall=0.9970, time=4.5727 ms/q
+    HNSW (param= 1000): recall=0.9975, time=5.6471 ms/q
+    HNSW (param= 1500): recall=0.9983, time=8.3774 ms/q
+
+============================================================
+BENCHMARK: Recall vs Time (k=20) — openai1m
+============================================================
+  Loaded CSPG(m=2,λ=0.5) from /Users/dhm/Documents/indices/openai1m_cspg_default.idx
+  → CSPG(m=2,λ=0.5)
+    CSPG(m=2,λ=0.5) (param=   10): recall=0.8858, time=1.0339 ms/q
+    CSPG(m=2,λ=0.5) (param=   20): recall=0.8858, time=0.3593 ms/q
+    CSPG(m=2,λ=0.5) (param=   30): recall=0.9267, time=0.4799 ms/q
+    CSPG(m=2,λ=0.5) (param=   40): recall=0.9476, time=0.5965 ms/q
+    CSPG(m=2,λ=0.5) (param=   60): recall=0.9672, time=0.8243 ms/q
+    CSPG(m=2,λ=0.5) (param=   80): recall=0.9767, time=1.0430 ms/q
+    CSPG(m=2,λ=0.5) (param=  100): recall=0.9822, time=1.2455 ms/q
+    CSPG(m=2,λ=0.5) (param=  150): recall=0.9887, time=1.7543 ms/q
+    CSPG(m=2,λ=0.5) (param=  200): recall=0.9917, time=2.2898 ms/q
+    CSPG(m=2,λ=0.5) (param=  300): recall=0.9945, time=3.1554 ms/q
+    CSPG(m=2,λ=0.5) (param=  400): recall=0.9959, time=4.0738 ms/q
+    CSPG(m=2,λ=0.5) (param=  600): recall=0.9973, time=5.9095 ms/q
+    CSPG(m=2,λ=0.5) (param=  800): recall=0.9979, time=7.8659 ms/q
+    CSPG(m=2,λ=0.5) (param= 1000): recall=0.9983, time=9.8704 ms/q
+    CSPG(m=2,λ=0.5) (param= 1500): recall=0.9989, time=15.2478 ms/q
+  Loaded HNSW from /Users/dhm/Documents/indices/openai1m_hnsw.idx
+  → HNSW
+    HNSW (param=   10): recall=0.7500, time=0.7564 ms/q
+    HNSW (param=   20): recall=0.8637, time=0.2327 ms/q
+    HNSW (param=   30): recall=0.9096, time=0.3042 ms/q
+    HNSW (param=   40): recall=0.9338, time=0.3756 ms/q
+    HNSW (param=   60): recall=0.9581, time=0.5116 ms/q
+    HNSW (param=   80): recall=0.9695, time=0.6556 ms/q
+    HNSW (param=  100): recall=0.9761, time=0.7679 ms/q
+    HNSW (param=  150): recall=0.9847, time=1.0794 ms/q
+    HNSW (param=  200): recall=0.9885, time=1.3594 ms/q
+    HNSW (param=  300): recall=0.9923, time=1.9193 ms/q
+    HNSW (param=  400): recall=0.9944, time=2.4704 ms/q
+    HNSW (param=  600): recall=0.9961, time=3.5114 ms/q
+    HNSW (param=  800): recall=0.9970, time=4.5768 ms/q
+    HNSW (param= 1000): recall=0.9976, time=5.6471 ms/q
+    HNSW (param= 1500): recall=0.9983, time=8.3741 ms/q
+
+============================================================
+BENCHMARK: Recall vs Time (k=50) — openai1m
+============================================================
+  Loaded CSPG(m=2,λ=0.5) from /Users/dhm/Documents/indices/openai1m_cspg_default.idx
+  → CSPG(m=2,λ=0.5)
+    CSPG(m=2,λ=0.5) (param=   10): recall=0.9357, time=1.3242 ms/q
+    CSPG(m=2,λ=0.5) (param=   20): recall=0.9357, time=0.7126 ms/q
+    CSPG(m=2,λ=0.5) (param=   30): recall=0.9357, time=0.7111 ms/q
+    CSPG(m=2,λ=0.5) (param=   40): recall=0.9357, time=0.7194 ms/q
+    CSPG(m=2,λ=0.5) (param=   60): recall=0.9489, time=0.8291 ms/q
+    CSPG(m=2,λ=0.5) (param=   80): recall=0.9646, time=1.0475 ms/q
+    CSPG(m=2,λ=0.5) (param=  100): recall=0.9734, time=1.2468 ms/q
+    CSPG(m=2,λ=0.5) (param=  150): recall=0.9842, time=1.7574 ms/q
+    CSPG(m=2,λ=0.5) (param=  200): recall=0.9890, time=2.2541 ms/q
+    CSPG(m=2,λ=0.5) (param=  300): recall=0.9933, time=3.1868 ms/q
+    CSPG(m=2,λ=0.5) (param=  400): recall=0.9953, time=4.1302 ms/q
+    CSPG(m=2,λ=0.5) (param=  600): recall=0.9970, time=5.9517 ms/q
+    CSPG(m=2,λ=0.5) (param=  800): recall=0.9977, time=7.8635 ms/q
+    CSPG(m=2,λ=0.5) (param= 1000): recall=0.9982, time=9.8668 ms/q
+    CSPG(m=2,λ=0.5) (param= 1500): recall=0.9988, time=15.2302 ms/q
+  Loaded HNSW from /Users/dhm/Documents/indices/openai1m_hnsw.idx
+  → HNSW
+    HNSW (param=   10): recall=0.6440, time=0.2736 ms/q
+    HNSW (param=   20): recall=0.7903, time=0.2403 ms/q
+    HNSW (param=   30): recall=0.8588, time=0.3102 ms/q
+    HNSW (param=   40): recall=0.8966, time=0.3771 ms/q
+    HNSW (param=   60): recall=0.9358, time=0.5126 ms/q
+    HNSW (param=   80): recall=0.9546, time=0.6402 ms/q
+    HNSW (param=  100): recall=0.9653, time=0.7672 ms/q
+    HNSW (param=  150): recall=0.9788, time=1.0761 ms/q
+    HNSW (param=  200): recall=0.9849, time=1.3584 ms/q
+    HNSW (param=  300): recall=0.9905, time=1.9216 ms/q
+    HNSW (param=  400): recall=0.9932, time=2.4781 ms/q
+    HNSW (param=  600): recall=0.9955, time=3.5220 ms/q
+    HNSW (param=  800): recall=0.9966, time=4.6381 ms/q
+    HNSW (param= 1000): recall=0.9973, time=5.8544 ms/q
+    HNSW (param= 1500): recall=0.9982, time=8.5064 ms/q
+
+============================================================
+BENCHMARK: Robustness — openai1m
+============================================================
+  Loaded CSPG(m=2,λ=0.5) from /Users/dhm/Documents/indices/openai1m_cspg_default.idx
+  → CSPG(m=2,λ=0.5)
+    mean=0.9938  median=1.0000  [0.7000, 1.0000]
+  Loaded HNSW from /Users/dhm/Documents/indices/openai1m_hnsw.idx
+  → HNSW
+    mean=0.9907  median=1.0000  [0.6500, 1.0000]
+
+============================================================
+SUMMARY: Construction — openai1m
+============================================================
+  CSPG(m=2, λ=0.5)                              time=  612.17s  mem=  6208.9MB
+  HNSW                                          time=  471.26s  mem=  6057.7MB
+
+Results → /Users/dhm/Documents/SuCo/benchs/results_cspg/results_cspg_openai1m.json
