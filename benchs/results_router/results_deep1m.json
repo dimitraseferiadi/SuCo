@@ -29,13 +29,13 @@
       "size_mb": 778.39
     },
     "HNSW32": {
-      "build_time_s": -1,
-      "memory_mb": -1,
+      "build_time_s": 47.49,
+      "memory_mb": 457.19,
       "size_mb": 625.73
     },
     "HNSW48": {
-      "build_time_s": -1,
-      "memory_mb": -1,
+      "build_time_s": 54.25,
+      "memory_mb": 0.0,
       "size_mb": 747.76
     }
   },

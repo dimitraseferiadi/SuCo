@@ -20,7 +20,7 @@
       "build_failed": "SuCo: no valid nsubspaces \u2264 8 for d=1369 (needs d%n==0 and (d/n)%2==0)"
     },
     "SHG": {
-      "build_time_s": -1,
+      "build_time_s": 24.22,
       "memory_mb": -1,
       "size_mb": 697.89
     },

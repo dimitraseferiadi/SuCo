@@ -19,12 +19,12 @@
       "size_mb": 549.49
     },
     "SHG": {
-      "build_time_s": -1,
-      "memory_mb": -1,
+      "build_time_s": 60.72,
+      "memory_mb": 1061.22,
       "size_mb": 1350.48
     },
     "CSPG": {
-      "build_time_s": -1,
+      "build_time_s": 74.66,
       "memory_mb": -1,
       "size_mb": 900.46
     },

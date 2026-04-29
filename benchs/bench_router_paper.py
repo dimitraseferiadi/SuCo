@@ -665,7 +665,17 @@ def run_benchmarks(dataset, benchmarks, index_types, data_dir, index_dir, output
         gt = compute_ground_truth(xb, xq, k=gt.shape[1])
 
     d, n = int(xb.shape[1]), int(xb.shape[0])
-    all_results = {"dataset": dataset, "n": n, "d": d, "nq": int(xq.shape[0])}
+
+    # Load any existing results so we merge instead of overwriting prior runs.
+    out_path = os.path.join(output_dir, f"results_{dataset}.json")
+    all_results = {}
+    if os.path.exists(out_path):
+        try:
+            with open(out_path) as f:
+                all_results = json.load(f)
+        except Exception:
+            all_results = {}
+    all_results.update({"dataset": dataset, "n": n, "d": d, "nq": int(xq.shape[0])})
 
     # ----- Dataset features -----
     if "features" in benchmarks:
@@ -674,18 +684,14 @@ def run_benchmarks(dataset, benchmarks, index_types, data_dir, index_dir, output
         print(f"  {all_results['features']}")
 
     # Carry forward construction stats from a prior run when reloading indices.
-    prev_path = os.path.join(output_dir, f"results_{dataset}.json")
-    prev_construction = {}
-    if os.path.exists(prev_path):
-        try:
-            with open(prev_path) as f:
-                prev_construction = json.load(f).get("construction", {})
-        except Exception:
-            pass
+    prev_construction = all_results.get("construction", {}) or {}
 
-    construction_results = {}
-    recall_curves = {f"recall_k{k}": {} for k in RECALL_KS}
-    robustness_results = {}
+    construction_results = dict(prev_construction)
+    recall_curves = {
+        f"recall_k{k}": dict(all_results.get(f"recall_k{k}", {}) or {})
+        for k in RECALL_KS
+    }
+    robustness_results = dict(all_results.get("robustness", {}) or {})
 
     for kind in index_types:
         if kind not in BUILDERS:
@@ -780,7 +786,6 @@ def run_benchmarks(dataset, benchmarks, index_types, data_dir, index_dir, output
 
     # ----- Save -----
     os.makedirs(output_dir, exist_ok=True)
-    out_path = os.path.join(output_dir, f"results_{dataset}.json")
     with open(out_path, "w") as f:
         json.dump(all_results, f, indent=2, default=str)
     print(f"\nResults saved to {out_path}")
