@@ -3,227 +3,495 @@ Index dir:  /Users/dhm/Documents/indices
 Output dir: /Users/dhm/Documents/SuCo/benchs/results_router
 Datasets:   ['gist1m']
 Benchmarks: ['construction', 'recall_k1', 'recall_k10', 'recall_k20', 'recall_k50', 'recall_k100', 'robustness', 'features']
-Indexes:    ['hnsw32', 'hnsw48']
+Indexes:    ['suco', 'shg', 'cspg', 'hnsw32', 'hnsw48']
 
 ######################################################################
 # Dataset: GIST1M
 ######################################################################
 
 Loading gist1m...
-  Loaded in 6.7s: xb=(1000000, 960), xq=(1000, 960), gt=(1000, 100)
+  Loaded in 7.0s: xb=(1000000, 960), xq=(1000, 960), gt=(1000, 100)
 
 ======================================================================
 BENCHMARK: features - gist1m
 ======================================================================
   {'n': 1000000, 'd': 960, 'nq': 1000, 'lid_mle': 38.109554290771484, 'pdist_mean': 1.9595098495483398, 'pdist_std': 0.47921499609947205, 'kmeans_inertia_ratio_16': 0.71470700602162}
 
---- Building HNSW32 ---
-  HNSW32 (M=32, efC=128): build=335.73s
-  Saved to /Users/dhm/Documents/indices/gist1m_hnsw32.idx
+--- Loading SuCo from /Users/dhm/Documents/indices/gist1m_suco.idx ---
+  Failed to load, will rebuild: Error in faiss::IndexSuCo::IndexSuCo(idx_t, int, int, float, float, int) at /Users/dhm/Documents/SuCo/faiss/IndexSuCo.cpp:126: Error: '!(d % nsubspaces == 0)' failed: IndexSuCo: d must be divisible by nsubspaces
+
+--- Building SuCo ---
+  SuCo (Ns=8, nc=50): build=2.99s
+  Saved to /Users/dhm/Documents/indices/gist1m_suco.idx
+
+--- SuCo recall@1 curve ---
+  SuCo (0.0005): recall@1=0.4350, ms/q=0.4810, qps=2079
+  SuCo (0.001): recall@1=0.5510, ms/q=0.4114, qps=2430
+  SuCo (0.002): recall@1=0.6730, ms/q=0.4902, qps=2040
+  SuCo (0.005): recall@1=0.8060, ms/q=0.8571, qps=1167
+  SuCo (0.01): recall@1=0.8880, ms/q=1.3887, qps=720
+  SuCo (0.02): recall@1=0.9470, ms/q=2.5767, qps=388
+  SuCo (0.05): recall@1=0.9820, ms/q=5.4637, qps=183
+  SuCo (0.1): recall@1=0.9890, ms/q=10.7783, qps=93
+  SuCo (0.2): recall@1=0.9900, ms/q=20.7096, qps=48
+
+--- SuCo recall@10 curve ---
+  SuCo (0.0005): recall@10=0.3403, ms/q=0.7033, qps=1422
+  SuCo (0.001): recall@10=0.4576, ms/q=0.6585, qps=1519
+  SuCo (0.002): recall@10=0.5926, ms/q=0.7455, qps=1341
+  SuCo (0.005): recall@10=0.7464, ms/q=0.9713, qps=1030
+  SuCo (0.01): recall@10=0.8467, ms/q=1.3736, qps=728
+  SuCo (0.02): recall@10=0.9155, ms/q=2.3464, qps=426
+  SuCo (0.05): recall@10=0.9701, ms/q=5.7354, qps=174
+  SuCo (0.1): recall@10=0.9918, ms/q=11.1304, qps=90
+  SuCo (0.2): recall@10=0.9955, ms/q=21.2474, qps=47
+
+--- SuCo recall@20 curve ---
+  SuCo (0.0005): recall@20=0.2993, ms/q=0.7339, qps=1363
+  SuCo (0.001): recall@20=0.4119, ms/q=0.6555, qps=1525
+  SuCo (0.002): recall@20=0.5414, ms/q=0.7223, qps=1385
+  SuCo (0.005): recall@20=0.7092, ms/q=1.0145, qps=986
+  SuCo (0.01): recall@20=0.8174, ms/q=1.3860, qps=721
+  SuCo (0.02): recall@20=0.8973, ms/q=2.4346, qps=411
+  SuCo (0.05): recall@20=0.9594, ms/q=5.8363, qps=171
+  SuCo (0.1): recall@20=0.9869, ms/q=11.3078, qps=88
+  SuCo (0.2): recall@20=0.9929, ms/q=21.3938, qps=47
+
+--- SuCo recall@50 curve ---
+  SuCo (0.0005): recall@50=0.2472, ms/q=0.6919, qps=1445
+  SuCo (0.001): recall@50=0.3531, ms/q=0.6878, qps=1454
+  SuCo (0.002): recall@50=0.4806, ms/q=0.7458, qps=1341
+  SuCo (0.005): recall@50=0.6567, ms/q=0.9634, qps=1038
+  SuCo (0.01): recall@50=0.7759, ms/q=1.3732, qps=728
+  SuCo (0.02): recall@50=0.8685, ms/q=2.4293, qps=412
+  SuCo (0.05): recall@50=0.9437, ms/q=5.7768, qps=173
+  SuCo (0.1): recall@50=0.9803, ms/q=11.2209, qps=89
+  SuCo (0.2): recall@50=0.9895, ms/q=21.2945, qps=47
+
+--- SuCo recall@100 curve ---
+  SuCo (0.0005): recall@100=0.2093, ms/q=0.6840, qps=1462
+  SuCo (0.001): recall@100=0.3073, ms/q=0.6345, qps=1576
+  SuCo (0.002): recall@100=0.4296, ms/q=0.7332, qps=1364
+  SuCo (0.005): recall@100=0.6061, ms/q=0.9717, qps=1029
+  SuCo (0.01): recall@100=0.7349, ms/q=1.3809, qps=724
+  SuCo (0.02): recall@100=0.8395, ms/q=2.3508, qps=425
+  SuCo (0.05): recall@100=0.9290, ms/q=5.7724, qps=173
+  SuCo (0.1): recall@100=0.9740, ms/q=11.2511, qps=89
+  SuCo (0.2): recall@100=0.9865, ms/q=21.4628, qps=47
+
+--- SuCo robustness (k=20) ---
+  SuCo: {'k': 20, 'param': 0.005, 'param_name': 'candidate_ratio', 'mean_recall': 0.7092, 'median_recall': 0.7, 'min_recall': 0.1, 'max_recall': 1.0, 'q25_recall': 0.6, 'q75_recall': 0.85, 'ms_per_query': 1.1953}
+
+--- Loading SHG from /Users/dhm/Documents/indices/gist1m_shg.idx ---
+  SHG: loaded
+
+--- SHG recall@1 curve ---
+  SHG (10): recall@1=0.6440, ms/q=0.6651, qps=1503
+  SHG (15): recall@1=0.7160, ms/q=0.1159, qps=8631
+  SHG (20): recall@1=0.7790, ms/q=0.1366, qps=7319
+  SHG (30): recall@1=0.8340, ms/q=0.1813, qps=5517
+  SHG (40): recall@1=0.8710, ms/q=0.2216, qps=4513
+  SHG (60): recall@1=0.9140, ms/q=0.3038, qps=3292
+  SHG (80): recall@1=0.9420, ms/q=0.3864, qps=2588
+  SHG (100): recall@1=0.9560, ms/q=0.4743, qps=2109
+  SHG (150): recall@1=0.9740, ms/q=0.8259, qps=1211
+  SHG (200): recall@1=0.9810, ms/q=1.9242, qps=520
+  SHG (300): recall@1=0.9850, ms/q=1.7581, qps=569
+  SHG (400): recall@1=0.9870, ms/q=2.3211, qps=431
+  SHG (600): recall@1=0.9880, ms/q=3.2416, qps=308
+  SHG (800): recall@1=0.9890, ms/q=4.2281, qps=237
+  SHG (1000): recall@1=0.9900, ms/q=5.0769, qps=197
+  SHG (1500): recall@1=0.9900, ms/q=7.0258, qps=142
+  SHG (2000): recall@1=0.9900, ms/q=8.9587, qps=112
+
+--- SHG recall@10 curve ---
+  SHG (10): recall@10=0.5816, ms/q=0.1038, qps=9636
+  SHG (15): recall@10=0.6560, ms/q=0.1452, qps=6889
+  SHG (20): recall@10=0.7106, ms/q=0.1767, qps=5661
+  SHG (30): recall@10=0.7821, ms/q=0.2379, qps=4204
+  SHG (40): recall@10=0.8262, ms/q=0.3355, qps=2981
+  SHG (60): recall@10=0.8815, ms/q=0.5259, qps=1902
+  SHG (80): recall@10=0.9130, ms/q=0.6312, qps=1584
+  SHG (100): recall@10=0.9338, ms/q=0.7724, qps=1295
+  SHG (150): recall@10=0.9636, ms/q=1.0948, qps=913
+  SHG (200): recall@10=0.9755, ms/q=1.3745, qps=728
+  SHG (300): recall@10=0.9873, ms/q=1.9907, qps=502
+  SHG (400): recall@10=0.9927, ms/q=2.5142, qps=398
+  SHG (600): recall@10=0.9967, ms/q=3.4930, qps=286
+  SHG (800): recall@10=0.9980, ms/q=4.4408, qps=225
+  SHG (1000): recall@10=0.9987, ms/q=5.2994, qps=189
+  SHG (1500): recall@10=0.9991, ms/q=7.3777, qps=136
+  SHG (2000): recall@10=0.9991, ms/q=9.4116, qps=106
+
+--- SHG recall@20 curve ---
+  SHG (10): recall@20=0.6738, ms/q=0.1712, qps=5841
+  SHG (15): recall@20=0.6738, ms/q=0.1767, qps=5658
+  SHG (20): recall@20=0.6738, ms/q=0.1767, qps=5659
+  SHG (30): recall@20=0.7498, ms/q=0.2650, qps=3774
+  SHG (40): recall@20=0.7993, ms/q=0.3515, qps=2845
+  SHG (60): recall@20=0.8607, ms/q=0.5147, qps=1943
+  SHG (80): recall@20=0.8990, ms/q=0.6234, qps=1604
+  SHG (100): recall@20=0.9225, ms/q=0.7717, qps=1296
+  SHG (150): recall@20=0.9557, ms/q=1.0905, qps=917
+  SHG (200): recall@20=0.9704, ms/q=1.3822, qps=723
+  SHG (300): recall@20=0.9838, ms/q=1.9834, qps=504
+  SHG (400): recall@20=0.9904, ms/q=2.4934, qps=401
+  SHG (600): recall@20=0.9957, ms/q=3.4569, qps=289
+  SHG (800): recall@20=0.9976, ms/q=4.4244, qps=226
+  SHG (1000): recall@20=0.9983, ms/q=5.3370, qps=187
+  SHG (1500): recall@20=0.9991, ms/q=7.3312, qps=136
+  SHG (2000): recall@20=0.9993, ms/q=9.2775, qps=108
+
+--- SHG recall@50 curve ---
+  SHG (10): recall@50=0.7880, ms/q=0.3397, qps=2943
+  SHG (15): recall@50=0.7880, ms/q=0.3548, qps=2818
+  SHG (20): recall@50=0.7880, ms/q=0.3978, qps=2514
+  SHG (30): recall@50=0.7880, ms/q=0.4204, qps=2379
+  SHG (40): recall@50=0.7880, ms/q=0.4081, qps=2451
+  SHG (60): recall@50=0.8201, ms/q=0.4727, qps=2116
+  SHG (80): recall@50=0.8654, ms/q=0.6115, qps=1635
+  SHG (100): recall@50=0.8944, ms/q=0.7351, qps=1360
+  SHG (150): recall@50=0.9361, ms/q=1.0610, qps=943
+  SHG (200): recall@50=0.9566, ms/q=1.3635, qps=733
+  SHG (300): recall@50=0.9760, ms/q=1.9107, qps=523
+  SHG (400): recall@50=0.9852, ms/q=2.4296, qps=412
+  SHG (600): recall@50=0.9932, ms/q=3.3536, qps=298
+  SHG (800): recall@50=0.9963, ms/q=4.3912, qps=228
+  SHG (1000): recall@50=0.9974, ms/q=5.2425, qps=191
+  SHG (1500): recall@50=0.9986, ms/q=7.1822, qps=139
+  SHG (2000): recall@50=0.9990, ms/q=9.1822, qps=109
+
+--- SHG recall@100 curve ---
+  SHG (10): recall@100=0.8616, ms/q=0.6327, qps=1581
+  SHG (15): recall@100=0.8616, ms/q=0.6886, qps=1452
+  SHG (20): recall@100=0.8616, ms/q=0.7201, qps=1389
+  SHG (30): recall@100=0.8616, ms/q=0.7139, qps=1401
+  SHG (40): recall@100=0.8616, ms/q=0.7047, qps=1419
+  SHG (60): recall@100=0.8616, ms/q=0.7191, qps=1391
+  SHG (80): recall@100=0.8616, ms/q=0.6998, qps=1429
+  SHG (100): recall@100=0.8616, ms/q=0.7051, qps=1418
+  SHG (150): recall@100=0.9137, ms/q=1.0621, qps=942
+  SHG (200): recall@100=0.9405, ms/q=1.2944, qps=773
+  SHG (300): recall@100=0.9658, ms/q=1.8716, qps=534
+  SHG (400): recall@100=0.9785, ms/q=2.4174, qps=414
+  SHG (600): recall@100=0.9895, ms/q=3.3551, qps=298
+  SHG (800): recall@100=0.9937, ms/q=4.3507, qps=230
+  SHG (1000): recall@100=0.9958, ms/q=5.2306, qps=191
+  SHG (1500): recall@100=0.9980, ms/q=7.2464, qps=138
+  SHG (2000): recall@100=0.9988, ms/q=9.1952, qps=109
+
+--- SHG robustness (k=20) ---
+  SHG: {'k': 20, 'param': 200, 'param_name': 'efSearch', 'mean_recall': 0.9704, 'median_recall': 1.0, 'min_recall': 0.7, 'max_recall': 1.0, 'q25_recall': 0.95, 'q75_recall': 1.0, 'ms_per_query': 1.197}
+
+--- Loading CSPG from /Users/dhm/Documents/indices/gist1m_cspg.idx ---
+  CSPG: loaded
+
+--- CSPG recall@1 curve ---
+  CSPG (10): recall@1=0.5910, ms/q=0.0572, qps=17485
+  CSPG (15): recall@1=0.6680, ms/q=0.0764, qps=13081
+  CSPG (20): recall@1=0.7230, ms/q=0.0951, qps=10518
+  CSPG (30): recall@1=0.7950, ms/q=0.1279, qps=7819
+  CSPG (40): recall@1=0.8390, ms/q=0.1552, qps=6445
+  CSPG (60): recall@1=0.8760, ms/q=0.2183, qps=4580
+  CSPG (80): recall@1=0.9030, ms/q=0.2898, qps=3450
+  CSPG (100): recall@1=0.9240, ms/q=0.3624, qps=2759
+  CSPG (150): recall@1=0.9570, ms/q=0.5933, qps=1685
+  CSPG (200): recall@1=0.9710, ms/q=1.1265, qps=888
+  CSPG (300): recall@1=0.9770, ms/q=1.3500, qps=741
+  CSPG (400): recall@1=0.9760, ms/q=1.5629, qps=640
+  CSPG (600): recall@1=0.9830, ms/q=2.2599, qps=442
+  CSPG (800): recall@1=0.9870, ms/q=3.0204, qps=331
+  CSPG (1000): recall@1=0.9890, ms/q=3.6803, qps=272
+  CSPG (1500): recall@1=0.9900, ms/q=5.6119, qps=178
+  CSPG (2000): recall@1=0.9910, ms/q=7.6167, qps=131
+
+--- CSPG recall@10 curve ---
+  CSPG (10): recall@10=0.5167, ms/q=0.0629, qps=15906
+  CSPG (15): recall@10=0.6007, ms/q=0.0866, qps=11553
+  CSPG (20): recall@10=0.6561, ms/q=0.0991, qps=10089
+  CSPG (30): recall@10=0.7322, ms/q=0.1357, qps=7370
+  CSPG (40): recall@10=0.7817, ms/q=0.1704, qps=5868
+  CSPG (60): recall@10=0.8381, ms/q=0.2345, qps=4264
+  CSPG (80): recall@10=0.8721, ms/q=0.3362, qps=2975
+  CSPG (100): recall@10=0.8967, ms/q=0.3934, qps=2542
+  CSPG (150): recall@10=0.9355, ms/q=0.6321, qps=1582
+  CSPG (200): recall@10=0.9531, ms/q=0.9004, qps=1111
+  CSPG (300): recall@10=0.9712, ms/q=1.3029, qps=768
+  CSPG (400): recall@10=0.9804, ms/q=1.5682, qps=638
+  CSPG (600): recall@10=0.9877, ms/q=2.2813, qps=438
+  CSPG (800): recall@10=0.9910, ms/q=2.9870, qps=335
+  CSPG (1000): recall@10=0.9933, ms/q=3.7072, qps=270
+  CSPG (1500): recall@10=0.9958, ms/q=5.6570, qps=177
+  CSPG (2000): recall@10=0.9966, ms/q=7.6353, qps=131
+
+--- CSPG recall@20 curve ---
+  CSPG (10): recall@20=0.6149, ms/q=0.1024, qps=9763
+  CSPG (15): recall@20=0.6149, ms/q=0.0969, qps=10324
+  CSPG (20): recall@20=0.6149, ms/q=0.1039, qps=9627
+  CSPG (30): recall@20=0.6963, ms/q=0.1372, qps=7288
+  CSPG (40): recall@20=0.7486, ms/q=0.1702, qps=5877
+  CSPG (60): recall@20=0.8144, ms/q=0.2352, qps=4252
+  CSPG (80): recall@20=0.8543, ms/q=0.3191, qps=3134
+  CSPG (100): recall@20=0.8819, ms/q=0.3857, qps=2592
+  CSPG (150): recall@20=0.9248, ms/q=0.6606, qps=1514
+  CSPG (200): recall@20=0.9456, ms/q=0.9223, qps=1084
+  CSPG (300): recall@20=0.9661, ms/q=1.2906, qps=775
+  CSPG (400): recall@20=0.9769, ms/q=1.5778, qps=634
+  CSPG (600): recall@20=0.9866, ms/q=2.3135, qps=432
+  CSPG (800): recall@20=0.9907, ms/q=3.0181, qps=331
+  CSPG (1000): recall@20=0.9924, ms/q=3.7189, qps=269
+  CSPG (1500): recall@20=0.9951, ms/q=5.6361, qps=177
+  CSPG (2000): recall@20=0.9962, ms/q=7.5865, qps=132
+
+--- CSPG recall@50 curve ---
+  CSPG (10): recall@50=0.7324, ms/q=0.1974, qps=5066
+  CSPG (15): recall@50=0.7324, ms/q=0.2012, qps=4969
+  CSPG (20): recall@50=0.7324, ms/q=0.1980, qps=5051
+  CSPG (30): recall@50=0.7324, ms/q=0.2123, qps=4710
+  CSPG (40): recall@50=0.7324, ms/q=0.2134, qps=4687
+  CSPG (60): recall@50=0.7666, ms/q=0.2499, qps=4001
+  CSPG (80): recall@50=0.8134, ms/q=0.3208, qps=3117
+  CSPG (100): recall@50=0.8470, ms/q=0.4174, qps=2396
+  CSPG (150): recall@50=0.8978, ms/q=0.6688, qps=1495
+  CSPG (200): recall@50=0.9255, ms/q=0.9394, qps=1064
+  CSPG (300): recall@50=0.9524, ms/q=1.2451, qps=803
+  CSPG (400): recall@50=0.9667, ms/q=1.5466, qps=647
+  CSPG (600): recall@50=0.9805, ms/q=2.2936, qps=436
+  CSPG (800): recall@50=0.9867, ms/q=2.9649, qps=337
+  CSPG (1000): recall@50=0.9898, ms/q=3.7456, qps=267
+  CSPG (1500): recall@50=0.9938, ms/q=5.5794, qps=179
+  CSPG (2000): recall@50=0.9953, ms/q=7.5862, qps=132
+
+--- CSPG recall@100 curve ---
+  CSPG (10): recall@100=0.8100, ms/q=0.3707, qps=2698
+  CSPG (15): recall@100=0.8100, ms/q=0.3639, qps=2748
+  CSPG (20): recall@100=0.8100, ms/q=0.3940, qps=2538
+  CSPG (30): recall@100=0.8100, ms/q=0.3850, qps=2598
+  CSPG (40): recall@100=0.8100, ms/q=0.3959, qps=2526
+  CSPG (60): recall@100=0.8100, ms/q=0.4410, qps=2267
+  CSPG (80): recall@100=0.8100, ms/q=0.4805, qps=2081
+  CSPG (100): recall@100=0.8100, ms/q=0.4810, qps=2079
+  CSPG (150): recall@100=0.8699, ms/q=0.6778, qps=1475
+  CSPG (200): recall@100=0.9026, ms/q=0.8352, qps=1197
+  CSPG (300): recall@100=0.9370, ms/q=1.2126, qps=825
+  CSPG (400): recall@100=0.9556, ms/q=1.5509, qps=645
+  CSPG (600): recall@100=0.9742, ms/q=2.2541, qps=444
+  CSPG (800): recall@100=0.9821, ms/q=3.0222, qps=331
+  CSPG (1000): recall@100=0.9866, ms/q=3.7370, qps=268
+  CSPG (1500): recall@100=0.9922, ms/q=5.6066, qps=178
+  CSPG (2000): recall@100=0.9945, ms/q=7.5944, qps=132
+
+--- CSPG robustness (k=20) ---
+  CSPG: {'k': 20, 'param': 200, 'param_name': 'efSearch', 'mean_recall': 0.9456, 'median_recall': 1.0, 'min_recall': 0.35, 'max_recall': 1.0, 'q25_recall': 0.9, 'q75_recall': 1.0, 'ms_per_query': 0.6783}
+
+--- Loading HNSW32 from /Users/dhm/Documents/indices/gist1m_hnsw32.idx ---
+  HNSW32: loaded
 
 --- HNSW32 recall@1 curve ---
-  HNSW32 (10): recall@1=0.5230, ms/q=0.0394, qps=25377
-  HNSW32 (15): recall@1=0.6100, ms/q=0.0512, qps=19528
-  HNSW32 (20): recall@1=0.6580, ms/q=0.0612, qps=16338
-  HNSW32 (30): recall@1=0.7380, ms/q=0.0812, qps=12312
-  HNSW32 (40): recall@1=0.7880, ms/q=0.0993, qps=10067
-  HNSW32 (60): recall@1=0.8470, ms/q=0.1358, qps=7365
-  HNSW32 (80): recall@1=0.8870, ms/q=0.1703, qps=5871
-  HNSW32 (100): recall@1=0.9020, ms/q=0.2083, qps=4800
-  HNSW32 (150): recall@1=0.9330, ms/q=0.3000, qps=3333
-  HNSW32 (200): recall@1=0.9540, ms/q=0.4000, qps=2500
-  HNSW32 (300): recall@1=0.9750, ms/q=0.6256, qps=1598
-  HNSW32 (400): recall@1=0.9780, ms/q=1.2399, qps=807
-  HNSW32 (600): recall@1=0.9830, ms/q=1.5394, qps=650
-  HNSW32 (800): recall@1=0.9860, ms/q=1.7559, qps=570
-  HNSW32 (1000): recall@1=0.9870, ms/q=2.1654, qps=462
-  HNSW32 (1500): recall@1=0.9890, ms/q=3.2538, qps=307
-  HNSW32 (2000): recall@1=0.9890, ms/q=4.3721, qps=229
+  HNSW32 (10): recall@1=0.5230, ms/q=0.0400, qps=25031
+  HNSW32 (15): recall@1=0.6100, ms/q=0.0511, qps=19585
+  HNSW32 (20): recall@1=0.6580, ms/q=0.0604, qps=16559
+  HNSW32 (30): recall@1=0.7380, ms/q=0.0816, qps=12257
+  HNSW32 (40): recall@1=0.7880, ms/q=0.0984, qps=10163
+  HNSW32 (60): recall@1=0.8470, ms/q=0.1363, qps=7339
+  HNSW32 (80): recall@1=0.8870, ms/q=0.1766, qps=5663
+  HNSW32 (100): recall@1=0.9020, ms/q=0.2134, qps=4685
+  HNSW32 (150): recall@1=0.9330, ms/q=0.3090, qps=3236
+  HNSW32 (200): recall@1=0.9540, ms/q=0.4431, qps=2257
+  HNSW32 (300): recall@1=0.9750, ms/q=1.0648, qps=939
+  HNSW32 (400): recall@1=0.9780, ms/q=1.2977, qps=771
+  HNSW32 (600): recall@1=0.9830, ms/q=1.5549, qps=643
+  HNSW32 (800): recall@1=0.9860, ms/q=1.9117, qps=523
+  HNSW32 (1000): recall@1=0.9870, ms/q=2.4002, qps=417
+  HNSW32 (1500): recall@1=0.9890, ms/q=3.5108, qps=285
+  HNSW32 (2000): recall@1=0.9890, ms/q=4.6300, qps=216
 
 --- HNSW32 recall@10 curve ---
-  HNSW32 (10): recall@10=0.4608, ms/q=0.0437, qps=22907
-  HNSW32 (15): recall@10=0.5433, ms/q=0.0565, qps=17702
-  HNSW32 (20): recall@10=0.5986, ms/q=0.0674, qps=14835
-  HNSW32 (30): recall@10=0.6791, ms/q=0.0899, qps=11118
-  HNSW32 (40): recall@10=0.7319, ms/q=0.1082, qps=9244
-  HNSW32 (60): recall@10=0.7979, ms/q=0.1509, qps=6627
-  HNSW32 (80): recall@10=0.8383, ms/q=0.1959, qps=5106
-  HNSW32 (100): recall@10=0.8674, ms/q=0.2560, qps=3907
-  HNSW32 (150): recall@10=0.9074, ms/q=0.3999, qps=2500
-  HNSW32 (200): recall@10=0.9317, ms/q=0.5479, qps=1825
-  HNSW32 (300): recall@10=0.9573, ms/q=0.8012, qps=1248
-  HNSW32 (400): recall@10=0.9684, ms/q=1.0063, qps=994
-  HNSW32 (600): recall@10=0.9817, ms/q=1.4023, qps=713
-  HNSW32 (800): recall@10=0.9865, ms/q=1.7631, qps=567
-  HNSW32 (1000): recall@10=0.9899, ms/q=2.1874, qps=457
-  HNSW32 (1500): recall@10=0.9930, ms/q=3.2525, qps=307
-  HNSW32 (2000): recall@10=0.9944, ms/q=4.4034, qps=227
+  HNSW32 (10): recall@10=0.4608, ms/q=0.0446, qps=22398
+  HNSW32 (15): recall@10=0.5433, ms/q=0.0564, qps=17737
+  HNSW32 (20): recall@10=0.5986, ms/q=0.0673, qps=14854
+  HNSW32 (30): recall@10=0.6791, ms/q=0.0902, qps=11085
+  HNSW32 (40): recall@10=0.7319, ms/q=0.1131, qps=8839
+  HNSW32 (60): recall@10=0.7979, ms/q=0.1713, qps=5837
+  HNSW32 (80): recall@10=0.8383, ms/q=0.2280, qps=4386
+  HNSW32 (100): recall@10=0.8674, ms/q=0.2963, qps=3374
+  HNSW32 (150): recall@10=0.9074, ms/q=0.4940, qps=2024
+  HNSW32 (200): recall@10=0.9317, ms/q=0.6076, qps=1646
+  HNSW32 (300): recall@10=0.9573, ms/q=0.8603, qps=1162
+  HNSW32 (400): recall@10=0.9684, ms/q=1.0632, qps=941
+  HNSW32 (600): recall@10=0.9817, ms/q=1.5117, qps=662
+  HNSW32 (800): recall@10=0.9865, ms/q=1.9975, qps=501
+  HNSW32 (1000): recall@10=0.9899, ms/q=2.3698, qps=422
+  HNSW32 (1500): recall@10=0.9930, ms/q=3.5005, qps=286
+  HNSW32 (2000): recall@10=0.9944, ms/q=4.6483, qps=215
 
 --- HNSW32 recall@20 curve ---
-  HNSW32 (10): recall@20=0.4206, ms/q=0.0438, qps=22809
-  HNSW32 (15): recall@20=0.5014, ms/q=0.0561, qps=17821
-  HNSW32 (20): recall@20=0.5590, ms/q=0.0670, qps=14926
-  HNSW32 (30): recall@20=0.6412, ms/q=0.0898, qps=11134
-  HNSW32 (40): recall@20=0.6972, ms/q=0.1084, qps=9227
-  HNSW32 (60): recall@20=0.7689, ms/q=0.1506, qps=6641
-  HNSW32 (80): recall@20=0.8153, ms/q=0.1953, qps=5121
-  HNSW32 (100): recall@20=0.8477, ms/q=0.2524, qps=3961
-  HNSW32 (150): recall@20=0.8936, ms/q=0.3979, qps=2513
-  HNSW32 (200): recall@20=0.9194, ms/q=0.5505, qps=1816
-  HNSW32 (300): recall@20=0.9502, ms/q=0.8086, qps=1237
-  HNSW32 (400): recall@20=0.9633, ms/q=0.9990, qps=1001
-  HNSW32 (600): recall@20=0.9776, ms/q=1.4251, qps=702
-  HNSW32 (800): recall@20=0.9841, ms/q=1.7813, qps=561
-  HNSW32 (1000): recall@20=0.9877, ms/q=2.1999, qps=455
-  HNSW32 (1500): recall@20=0.9921, ms/q=3.2658, qps=306
-  HNSW32 (2000): recall@20=0.9938, ms/q=4.4010, qps=227
+  HNSW32 (10): recall@20=0.4206, ms/q=0.0440, qps=22731
+  HNSW32 (15): recall@20=0.5014, ms/q=0.0570, qps=17553
+  HNSW32 (20): recall@20=0.5590, ms/q=0.0676, qps=14797
+  HNSW32 (30): recall@20=0.6412, ms/q=0.0898, qps=11136
+  HNSW32 (40): recall@20=0.6972, ms/q=0.1142, qps=8758
+  HNSW32 (60): recall@20=0.7689, ms/q=0.1623, qps=6163
+  HNSW32 (80): recall@20=0.8153, ms/q=0.2301, qps=4347
+  HNSW32 (100): recall@20=0.8477, ms/q=0.2856, qps=3502
+  HNSW32 (150): recall@20=0.8936, ms/q=0.4738, qps=2111
+  HNSW32 (200): recall@20=0.9194, ms/q=0.6052, qps=1652
+  HNSW32 (300): recall@20=0.9502, ms/q=0.8849, qps=1130
+  HNSW32 (400): recall@20=0.9633, ms/q=1.0776, qps=928
+  HNSW32 (600): recall@20=0.9776, ms/q=1.5144, qps=660
+  HNSW32 (800): recall@20=0.9841, ms/q=1.9643, qps=509
+  HNSW32 (1000): recall@20=0.9877, ms/q=2.4023, qps=416
+  HNSW32 (1500): recall@20=0.9921, ms/q=3.4796, qps=287
+  HNSW32 (2000): recall@20=0.9938, ms/q=4.6713, qps=214
 
 --- HNSW32 recall@50 curve ---
-  HNSW32 (10): recall@50=0.3531, ms/q=0.0448, qps=22334
-  HNSW32 (15): recall@50=0.4323, ms/q=0.0570, qps=17535
-  HNSW32 (20): recall@50=0.4898, ms/q=0.0684, qps=14611
-  HNSW32 (30): recall@50=0.5737, ms/q=0.0909, qps=10996
-  HNSW32 (40): recall@50=0.6344, ms/q=0.1105, qps=9047
-  HNSW32 (60): recall@50=0.7134, ms/q=0.1508, qps=6629
-  HNSW32 (80): recall@50=0.7666, ms/q=0.1929, qps=5184
-  HNSW32 (100): recall@50=0.8036, ms/q=0.2410, qps=4149
-  HNSW32 (150): recall@50=0.8610, ms/q=0.3949, qps=2533
-  HNSW32 (200): recall@50=0.8944, ms/q=0.5353, qps=1868
-  HNSW32 (300): recall@50=0.9325, ms/q=0.8041, qps=1244
-  HNSW32 (400): recall@50=0.9508, ms/q=1.0146, qps=986
-  HNSW32 (600): recall@50=0.9691, ms/q=1.4107, qps=709
-  HNSW32 (800): recall@50=0.9787, ms/q=1.7767, qps=563
-  HNSW32 (1000): recall@50=0.9839, ms/q=2.2083, qps=453
-  HNSW32 (1500): recall@50=0.9898, ms/q=3.2488, qps=308
-  HNSW32 (2000): recall@50=0.9926, ms/q=4.4113, qps=227
+  HNSW32 (10): recall@50=0.3531, ms/q=0.0447, qps=22351
+  HNSW32 (15): recall@50=0.4323, ms/q=0.0581, qps=17216
+  HNSW32 (20): recall@50=0.4898, ms/q=0.0689, qps=14504
+  HNSW32 (30): recall@50=0.5737, ms/q=0.0908, qps=11017
+  HNSW32 (40): recall@50=0.6344, ms/q=0.1114, qps=8978
+  HNSW32 (60): recall@50=0.7134, ms/q=0.1553, qps=6439
+  HNSW32 (80): recall@50=0.7666, ms/q=0.2243, qps=4459
+  HNSW32 (100): recall@50=0.8036, ms/q=0.2795, qps=3578
+  HNSW32 (150): recall@50=0.8610, ms/q=0.4390, qps=2278
+  HNSW32 (200): recall@50=0.8944, ms/q=0.5931, qps=1686
+  HNSW32 (300): recall@50=0.9325, ms/q=0.8448, qps=1184
+  HNSW32 (400): recall@50=0.9508, ms/q=1.0600, qps=943
+  HNSW32 (600): recall@50=0.9691, ms/q=1.5333, qps=652
+  HNSW32 (800): recall@50=0.9787, ms/q=1.9496, qps=513
+  HNSW32 (1000): recall@50=0.9839, ms/q=2.3844, qps=419
+  HNSW32 (1500): recall@50=0.9898, ms/q=3.4433, qps=290
+  HNSW32 (2000): recall@50=0.9926, ms/q=4.5976, qps=218
 
 --- HNSW32 recall@100 curve ---
-  HNSW32 (10): recall@100=0.2969, ms/q=0.0436, qps=22919
-  HNSW32 (15): recall@100=0.3687, ms/q=0.0575, qps=17401
-  HNSW32 (20): recall@100=0.4228, ms/q=0.0684, qps=14620
-  HNSW32 (30): recall@100=0.5065, ms/q=0.0901, qps=11104
-  HNSW32 (40): recall@100=0.5688, ms/q=0.1110, qps=9011
-  HNSW32 (60): recall@100=0.6573, ms/q=0.1516, qps=6594
-  HNSW32 (80): recall@100=0.7180, ms/q=0.1938, qps=5161
-  HNSW32 (100): recall@100=0.7606, ms/q=0.2308, qps=4333
-  HNSW32 (150): recall@100=0.8272, ms/q=0.3500, qps=2857
-  HNSW32 (200): recall@100=0.8666, ms/q=0.5125, qps=1951
-  HNSW32 (300): recall@100=0.9120, ms/q=0.7744, qps=1291
-  HNSW32 (400): recall@100=0.9357, ms/q=1.0128, qps=987
-  HNSW32 (600): recall@100=0.9589, ms/q=1.4009, qps=714
-  HNSW32 (800): recall@100=0.9710, ms/q=1.7647, qps=567
-  HNSW32 (1000): recall@100=0.9777, ms/q=2.1903, qps=457
-  HNSW32 (1500): recall@100=0.9862, ms/q=3.2854, qps=304
-  HNSW32 (2000): recall@100=0.9904, ms/q=4.4121, qps=227
+  HNSW32 (10): recall@100=0.2969, ms/q=0.0459, qps=21807
+  HNSW32 (15): recall@100=0.3687, ms/q=0.0583, qps=17145
+  HNSW32 (20): recall@100=0.4228, ms/q=0.0692, qps=14452
+  HNSW32 (30): recall@100=0.5065, ms/q=0.0905, qps=11052
+  HNSW32 (40): recall@100=0.5688, ms/q=0.1115, qps=8968
+  HNSW32 (60): recall@100=0.6573, ms/q=0.1540, qps=6493
+  HNSW32 (80): recall@100=0.7180, ms/q=0.1990, qps=5025
+  HNSW32 (100): recall@100=0.7606, ms/q=0.2593, qps=3856
+  HNSW32 (150): recall@100=0.8272, ms/q=0.4045, qps=2472
+  HNSW32 (200): recall@100=0.8666, ms/q=0.6067, qps=1648
+  HNSW32 (300): recall@100=0.9120, ms/q=0.8389, qps=1192
+  HNSW32 (400): recall@100=0.9357, ms/q=1.0530, qps=950
+  HNSW32 (600): recall@100=0.9589, ms/q=1.4816, qps=675
+  HNSW32 (800): recall@100=0.9710, ms/q=1.9800, qps=505
+  HNSW32 (1000): recall@100=0.9777, ms/q=2.3168, qps=432
+  HNSW32 (1500): recall@100=0.9862, ms/q=3.4463, qps=290
+  HNSW32 (2000): recall@100=0.9904, ms/q=4.5955, qps=218
 
 --- HNSW32 robustness (k=20) ---
-  HNSW32: {'k': 20, 'param': 200, 'param_name': 'efSearch', 'mean_recall': 0.9193, 'median_recall': 0.95, 'min_recall': 0.2, 'max_recall': 1.0, 'q25_recall': 0.9, 'q75_recall': 1.0, 'ms_per_query': 0.4237}
+  HNSW32: {'k': 20, 'param': 200, 'param_name': 'efSearch', 'mean_recall': 0.9193, 'median_recall': 0.95, 'min_recall': 0.2, 'max_recall': 1.0, 'q25_recall': 0.9, 'q75_recall': 1.0, 'ms_per_query': 0.4399}
 
---- Building HNSW48 ---
-  HNSW48 (M=48, efC=128): build=369.15s
-  Saved to /Users/dhm/Documents/indices/gist1m_hnsw48.idx
+--- Loading HNSW48 from /Users/dhm/Documents/indices/gist1m_hnsw48.idx ---
+  HNSW48: loaded
 
 --- HNSW48 recall@1 curve ---
-  HNSW48 (10): recall@1=0.5290, ms/q=0.0471, qps=21217
-  HNSW48 (15): recall@1=0.6290, ms/q=0.0597, qps=16748
-  HNSW48 (20): recall@1=0.6790, ms/q=0.0709, qps=14108
-  HNSW48 (30): recall@1=0.7620, ms/q=0.0935, qps=10698
-  HNSW48 (40): recall@1=0.8040, ms/q=0.1149, qps=8700
-  HNSW48 (60): recall@1=0.8630, ms/q=0.1558, qps=6417
-  HNSW48 (80): recall@1=0.8970, ms/q=0.1984, qps=5041
-  HNSW48 (100): recall@1=0.9190, ms/q=0.2443, qps=4094
-  HNSW48 (150): recall@1=0.9410, ms/q=0.3553, qps=2814
-  HNSW48 (200): recall@1=0.9530, ms/q=0.4736, qps=2111
-  HNSW48 (300): recall@1=0.9690, ms/q=1.0517, qps=951
-  HNSW48 (400): recall@1=0.9750, ms/q=1.3170, qps=759
-  HNSW48 (600): recall@1=0.9820, ms/q=1.5856, qps=631
-  HNSW48 (800): recall@1=0.9830, ms/q=1.9786, qps=505
-  HNSW48 (1000): recall@1=0.9850, ms/q=2.4314, qps=411
-  HNSW48 (1500): recall@1=0.9860, ms/q=3.5161, qps=284
-  HNSW48 (2000): recall@1=0.9880, ms/q=4.6616, qps=215
+  HNSW48 (10): recall@1=0.5290, ms/q=0.0460, qps=21753
+  HNSW48 (15): recall@1=0.6290, ms/q=0.0587, qps=17026
+  HNSW48 (20): recall@1=0.6790, ms/q=0.0723, qps=13830
+  HNSW48 (30): recall@1=0.7620, ms/q=0.0960, qps=10413
+  HNSW48 (40): recall@1=0.8040, ms/q=0.1149, qps=8703
+  HNSW48 (60): recall@1=0.8630, ms/q=0.1537, qps=6506
+  HNSW48 (80): recall@1=0.8970, ms/q=0.1946, qps=5140
+  HNSW48 (100): recall@1=0.9190, ms/q=0.2369, qps=4220
+  HNSW48 (150): recall@1=0.9410, ms/q=0.3430, qps=2915
+  HNSW48 (200): recall@1=0.9530, ms/q=0.4564, qps=2191
+  HNSW48 (300): recall@1=0.9690, ms/q=0.9182, qps=1089
+  HNSW48 (400): recall@1=0.9750, ms/q=1.5821, qps=632
+  HNSW48 (600): recall@1=0.9820, ms/q=1.6979, qps=589
+  HNSW48 (800): recall@1=0.9830, ms/q=2.1409, qps=467
+  HNSW48 (1000): recall@1=0.9850, ms/q=2.6718, qps=374
+  HNSW48 (1500): recall@1=0.9860, ms/q=3.7351, qps=268
+  HNSW48 (2000): recall@1=0.9880, ms/q=4.9608, qps=202
 
 --- HNSW48 recall@10 curve ---
-  HNSW48 (10): recall@10=0.4829, ms/q=0.0503, qps=19893
-  HNSW48 (15): recall@10=0.5649, ms/q=0.0644, qps=15519
-  HNSW48 (20): recall@10=0.6203, ms/q=0.0760, qps=13156
-  HNSW48 (30): recall@10=0.6951, ms/q=0.0993, qps=10075
-  HNSW48 (40): recall@10=0.7472, ms/q=0.1244, qps=8037
-  HNSW48 (60): recall@10=0.8137, ms/q=0.1728, qps=5786
-  HNSW48 (80): recall@10=0.8519, ms/q=0.2374, qps=4212
-  HNSW48 (100): recall@10=0.8787, ms/q=0.3119, qps=3206
-  HNSW48 (150): recall@10=0.9185, ms/q=0.4832, qps=2069
-  HNSW48 (200): recall@10=0.9408, ms/q=0.6432, qps=1555
-  HNSW48 (300): recall@10=0.9650, ms/q=0.8967, qps=1115
-  HNSW48 (400): recall@10=0.9751, ms/q=1.1164, qps=896
-  HNSW48 (600): recall@10=0.9845, ms/q=1.5504, qps=645
-  HNSW48 (800): recall@10=0.9881, ms/q=1.9946, qps=501
-  HNSW48 (1000): recall@10=0.9912, ms/q=2.4293, qps=412
-  HNSW48 (1500): recall@10=0.9937, ms/q=3.5140, qps=285
-  HNSW48 (2000): recall@10=0.9952, ms/q=4.7259, qps=212
+  HNSW48 (10): recall@10=0.4829, ms/q=0.0513, qps=19507
+  HNSW48 (15): recall@10=0.5649, ms/q=0.0675, qps=14825
+  HNSW48 (20): recall@10=0.6203, ms/q=0.0782, qps=12790
+  HNSW48 (30): recall@10=0.6951, ms/q=0.1080, qps=9255
+  HNSW48 (40): recall@10=0.7472, ms/q=0.1492, qps=6700
+  HNSW48 (60): recall@10=0.8137, ms/q=0.2050, qps=4878
+  HNSW48 (80): recall@10=0.8519, ms/q=0.2770, qps=3610
+  HNSW48 (100): recall@10=0.8787, ms/q=0.3690, qps=2710
+  HNSW48 (150): recall@10=0.9185, ms/q=0.5266, qps=1899
+  HNSW48 (200): recall@10=0.9408, ms/q=0.6713, qps=1490
+  HNSW48 (300): recall@10=0.9650, ms/q=0.9527, qps=1050
+  HNSW48 (400): recall@10=0.9751, ms/q=1.2011, qps=833
+  HNSW48 (600): recall@10=0.9845, ms/q=1.7314, qps=578
+  HNSW48 (800): recall@10=0.9881, ms/q=2.1616, qps=463
+  HNSW48 (1000): recall@10=0.9912, ms/q=2.6896, qps=372
+  HNSW48 (1500): recall@10=0.9937, ms/q=3.7504, qps=267
+  HNSW48 (2000): recall@10=0.9952, ms/q=4.9275, qps=203
 
 --- HNSW48 recall@20 curve ---
-  HNSW48 (10): recall@20=0.4424, ms/q=0.0499, qps=20034
-  HNSW48 (15): recall@20=0.5270, ms/q=0.0653, qps=15305
-  HNSW48 (20): recall@20=0.5858, ms/q=0.0765, qps=13065
-  HNSW48 (30): recall@20=0.6616, ms/q=0.1002, qps=9979
-  HNSW48 (40): recall@20=0.7161, ms/q=0.1249, qps=8007
-  HNSW48 (60): recall@20=0.7855, ms/q=0.1718, qps=5821
-  HNSW48 (80): recall@20=0.8288, ms/q=0.2232, qps=4480
-  HNSW48 (100): recall@20=0.8582, ms/q=0.3127, qps=3198
-  HNSW48 (150): recall@20=0.9045, ms/q=0.4806, qps=2081
-  HNSW48 (200): recall@20=0.9300, ms/q=0.6443, qps=1552
-  HNSW48 (300): recall@20=0.9577, ms/q=0.8928, qps=1120
-  HNSW48 (400): recall@20=0.9702, ms/q=1.1241, qps=890
-  HNSW48 (600): recall@20=0.9826, ms/q=1.5753, qps=635
-  HNSW48 (800): recall@20=0.9874, ms/q=1.9978, qps=501
-  HNSW48 (1000): recall@20=0.9905, ms/q=2.4260, qps=412
-  HNSW48 (1500): recall@20=0.9938, ms/q=3.5331, qps=283
-  HNSW48 (2000): recall@20=0.9955, ms/q=4.7296, qps=211
+  HNSW48 (10): recall@20=0.4424, ms/q=0.0516, qps=19386
+  HNSW48 (15): recall@20=0.5270, ms/q=0.0659, qps=15178
+  HNSW48 (20): recall@20=0.5858, ms/q=0.0795, qps=12584
+  HNSW48 (30): recall@20=0.6616, ms/q=0.1043, qps=9586
+  HNSW48 (40): recall@20=0.7161, ms/q=0.1373, qps=7282
+  HNSW48 (60): recall@20=0.7855, ms/q=0.2071, qps=4828
+  HNSW48 (80): recall@20=0.8288, ms/q=0.2787, qps=3588
+  HNSW48 (100): recall@20=0.8582, ms/q=0.3528, qps=2835
+  HNSW48 (150): recall@20=0.9045, ms/q=0.5248, qps=1905
+  HNSW48 (200): recall@20=0.9300, ms/q=0.6671, qps=1499
+  HNSW48 (300): recall@20=0.9577, ms/q=0.9441, qps=1059
+  HNSW48 (400): recall@20=0.9702, ms/q=1.1993, qps=834
+  HNSW48 (600): recall@20=0.9826, ms/q=1.7137, qps=584
+  HNSW48 (800): recall@20=0.9874, ms/q=2.1524, qps=465
+  HNSW48 (1000): recall@20=0.9905, ms/q=2.6539, qps=377
+  HNSW48 (1500): recall@20=0.9938, ms/q=3.7665, qps=266
+  HNSW48 (2000): recall@20=0.9955, ms/q=4.9320, qps=203
 
 --- HNSW48 recall@50 curve ---
-  HNSW48 (10): recall@50=0.3761, ms/q=0.0512, qps=19544
-  HNSW48 (15): recall@50=0.4572, ms/q=0.0654, qps=15283
-  HNSW48 (20): recall@50=0.5159, ms/q=0.0776, qps=12890
-  HNSW48 (30): recall@50=0.5964, ms/q=0.1009, qps=9912
-  HNSW48 (40): recall@50=0.6572, ms/q=0.1262, qps=7922
-  HNSW48 (60): recall@50=0.7350, ms/q=0.1718, qps=5820
-  HNSW48 (80): recall@50=0.7859, ms/q=0.2216, qps=4512
-  HNSW48 (100): recall@50=0.8196, ms/q=0.3033, qps=3297
-  HNSW48 (150): recall@50=0.8748, ms/q=0.4675, qps=2139
-  HNSW48 (200): recall@50=0.9070, ms/q=0.6437, qps=1553
-  HNSW48 (300): recall@50=0.9419, ms/q=0.9018, qps=1109
-  HNSW48 (400): recall@50=0.9585, ms/q=1.1106, qps=900
-  HNSW48 (600): recall@50=0.9755, ms/q=1.5776, qps=634
-  HNSW48 (800): recall@50=0.9831, ms/q=2.0018, qps=500
-  HNSW48 (1000): recall@50=0.9868, ms/q=2.4364, qps=410
-  HNSW48 (1500): recall@50=0.9923, ms/q=3.5444, qps=282
-  HNSW48 (2000): recall@50=0.9946, ms/q=4.7136, qps=212
+  HNSW48 (10): recall@50=0.3761, ms/q=0.0523, qps=19109
+  HNSW48 (15): recall@50=0.4572, ms/q=0.0664, qps=15051
+  HNSW48 (20): recall@50=0.5159, ms/q=0.0804, qps=12430
+  HNSW48 (30): recall@50=0.5964, ms/q=0.1045, qps=9569
+  HNSW48 (40): recall@50=0.6572, ms/q=0.1340, qps=7465
+  HNSW48 (60): recall@50=0.7350, ms/q=0.2001, qps=4997
+  HNSW48 (80): recall@50=0.7859, ms/q=0.2587, qps=3865
+  HNSW48 (100): recall@50=0.8196, ms/q=0.3622, qps=2761
+  HNSW48 (150): recall@50=0.8748, ms/q=0.5443, qps=1837
+  HNSW48 (200): recall@50=0.9070, ms/q=0.6720, qps=1488
+  HNSW48 (300): recall@50=0.9419, ms/q=0.9472, qps=1056
+  HNSW48 (400): recall@50=0.9585, ms/q=1.2055, qps=830
+  HNSW48 (600): recall@50=0.9755, ms/q=1.7307, qps=578
+  HNSW48 (800): recall@50=0.9831, ms/q=2.1984, qps=455
+  HNSW48 (1000): recall@50=0.9868, ms/q=2.6865, qps=372
+  HNSW48 (1500): recall@50=0.9923, ms/q=3.8525, qps=260
+  HNSW48 (2000): recall@50=0.9946, ms/q=5.0469, qps=198
 
 --- HNSW48 recall@100 curve ---
-  HNSW48 (10): recall@100=0.3188, ms/q=0.0514, qps=19461
-  HNSW48 (15): recall@100=0.3921, ms/q=0.0654, qps=15293
-  HNSW48 (20): recall@100=0.4467, ms/q=0.0790, qps=12664
-  HNSW48 (30): recall@100=0.5293, ms/q=0.1018, qps=9819
-  HNSW48 (40): recall@100=0.5925, ms/q=0.1259, qps=7941
-  HNSW48 (60): recall@100=0.6800, ms/q=0.1700, qps=5881
-  HNSW48 (80): recall@100=0.7377, ms/q=0.2180, qps=4588
-  HNSW48 (100): recall@100=0.7774, ms/q=0.2680, qps=3731
-  HNSW48 (150): recall@100=0.8423, ms/q=0.4237, qps=2360
-  HNSW48 (200): recall@100=0.8813, ms/q=0.5975, qps=1674
-  HNSW48 (300): recall@100=0.9237, ms/q=0.8829, qps=1133
-  HNSW48 (400): recall@100=0.9452, ms/q=1.1214, qps=892
-  HNSW48 (600): recall@100=0.9675, ms/q=1.5357, qps=651
-  HNSW48 (800): recall@100=0.9776, ms/q=1.9970, qps=501
-  HNSW48 (1000): recall@100=0.9832, ms/q=2.4034, qps=416
-  HNSW48 (1500): recall@100=0.9902, ms/q=3.5331, qps=283
-  HNSW48 (2000): recall@100=0.9936, ms/q=4.6896, qps=213
+  HNSW48 (10): recall@100=0.3188, ms/q=0.0528, qps=18933
+  HNSW48 (15): recall@100=0.3921, ms/q=0.0668, qps=14967
+  HNSW48 (20): recall@100=0.4467, ms/q=0.0794, qps=12588
+  HNSW48 (30): recall@100=0.5293, ms/q=0.1035, qps=9660
+  HNSW48 (40): recall@100=0.5925, ms/q=0.1299, qps=7696
+  HNSW48 (60): recall@100=0.6800, ms/q=0.1842, qps=5428
+  HNSW48 (80): recall@100=0.7377, ms/q=0.2649, qps=3775
+  HNSW48 (100): recall@100=0.7774, ms/q=0.3249, qps=3078
+  HNSW48 (150): recall@100=0.8423, ms/q=0.5068, qps=1973
+  HNSW48 (200): recall@100=0.8813, ms/q=0.6499, qps=1539
+  HNSW48 (300): recall@100=0.9237, ms/q=0.9482, qps=1055
+  HNSW48 (400): recall@100=0.9452, ms/q=1.2077, qps=828
+  HNSW48 (600): recall@100=0.9675, ms/q=1.7142, qps=583
+  HNSW48 (800): recall@100=0.9776, ms/q=2.1839, qps=458
+  HNSW48 (1000): recall@100=0.9832, ms/q=2.6998, qps=370
+  HNSW48 (1500): recall@100=0.9902, ms/q=3.8521, qps=260
+  HNSW48 (2000): recall@100=0.9936, ms/q=5.0488, qps=198
 
 --- HNSW48 robustness (k=20) ---
-  HNSW48: {'k': 20, 'param': 200, 'param_name': 'efSearch', 'mean_recall': 0.9299, 'median_recall': 0.95, 'min_recall': 0.4, 'max_recall': 1.0, 'q25_recall': 0.9, 'q75_recall': 1.0, 'ms_per_query': 0.4754}
+  HNSW48: {'k': 20, 'param': 200, 'param_name': 'efSearch', 'mean_recall': 0.9299, 'median_recall': 0.95, 'min_recall': 0.4, 'max_recall': 1.0, 'q25_recall': 0.9, 'q75_recall': 1.0, 'ms_per_query': 0.5244}
 
 ======================================================================
 BENCHMARK: construction - gist1m
 ======================================================================
+  SuCo: build=2.99s, peak_rss_delta=564.48MB, serialized=3723.48MB
+  SHG: build=-1s, peak_rss_delta=-1MB, serialized=5245.29MB
+  CSPG: build=-1s, peak_rss_delta=-1MB, serialized=4074.29MB
   HNSW32: build=335.73s, peak_rss_delta=627.08MB, serialized=3921.63MB
   HNSW48: build=369.15s, peak_rss_delta=0.0MB, serialized=4043.66MB
 

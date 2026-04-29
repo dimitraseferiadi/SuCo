@@ -41,7 +41,6 @@ import json
 import os
 import resource as _resource
 import struct
-import subprocess
 import sys
 import time
 import traceback
@@ -188,19 +187,6 @@ def compute_ground_truth(xb, xq, k=100):
     return I.astype(np.int32)
 
 
-def _prepare_deep1b(data_dir, nb, nt):
-    script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "prepare_deep1m.py")
-    cmd = [
-        sys.executable,
-        script_path,
-        "--data-dir", data_dir,
-        "--nb", str(nb),
-        "--nt", str(nt),
-    ]
-    print("  Preparing Deep1B data:", " ".join(cmd))
-    subprocess.run(cmd, check=True)
-
-
 # ===========================================================================
 # Dataset loaders — one branch per dataset, paper-style
 # ===========================================================================
@@ -225,7 +211,6 @@ def load_dataset(name, data_dir):
                 read_ivecs(os.path.join(p, "gist_groundtruth.ivecs")))
 
     if name == "deep1m":
-        _prepare_deep1b(data_dir, nb=1_000_000, nt=500_000)
         p = os.path.join(data_dir, "deep1b")
         xb = read_fvecs(os.path.join(p, "base.fvecs"), n=1_000_000)
         xq = read_fvecs(os.path.join(p, "deep1B_queries.fvecs"), n=10_000)
@@ -235,9 +220,11 @@ def load_dataset(name, data_dir):
         return xb, xq, gt
 
     if name == "deep10m":
-        _prepare_deep1b(data_dir, nb=10_000_000, nt=1_000_000)
+        # GT (deep10M_groundtruth.ivecs) is computed against the canonical
+        # base.fvecs[:10M] ordering produced by prepare_deep1m.py — NOT against
+        # the standalone deep10M.fvecs (different ordering, recall is 0).
         p = os.path.join(data_dir, "deep1b")
-        xb = read_fvecs(os.path.join(p, "deep10M.fvecs"))
+        xb = read_fvecs(os.path.join(p, "base.fvecs"), n=10_000_000)
         xq = read_fvecs(os.path.join(p, "deep1B_queries.fvecs"), n=10_000)
         gt = read_ivecs(os.path.join(p, "deep10M_groundtruth.ivecs"))
         if gt.shape[0] > xq.shape[0]:
