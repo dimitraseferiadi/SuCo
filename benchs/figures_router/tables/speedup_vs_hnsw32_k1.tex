@@ -1,0 +1,67 @@
+\begin{table}[t]
+\centering
+\small
+\caption{Speedup vs HNSW32 at recall@1 target (>1 means faster than HNSW32 at the same recall).}
+\label{tab:speedup-k1}
+\begin{tabular}{lrrrrr}
+\toprule
+Dataset & Index & speedup@0.80 & speedup@0.90 & speedup@0.95 & speedup@0.99 \\
+\midrule
+SIFT1M & SuCo & 0.023 & 0.031 & 0.045 & 0.095 \\
+SIFT1M & SHG & 0.465 & 0.608 & 0.654 & 0.827 \\
+SIFT1M & CSPG & 0.618 & 0.688 & 0.635 & 0.228 \\
+SIFT1M & HNSW32 & 1 & 1 & 1 & 1 \\
+SIFT1M & HNSW48 & 0.621 & 0.791 & 0.79 & 0.798 \\
+SIFT10M & SuCo & 0.004 & 0.002 & 0.003 & 0.007 \\
+SIFT10M & SHG & 0.054 & 0.028 & 0.514 & 0.828 \\
+SIFT10M & CSPG & 0.405 & 0.321 & 0.551 & 0.686 \\
+SIFT10M & HNSW32 & 1 & 1 & 1 & 1 \\
+SIFT10M & HNSW48 & 0.271 & 0.14 & 0.716 & 0.905 \\
+GIST1M & SuCo & 0.126 & 0.145 & 0.17 & — \\
+GIST1M & SHG & 0.71 & 0.763 & 0.731 & — \\
+GIST1M & CSPG & 0.834 & 0.763 & 0.799 & — \\
+GIST1M & HNSW32 & 1 & 1 & 1 & — \\
+GIST1M & HNSW48 & 0.731 & 0.756 & 0.635 & — \\
+DEEP1M & SuCo & 0.017 & 0.024 & 0.037 & 0.083 \\
+DEEP1M & SHG & 0.472 & 0.645 & 0.676 & 0.78 \\
+DEEP1M & CSPG & 0.63 & 0.68 & 0.618 & 0.693 \\
+DEEP1M & HNSW32 & 1 & 1 & 1 & 1 \\
+DEEP1M & HNSW48 & 0.647 & 0.881 & 0.818 & 0.866 \\
+DEEP10M & SuCo & 0.002 & 0.002 & 0.004 & 0.012 \\
+DEEP10M & SHG & 0.051 & 0.573 & 0.67 & 0.792 \\
+DEEP10M & CSPG & 0.24 & 0.612 & 0.641 & 0.616 \\
+DEEP10M & HNSW32 & 1 & 1 & 1 & 1 \\
+DEEP10M & HNSW48 & 0.187 & 0.724 & 0.87 & 0.859 \\
+SPACEV10M & SuCo & 0.002 & 0.013 & — & — \\
+SPACEV10M & SHG & 0.092 & 1.093 & — & — \\
+SPACEV10M & CSPG & 0.242 & 0.881 & — & — \\
+SPACEV10M & HNSW32 & 1 & 1 & — & — \\
+SPACEV10M & HNSW48 & 0.498 & 1.454 & — & — \\
+MSong & SuCo & 0.031 & 0.021 & 0.018 & 0.011 \\
+MSong & SHG & 0.396 & 0.423 & 0.579 & 0.849 \\
+MSong & CSPG & 0.376 & 0.394 & 0.444 & 0.469 \\
+MSong & HNSW32 & 1 & 1 & 1 & 1 \\
+MSong & HNSW48 & 0.587 & 0.627 & 0.789 & 0.953 \\
+Enron & SuCo & — & — & — & — \\
+Enron & SHG & 0.552 & 0.663 & 1.158 & 0.889 \\
+Enron & CSPG & 0.533 & 0.425 & 0.397 & 0.42 \\
+Enron & HNSW32 & 1 & 1 & 1 & 1 \\
+Enron & HNSW48 & 0.502 & 0.604 & 1.102 & 1.217 \\
+OpenAI1M & SuCo & 0.087 & 0.039 & 0.041 & 0.057 \\
+OpenAI1M & SHG & 0.254 & 0.951 & 0.896 & 0.81 \\
+OpenAI1M & CSPG & 0.937 & 0.888 & 0.908 & 0.857 \\
+OpenAI1M & HNSW32 & 1 & 1 & 1 & 1 \\
+OpenAI1M & HNSW48 & 1.007 & 0.825 & 0.824 & 0.722 \\
+MSTuring10M & SuCo & 0.007 & 0.014 & 0.024 & 0.121 \\
+MSTuring10M & SHG & 0.668 & 0.83 & 0.916 & 1.47 \\
+MSTuring10M & CSPG & 0.655 & 0.731 & 0.799 & 1.056 \\
+MSTuring10M & HNSW32 & 1 & 1 & 1 & 1 \\
+MSTuring10M & HNSW48 & 0.879 & 0.965 & 1.069 & 1.964 \\
+UQ-V & SuCo & — & — & — & — \\
+UQ-V & SHG & — & — & — & — \\
+UQ-V & CSPG & — & — & — & — \\
+UQ-V & HNSW32 & — & — & — & — \\
+UQ-V & HNSW48 & — & — & — & — \\
+\bottomrule
+\end{tabular}
+\end{table}
